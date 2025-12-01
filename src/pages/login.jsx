@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import '../styles/login.css';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -17,13 +15,19 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Mock data for testing
+  const mockUsers = {
+    'student@gmail.com': { password: '123456', role: 'student', name: 'Nguyễn Văn A' },
+    'leader@gmail.com': { password: '123456', role: 'club_leader', name: 'Trần Thị B' },
+    'admin@gmail.com': { password: '123456', role: 'admin', name: 'Admin' }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -35,23 +39,16 @@ const Login = () => {
   const validateForm = () => {
     const newErrors = {};
     
-    // Email validation
     if (!formData.email.trim()) {
       newErrors.email = 'Email không được để trống';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email không hợp lệ';
     }
     
-    // Password validation
     if (!formData.password) {
       newErrors.password = 'Mật khẩu không được để trống';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
-    }
-    
-    // Role validation
-    if (!formData.role) {
-      newErrors.role = 'Vui lòng chọn vai trò';
     }
     
     setErrors(newErrors);
@@ -67,11 +64,20 @@ const Login = () => {
     
     setLoading(true);
     
-    try {
-      // Call login API
-      const response = await login(formData);
+    // Simulate API call with setTimeout
+    setTimeout(() => {
+      const user = mockUsers[formData.email];
       
-      if (response.success) {
+      if (user && user.password === formData.password && user.role === formData.role) {
+        // Save to localStorage
+        localStorage.setItem('user', JSON.stringify({
+          email: formData.email,
+          name: user.name,
+          role: user.role
+        }));
+        
+        alert(`Đăng nhập thành công!\nChào mừng ${user.name}`);
+        
         // Redirect based on role
         switch (formData.role) {
           case 'admin':
@@ -85,23 +91,33 @@ const Login = () => {
             navigate('/student/dashboard');
             break;
         }
+      } else {
+        setErrors({
+          submit: 'Email, mật khẩu hoặc vai trò không đúng!'
+        });
       }
-    } catch (error) {
-      setErrors({
-        submit: error.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'
-      });
-    } finally {
+      
       setLoading(false);
-    }
+    }, 1000);
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <img src="/logo192.png" alt="Logo" className="login-logo" />
+          <div className="login-logo">🎓</div>
           <h1>Hệ thống quản lý CLB</h1>
           <p>Đăng nhập vào tài khoản của bạn</p>
+        </div>
+
+        {/* Demo accounts info */}
+        <div className="demo-info">
+          <p><strong>Tài khoản demo:</strong></p>
+          <ul>
+            <li>Student: student@gmail.com / 123456</li>
+            <li>Club Leader: leader@gmail.com / 123456</li>
+            <li>Admin: admin@gmail.com / 123456</li>
+          </ul>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -133,7 +149,6 @@ const Login = () => {
               onChange={handleChange}
               placeholder="Nhập email của bạn"
               className={errors.email ? 'error' : ''}
-              autoComplete="email"
             />
             {errors.email && <span className="error-message">{errors.email}</span>}
           </div>
@@ -150,13 +165,11 @@ const Login = () => {
                 onChange={handleChange}
                 placeholder="Nhập mật khẩu"
                 className={errors.password ? 'error' : ''}
-                autoComplete="current-password"
               />
               <button
                 type="button"
                 className="toggle-password"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               >
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
@@ -170,7 +183,7 @@ const Login = () => {
               <input type="checkbox" name="remember" />
               <span>Ghi nhớ đăng nhập</span>
             </label>
-            <a href="/forgot-password" className="forgot-link">
+            <a href="#" className="forgot-link" onClick={(e) => e.preventDefault()}>
               Quên mật khẩu?
             </a>
           </div>
@@ -188,7 +201,12 @@ const Login = () => {
             className="btn-login"
             disabled={loading}
           >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            {loading ? (
+              <>
+                <span className="spinner"></span>
+                Đang đăng nhập...
+              </>
+            ) : 'Đăng nhập'}
           </button>
         </form>
 
@@ -196,7 +214,7 @@ const Login = () => {
         <div className="login-footer">
           <p>
             Chưa có tài khoản?{' '}
-            <a href="/register" className="register-link">
+            <a href="#" className="register-link" onClick={(e) => e.preventDefault()}>
               Đăng ký ngay
             </a>
           </p>
