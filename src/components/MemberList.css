@@ -1,0 +1,199 @@
+.member-list-container {
+  padding: 20px;
+}
+
+.members-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+}
+
+.members-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.members-table th {
+  padding: 15px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.members-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.3s ease;
+}
+
+.members-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.members-table td {
+  padding: 15px 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.student-id {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.member-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.club-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.role-chủ-tịch {
+  background: #fce4ec;
+  color: #c2185b;
+}
+
+.role-phó-chủ-tịch {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.role-thư-ký {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.role-thủ-quỹ {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.role-thành-viên {
+  background: #e0e0e0;
+  color: #616161;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-hoạt.động {
+  background: #4CAF50;
+  color: white;
+}
+
+.status-tạm.ngưng {
+  background: #FF9800;
+  color: white;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-edit-small,
+.btn-delete-small {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-edit-small {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-edit-small:hover {
+  background: #45a049;
+}
+
+.btn-delete-small {
+  background: #f44336;
+  color: white;
+}
+
+.btn-delete-small:hover {
+  background: #da190b;
+}
+
+.table-footer {
+  background: white;
+  padding: 15px 20px;
+  border-radius: 0 0 12px 12px;
+  margin-top: -12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table-footer p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.table-footer strong {
+  color: #667eea;
+}
+
+.no-results {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 18px;
+}
+
+@media (max-width: 1024px) {
+  .members-table-container {
+    overflow-x: scroll;
+  }
+}
+
+@media (max-width: 768px) {
+  .member-list-container {
+    padding: 10px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .btn-edit-small,
+  .btn-delete-small {
+    width: 100%;
+  }
+}
+
