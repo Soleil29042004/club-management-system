@@ -1,0 +1,220 @@
+.club-list-container {
+  padding: 20px;
+}
+
+.filters-section {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.search-box {
+  margin-bottom: 15px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.filter-group {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  padding: 10px 15px;
+  font-size: 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.clubs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 25px;
+}
+
+.club-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.club-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.club-card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.club-card-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-hoạt.động {
+  background: #4CAF50;
+  color: white;
+}
+
+.status-tạm.ngưng {
+  background: #FF9800;
+  color: white;
+}
+
+.status-ngừng.hoạt.động {
+  background: #f44336;
+  color: white;
+}
+
+.club-card-body {
+  padding: 20px;
+}
+
+.club-description {
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.6;
+  min-height: 50px;
+}
+
+.club-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-label {
+  color: #888;
+  font-weight: 500;
+}
+
+.info-value {
+  color: #333;
+  font-weight: 600;
+}
+
+.club-card-actions {
+  padding: 15px 20px;
+  background: #f9f9f9;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.club-card-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-view {
+  background: #2196F3;
+  color: white;
+}
+
+.btn-view:hover {
+  background: #1976D2;
+}
+
+.btn-edit {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #45a049;
+}
+
+.btn-delete {
+  background: #f44336;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #da190b;
+}
+
+.no-results {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 18px;
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .clubs-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-group {
+    flex-direction: column;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .club-card-actions {
+    flex-direction: column;
+  }
+  
+  .club-card-actions button {
+    width: 100%;
+  }
+}
+
