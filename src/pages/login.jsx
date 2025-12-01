@@ -110,16 +110,6 @@ const Login = () => {
           <p>Đăng nhập vào tài khoản của bạn</p>
         </div>
 
-        {/* Demo accounts info */}
-        <div className="demo-info">
-          <p><strong>Tài khoản demo:</strong></p>
-          <ul>
-            <li>Student: student@gmail.com / 123456</li>
-            <li>Club Leader: leader@gmail.com / 123456</li>
-            <li>Admin: admin@gmail.com / 123456</li>
-          </ul>
-        </div>
-
         <form onSubmit={handleSubmit} className="login-form">
           {/* Role Selection */}
           <div className="form-group">
