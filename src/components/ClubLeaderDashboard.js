@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from './Toast';
 import LeaderStats from './LeaderStats';
 import ClubInfo from './ClubInfo';
 import JoinRequestsList from './JoinRequestsList';
@@ -7,6 +8,7 @@ import { clubCategories, statusOptions } from '../data/mockData';
 import './ClubLeaderDashboard.css';
 
 const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage }) => {
+  const { showToast } = useToast();
   const [joinRequests, setJoinRequests] = useState([]);
   const [myClub, setMyClub] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -69,7 +71,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       ));
     }
     
-    alert('Đã chấp nhận yêu cầu tham gia!');
+    showToast('Đã chấp nhận yêu cầu tham gia!', 'success');
   };
 
   const handleReject = (requestId) => {
@@ -79,7 +81,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
           ? { ...request, status: 'rejected' }
           : request
       ));
-      alert('Đã từ chối yêu cầu tham gia!');
+      showToast('Đã từ chối yêu cầu tham gia!', 'success');
     }
   };
 
@@ -99,7 +101,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     e.preventDefault();
     
     if (!formData.name.trim() || !formData.description.trim()) {
-      alert('Vui lòng điền đầy đủ thông tin!');
+      showToast('Vui lòng điền đầy đủ thông tin!', 'error');
       return;
     }
 
@@ -113,7 +115,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     // Update myClub state
     setMyClub({ ...formData, id: myClub.id });
     setShowEditForm(false);
-    alert('Cập nhật thông tin club thành công!');
+    showToast('Cập nhật thông tin club thành công!', 'success');
   };
 
   const handleFormCancel = () => {
@@ -141,7 +143,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
         setMyClub({ ...myClub, memberCount: Math.max(0, myClub.memberCount - 1) });
       }
       
-      alert('Đã xóa thành viên khỏi club!');
+      showToast('Đã xóa thành viên khỏi club!', 'success');
     }
   };
 
@@ -151,7 +153,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
         ? { ...member, role: newRole }
         : member
     ));
-    alert('Đã cập nhật vai trò thành viên!');
+    showToast('Đã cập nhật vai trò thành viên!', 'success');
   };
 
   const pendingRequests = getPendingRequests();

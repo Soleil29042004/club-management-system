@@ -7,10 +7,11 @@ import ClubLeaderDashboard from './components/ClubLeaderDashboard';
 import Profile from './components/Profile';
 import Login from './pages/login';
 import Register from './pages/register';
+import { ToastProvider } from './components/Toast';
 import { mockClubs, mockMembers } from './data/mockData';
 import './App.css';
 
-function App() {
+function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -281,6 +282,14 @@ function App() {
           <p>© 2024 FPT University - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
         </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 }
 

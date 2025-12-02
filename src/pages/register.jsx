@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useToast } from '../components/Toast';
 import '../styles/login.css';
 
 const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -127,11 +129,13 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
       setLoading(false);
       
       // Show success message and redirect
-      alert('Đăng ký thành công! Bạn sẽ được chuyển đến trang chủ.');
+      showToast('Đăng ký thành công! Bạn sẽ được chuyển đến trang chủ.', 'success');
       
-      if (onRegisterSuccess) {
-        onRegisterSuccess(formData.role);
-      }
+      setTimeout(() => {
+        if (onRegisterSuccess) {
+          onRegisterSuccess(formData.role);
+        }
+      }, 500);
     }, 1000);
   };
 

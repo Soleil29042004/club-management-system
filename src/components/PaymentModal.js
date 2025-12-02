@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useToast } from './Toast';
 import './PaymentModal.css';
 
 const PaymentModal = ({ club, onClose, onSubmit }) => {
+  const { showToast } = useToast();
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentNote, setPaymentNote] = useState('');
 
@@ -9,7 +11,7 @@ const PaymentModal = ({ club, onClose, onSubmit }) => {
 
   const handleSubmit = () => {
     if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
-      alert('Vui lòng nhập số tiền hợp lệ!');
+      showToast('Vui lòng nhập số tiền hợp lệ!', 'error');
       return;
     }
     onSubmit({

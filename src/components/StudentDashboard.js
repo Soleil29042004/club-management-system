@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from './Toast';
 import StudentStats from './StudentStats';
 import StudentClubList from './StudentClubList';
 import StudentUnpaidFees from './StudentUnpaidFees';
@@ -7,6 +8,7 @@ import PaymentModal from './PaymentModal';
 import './StudentDashboard.css';
 
 const StudentDashboard = ({ clubs, currentPage }) => {
+  const { showToast } = useToast();
   const [joinRequests, setJoinRequests] = useState([]);
   const [payments, setPayments] = useState([]);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -55,7 +57,7 @@ const StudentDashboard = ({ clubs, currentPage }) => {
     setJoinRequests([...joinRequests, newRequest]);
     setShowJoinModal(false);
     setSelectedClub(null);
-    alert('Đã gửi yêu cầu tham gia thành công!');
+    showToast('Đã gửi yêu cầu tham gia thành công!', 'success');
   };
 
   const handlePayment = (club) => {
@@ -80,7 +82,7 @@ const StudentDashboard = ({ clubs, currentPage }) => {
     setPayments([...payments, newPayment]);
     setShowPaymentModal(false);
     setSelectedClub(null);
-    alert('Nộp phí thành công!');
+    showToast('Nộp phí thành công!', 'success');
   };
 
   const getRequestStatus = (clubId) => {
