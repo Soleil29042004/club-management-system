@@ -5,8 +5,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
   
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    role: 'student'
+    password: ''
   });
   
   const [errors, setErrors] = useState({});
@@ -80,7 +79,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
         }
       }
       
-      if (user && user.password === formData.password && user.role === formData.role) {
+      if (user && user.password === formData.password) {
         // Save to localStorage
         localStorage.setItem('user', JSON.stringify({
           email: formData.email,
@@ -88,10 +87,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
           role: user.role
         }));
         
-        // Allow admin, student, and club_leader to proceed
-        if (formData.role === 'admin' || formData.role === 'student' || formData.role === 'club_leader') {
+        // Automatically navigate based on user role
+        if (user.role === 'admin' || user.role === 'student' || user.role === 'club_leader') {
           if (onLoginSuccess) {
-            onLoginSuccess(formData.role);
+            onLoginSuccess(user.role);
           }
         } else {
           setErrors({
@@ -100,7 +99,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
         }
       } else {
         setErrors({
-          submit: 'Email, mật khẩu hoặc vai trò không đúng!'
+          submit: 'Email hoặc mật khẩu không đúng!'
         });
       }
       
@@ -118,23 +117,6 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          {/* Role Selection */}
-          <div className="form-group">
-            <label htmlFor="role">Vai trò</label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className={errors.role ? 'error' : ''}
-            >
-              <option value="student">Sinh viên</option>
-              <option value="club_leader">Club Leader</option>
-              <option value="admin">Admin</option>
-            </select>
-            {errors.role && <span className="error-message">{errors.role}</span>}
-          </div>
-
           {/* Email Input */}
           <div className="form-group">
             <label htmlFor="email">Email</label>
