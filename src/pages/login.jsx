@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import '../styles/login.css';
 
-const Login = () => {
-  const navigate = useNavigate();
+const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
   
   const [formData, setFormData] = useState({
     email: '',
@@ -66,7 +64,21 @@ const Login = () => {
     
     // Simulate API call with setTimeout
     setTimeout(() => {
-      const user = mockUsers[formData.email];
+      // Check mock users first
+      let user = mockUsers[formData.email];
+      
+      // If not found in mock users, check registered users
+      if (!user) {
+        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+        const registeredUser = registeredUsers.find(u => u.email === formData.email);
+        if (registeredUser) {
+          user = {
+            password: registeredUser.password,
+            role: registeredUser.role,
+            name: registeredUser.name
+          };
+        }
+      }
       
       if (user && user.password === formData.password && user.role === formData.role) {
         // Save to localStorage
@@ -76,20 +88,15 @@ const Login = () => {
           role: user.role
         }));
         
-        alert(`Đăng nhập thành công!\nChào mừng ${user.name}`);
-        
-        // Redirect based on role
-        switch (formData.role) {
-          case 'admin':
-            navigate('/admin/dashboard');
-            break;
-          case 'club_leader':
-            navigate('/club-leader/dashboard');
-            break;
-          case 'student':
-          default:
-            navigate('/student/dashboard');
-            break;
+        // Allow admin, student, and club_leader to proceed
+        if (formData.role === 'admin' || formData.role === 'student' || formData.role === 'club_leader') {
+          if (onLoginSuccess) {
+            onLoginSuccess(formData.role);
+          }
+        } else {
+          setErrors({
+            submit: 'Vai trò này chưa được hỗ trợ!'
+          });
         }
       } else {
         setErrors({
@@ -106,8 +113,8 @@ const Login = () => {
       <div className="login-card">
         <div className="login-header">
           <div className="login-logo">🎓</div>
-          <h1>Hệ thống quản lý CLB</h1>
-          <p>Đăng nhập vào tài khoản của bạn</p>
+          <h1>FPT University</h1>
+          <p>Hệ thống quản lý Câu lạc bộ Sinh viên</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -204,7 +211,12 @@ const Login = () => {
         <div className="login-footer">
           <p>
             Chưa có tài khoản?{' '}
-            <a href="#" className="register-link" onClick={(e) => e.preventDefault()}>
+            <a href="#" className="register-link" onClick={(e) => {
+              e.preventDefault();
+              if (onSwitchToRegister) {
+                onSwitchToRegister();
+              }
+            }}>
               Đăng ký ngay
             </a>
           </p>

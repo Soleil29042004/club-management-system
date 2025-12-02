@@ -1,0 +1,190 @@
+.members-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.members-header {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.members-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+  font-weight: 600;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+}
+
+.empty-state h2 {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 24px;
+}
+
+.empty-state p {
+  color: #666;
+  font-size: 16px;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.member-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.member-card:hover {
+  border-color: #0651A0;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.member-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0651A0 0%, #008DDE 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-info h3 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  color: #333;
+  font-weight: 600;
+}
+
+.member-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  font-size: 14px;
+  color: #666;
+}
+
+.member-details span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.member-id {
+  font-weight: 600;
+  color: #0651A0;
+}
+
+.member-email {
+  color: #888;
+}
+
+.member-phone,
+.member-major,
+.member-join-date {
+  color: #666;
+}
+
+.member-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.member-role-select {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.member-role-select label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+}
+
+.role-select {
+  padding: 8px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.role-select:focus {
+  outline: none;
+  border-color: #0651A0;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-delete-member {
+  padding: 8px 16px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-delete-member:hover {
+  background: #d32f2f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+@media (max-width: 768px) {
+  .member-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .member-actions {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .member-role-select {
+    width: 100%;
+  }
+}
+

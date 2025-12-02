@@ -1,12 +1,11 @@
-.club-list-container {
+.clubs-section {
+  background: white;
+  border-radius: 12px;
   padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .filters-section {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
 }
 
@@ -25,14 +24,13 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  border-color: #0651A0;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .filter-group {
   display: flex;
   gap: 15px;
-  flex-wrap: wrap;
 }
 
 .filter-select {
@@ -49,7 +47,7 @@
 
 .filter-select:focus {
   outline: none;
-  border-color: #4CAF50;
+  border-color: #0651A0;
 }
 
 .clubs-grid {
@@ -64,11 +62,13 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 2px solid transparent;
 }
 
 .club-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  border-color: #0651A0;
 }
 
 .club-card-header {
@@ -94,18 +94,8 @@
   text-transform: uppercase;
 }
 
-.status-hoạt.động {
-  background: #4CAF50;
-  color: white;
-}
-
-.status-tạm.ngưng {
-  background: #FF9800;
-  color: white;
-}
-
-.status-ngừng.hoạt.động {
-  background: #f44336;
+.status-active {
+  background: rgba(255, 255, 255, 0.3);
   color: white;
 }
 
@@ -148,11 +138,13 @@
   background: #f9f9f9;
   display: flex;
   gap: 10px;
-  justify-content: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .club-card-actions button {
-  padding: 8px 16px;
+  padding: 10px 20px;
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -161,37 +153,46 @@
   transition: all 0.3s ease;
 }
 
-.btn-view {
-  background: linear-gradient(135deg, #008DDE 0%, #0651A0 100%);
+.btn-join {
+  background: #4CAF50;
   color: white;
-  box-shadow: 0 2px 8px rgba(6, 81, 160, 0.2);
 }
 
-.btn-view:hover {
-  background: linear-gradient(135deg, #0651A0 0%, #008DDE 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(6, 81, 160, 0.3);
+.btn-join:hover {
+  background: #45a049;
+  transform: scale(1.05);
 }
 
-.btn-edit {
-  background: linear-gradient(135deg, #53B848 0%, #45a049 100%);
+.request-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.request-badge.pending {
+  background: #FFC107;
+  color: #333;
+}
+
+.request-badge.approved {
+  background: #4CAF50;
   color: white;
-  box-shadow: 0 2px 8px rgba(83, 184, 72, 0.2);
 }
 
-.btn-edit:hover {
-  background: linear-gradient(135deg, #45a049 0%, #53B848 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(83, 184, 72, 0.3);
-}
-
-.btn-delete {
+.request-badge.rejected {
   background: #f44336;
   color: white;
 }
 
-.btn-delete:hover {
-  background: #da190b;
+.payment-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #2196F3;
+  color: white;
 }
 
 .no-results {
