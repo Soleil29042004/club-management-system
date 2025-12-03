@@ -7,7 +7,8 @@ const StudentClubList = ({
   payments, 
   onJoinRequest, 
   getRequestStatus, 
-  hasPayment 
+  hasPayment,
+  onViewDetails
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -84,9 +85,21 @@ const StudentClubList = ({
                       <span className="info-label">Địa điểm:</span>
                       <span className="info-value">{club.location}</span>
                     </div>
+                    <div className="info-item">
+                      <span className="info-label">Phí tham gia:</span>
+                      <span className="info-value">
+                        {club.participationFee ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="club-card-actions">
+                  <button 
+                    onClick={() => onViewDetails && onViewDetails(club)} 
+                    className="btn-details"
+                  >
+                    📋 Chi tiết
+                  </button>
                   {requestStatus === 'pending' && (
                     <span className="request-badge pending">Đang chờ duyệt</span>
                   )}

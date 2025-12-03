@@ -5,6 +5,7 @@ import StudentClubList from './StudentClubList';
 import StudentUnpaidFees from './StudentUnpaidFees';
 import JoinRequestModal from './JoinRequestModal';
 import PaymentModal from './PaymentModal';
+import ClubDetailsModal from './ClubDetailsModal';
 import './StudentDashboard.css';
 
 const StudentDashboard = ({ clubs, currentPage }) => {
@@ -13,6 +14,7 @@ const StudentDashboard = ({ clubs, currentPage }) => {
   const [payments, setPayments] = useState([]);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
 
   // Load data from localStorage on mount
@@ -41,7 +43,7 @@ const StudentDashboard = ({ clubs, currentPage }) => {
     setShowJoinModal(true);
   };
 
-  const submitJoinRequest = () => {
+  const submitJoinRequest = (formData) => {
     const user = JSON.parse(localStorage.getItem('user'));
     const newRequest = {
       id: Date.now(),
@@ -49,6 +51,12 @@ const StudentDashboard = ({ clubs, currentPage }) => {
       clubName: selectedClub.name,
       studentEmail: user.email,
       studentName: user.name,
+      phone: formData.phone,
+      studentId: formData.studentId,
+      major: formData.major,
+      reason: formData.reason,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
       status: 'pending',
       requestDate: new Date().toISOString().split('T')[0],
       message: `Yêu cầu tham gia ${selectedClub.name}`
@@ -63,6 +71,11 @@ const StudentDashboard = ({ clubs, currentPage }) => {
   const handlePayment = (club) => {
     setSelectedClub(club);
     setShowPaymentModal(true);
+  };
+
+  const handleViewDetails = (club) => {
+    setSelectedClub(club);
+    setShowDetailsModal(true);
   };
 
   const submitPayment = (paymentData) => {
@@ -151,6 +164,7 @@ const StudentDashboard = ({ clubs, currentPage }) => {
           onJoinRequest={handleJoinRequest}
           getRequestStatus={getRequestStatus}
           hasPayment={hasPayment}
+          onViewDetails={handleViewDetails}
         />
       )}
 
@@ -183,6 +197,17 @@ const StudentDashboard = ({ clubs, currentPage }) => {
             setSelectedClub(null);
           }}
           onSubmit={submitPayment}
+        />
+      )}
+
+      {/* Club Details Modal */}
+      {showDetailsModal && (
+        <ClubDetailsModal
+          club={selectedClub}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedClub(null);
+          }}
         />
       )}
     </div>

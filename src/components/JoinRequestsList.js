@@ -36,8 +36,42 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
                   <span className="detail-label">Câu lạc bộ:</span>
                   <span className="detail-value">{request.clubName}</span>
                 </div>
+                {request.studentId && (
+                  <div className="detail-item">
+                    <span className="detail-label">Mã sinh viên:</span>
+                    <span className="detail-value">{request.studentId}</span>
+                  </div>
+                )}
+                {request.phone && (
+                  <div className="detail-item">
+                    <span className="detail-label">Số điện thoại:</span>
+                    <span className="detail-value">{request.phone}</span>
+                  </div>
+                )}
+                {request.major && (
+                  <div className="detail-item">
+                    <span className="detail-label">Chuyên ngành:</span>
+                    <span className="detail-value">{request.major}</span>
+                  </div>
+                )}
+                {request.startDate && request.endDate && (
+                  <div className="detail-item">
+                    <span className="detail-label">Thời gian tham gia:</span>
+                    <span className="detail-value">
+                      {request.startDate} - {request.endDate}
+                    </span>
+                  </div>
+                )}
               </div>
-              <p className="request-message">{request.message}</p>
+              {request.reason && (
+                <div className="request-reason">
+                  <strong>Lý do gia nhập:</strong>
+                  <p>{request.reason}</p>
+                </div>
+              )}
+              {request.message && (
+                <p className="request-message">{request.message}</p>
+              )}
             </div>
             <div className="request-card-actions">
               <button

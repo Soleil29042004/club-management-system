@@ -11,7 +11,24 @@ export const mockClubs = [
     memberCount: 45,
     status: "Hoạt động",
     email: "programming@club.com",
-    location: "Phòng A301"
+    location: "Phòng A301",
+    participationFee: 50000,
+    activities: [
+      {
+        id: 1,
+        title: "Workshop React.js",
+        description: "Học cách xây dựng ứng dụng web với React.js",
+        date: "2024-12-15",
+        location: "Phòng A301"
+      },
+      {
+        id: 2,
+        title: "Hackathon 2024",
+        description: "Cuộc thi lập trình 24 giờ",
+        date: "2024-12-20",
+        location: "Phòng Lab"
+      }
+    ]
   },
   {
     id: 2,
@@ -23,7 +40,17 @@ export const mockClubs = [
     memberCount: 60,
     status: "Hoạt động",
     email: "english@club.com",
-    location: "Phòng B205"
+    location: "Phòng B205",
+    participationFee: 30000,
+    activities: [
+      {
+        id: 1,
+        title: "Speaking Club",
+        description: "Luyện nói tiếng Anh với người bản xứ",
+        date: "2024-12-10",
+        location: "Phòng B205"
+      }
+    ]
   },
   {
     id: 3,
@@ -35,7 +62,17 @@ export const mockClubs = [
     memberCount: 80,
     status: "Hoạt động",
     email: "sports@club.com",
-    location: "Sân vận động"
+    location: "Sân vận động",
+    participationFee: 100000,
+    activities: [
+      {
+        id: 1,
+        title: "Giải bóng đá sinh viên",
+        description: "Giải đấu bóng đá giữa các đội trong trường",
+        date: "2024-12-18",
+        location: "Sân vận động"
+      }
+    ]
   },
   {
     id: 4,
@@ -47,7 +84,9 @@ export const mockClubs = [
     memberCount: 35,
     status: "Hoạt động",
     email: "photo@club.com",
-    location: "Phòng C102"
+    location: "Phòng C102",
+    participationFee: 75000,
+    activities: []
   }
 ];
 

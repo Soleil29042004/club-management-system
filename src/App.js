@@ -131,9 +131,8 @@ function AppContent() {
               Hồ sơ
             </button>
             <button
-              className="nav-item"
+              className="nav-item logout"
               onClick={handleLogout}
-              style={{ marginLeft: 'auto' }}
             >
               <span className="nav-icon">🚪</span>
               Đăng xuất
@@ -160,6 +159,8 @@ function AppContent() {
       case 'requests':
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
       case 'members':
+        return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
+      case 'activities':
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
       case 'profile':
         return <Profile userRole={userRole} clubs={clubs} members={members} />;
@@ -199,6 +200,13 @@ function AppContent() {
               Quản lý thành viên
             </button>
             <button
+              className={`nav-item ${currentPage === 'activities' ? 'active' : ''}`}
+              onClick={() => setCurrentPage('activities')}
+            >
+              <span className="nav-icon">📅</span>
+              Hoạt động
+            </button>
+            <button
               className={`nav-item ${currentPage === 'profile' ? 'active' : ''}`}
               onClick={() => setCurrentPage('profile')}
             >
@@ -206,9 +214,8 @@ function AppContent() {
               Hồ sơ
             </button>
             <button
-              className="nav-item"
+              className="nav-item logout"
               onClick={handleLogout}
-              style={{ marginLeft: 'auto' }}
             >
               <span className="nav-icon">🚪</span>
               Đăng xuất
@@ -264,9 +271,8 @@ function AppContent() {
             Hồ sơ
           </button>
           <button
-            className="nav-item"
+            className="nav-item logout"
             onClick={handleLogout}
-            style={{ marginLeft: 'auto' }}
           >
             <span className="nav-icon">🚪</span>
             Đăng xuất

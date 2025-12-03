@@ -110,6 +110,28 @@
   font-weight: 600;
 }
 
+.request-reason {
+  margin: 15px 0;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border-left: 4px solid #0651A0;
+}
+
+.request-reason strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #0651A0;
+  font-size: 14px;
+}
+
+.request-reason p {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
 .request-message {
   color: #666;
   line-height: 1.6;

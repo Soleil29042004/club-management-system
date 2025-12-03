@@ -4,6 +4,7 @@ import LeaderStats from './LeaderStats';
 import ClubInfo from './ClubInfo';
 import JoinRequestsList from './JoinRequestsList';
 import MembersList from './MembersList';
+import ClubActivities from './ClubActivities';
 import { clubCategories, statusOptions } from '../data/mockData';
 import './ClubLeaderDashboard.css';
 
@@ -156,6 +157,19 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     showToast('Đã cập nhật vai trò thành viên!', 'success');
   };
 
+  const handleUpdateActivities = (activities) => {
+    if (!myClub) return;
+    
+    const updatedClub = { ...myClub, activities };
+    setMyClub(updatedClub);
+    setClubs(clubs.map(club =>
+      club.id === myClub.id
+        ? updatedClub
+        : club
+    ));
+    showToast('Đã cập nhật hoạt động thành công!', 'success');
+  };
+
   const pendingRequests = getPendingRequests();
   const clubMembers = getClubMembers();
 
@@ -213,6 +227,14 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
           members={clubMembers}
           onUpdateRole={handleUpdateMemberRole}
           onDeleteMember={handleDeleteMember}
+        />
+      )}
+
+      {/* Activities Management Tab */}
+      {currentPage === 'activities' && (
+        <ClubActivities
+          club={myClub}
+          onUpdateActivities={handleUpdateActivities}
         />
       )}
     </div>

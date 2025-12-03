@@ -153,6 +153,16 @@
   transition: all 0.3s ease;
 }
 
+.btn-details {
+  background: #0651A0;
+  color: white;
+}
+
+.btn-details:hover {
+  background: #5568d3;
+  transform: scale(1.05);
+}
+
 .btn-join {
   background: #4CAF50;
   color: white;
