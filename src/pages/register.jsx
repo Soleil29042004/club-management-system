@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useToast } from '../components/Toast';
-import '../styles/login.css';
 
 const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
   const { showToast } = useToast();
@@ -140,15 +139,17 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <div className="login-logo">🎓</div>
-          <h1>FPT University</h1>
-          <p>Đăng ký tài khoản mới</p>
+    <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-fpt-blue via-fpt-blue-light to-green-500 p-5 font-sans relative overflow-hidden">
+      <div className="absolute top-[-50%] right-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(243,113,36,0.1)_0%,transparent_70%)] animate-spin-slow"></div>
+      
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[460px] p-11 animate-slide-in relative z-10 border border-white/20 max-h-[90vh] overflow-y-auto">
+        <div className="text-center mb-5">
+          <div className="text-6xl mb-4 animate-bounce">🎓</div>
+          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">FPT University</h1>
+          <p className="text-gray-600 text-[15px] font-medium">Đăng ký tài khoản mới</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Full Name Input */}
           <div className="form-group">
             <label htmlFor="fullName">Họ và tên *</label>

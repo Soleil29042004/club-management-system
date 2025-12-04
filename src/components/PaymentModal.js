@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useToast } from './Toast';
-import './PaymentModal.css';
 
 const PaymentModal = ({ club, onClose, onSubmit }) => {
   const { showToast } = useToast();

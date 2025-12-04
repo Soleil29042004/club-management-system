@@ -6,7 +6,6 @@ import JoinRequestsList from './JoinRequestsList';
 import MembersList from './MembersList';
 import ClubActivities from './ClubActivities';
 import { clubCategories, statusOptions } from '../data/mockData';
-import './ClubLeaderDashboard.css';
 
 const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage }) => {
   const { showToast } = useToast();
@@ -175,21 +174,21 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
   if (!myClub) {
     return (
-      <div className="club-leader-dashboard">
-        <div className="no-club-message">
-          <div className="no-club-icon">⚠️</div>
-          <h2>Bạn chưa được gán quản lý câu lạc bộ nào</h2>
-          <p>Vui lòng liên hệ admin để được gán quản lý câu lạc bộ.</p>
+      <div className="max-w-[1400px] mx-auto p-5">
+        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+          <div className="text-6xl mb-6">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Bạn chưa được gán quản lý câu lạc bộ nào</h2>
+          <p className="text-gray-600">Vui lòng liên hệ admin để được gán quản lý câu lạc bộ.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="club-leader-dashboard">
-      <div className="leader-header">
-        <h1>👑 Trang Quản lý Club Leader</h1>
-        <p>Quản lý câu lạc bộ: <strong>{myClub.name}</strong></p>
+    <div className="max-w-[1400px] mx-auto p-5">
+      <div className="bg-gradient-to-br from-white to-blue-50 p-8 rounded-2xl shadow-lg mb-8 border border-fpt-blue/10">
+        <h1 className="text-3xl font-bold text-fpt-blue mb-2">👑 Trang Quản lý Club Leader</h1>
+        <p className="text-gray-600 text-lg">Quản lý câu lạc bộ: <strong className="text-fpt-blue">{myClub.name}</strong></p>
       </div>
 
       <LeaderStats

@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import './Toast.css';
 
 const ToastContext = createContext();
 
@@ -40,7 +39,7 @@ export const ToastProvider = ({ children }) => {
 
 const ToastContainer = ({ toasts, removeToast }) => {
   return (
-    <div className="toast-container">
+    <div className="fixed top-20 right-5 z-[9999] flex flex-col gap-3">
       {toasts.map(toast => (
         <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
       ))}
@@ -81,11 +80,33 @@ const ToastItem = ({ toast, onClose }) => {
     }
   };
 
+  const getToastStyles = () => {
+    switch (toast.type) {
+      case 'success':
+        return 'bg-green-500 text-white';
+      case 'error':
+        return 'bg-red-500 text-white';
+      case 'warning':
+        return 'bg-orange-500 text-white';
+      case 'info':
+        return 'bg-blue-500 text-white';
+      default:
+        return 'bg-green-500 text-white';
+    }
+  };
+
   return (
-    <div className={`toast toast-${toast.type} ${isExiting ? 'toast-exit' : ''}`}>
-      <div className="toast-icon">{getIcon()}</div>
-      <div className="toast-message">{toast.message}</div>
-      <button className="toast-close" onClick={handleClose}>×</button>
+    <div className={`${getToastStyles()} px-5 py-4 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px] max-w-[400px] transition-all ${
+      isExiting ? 'opacity-0 translate-x-full' : 'opacity-100 translate-x-0'
+    }`}>
+      <div className="text-xl font-bold flex-shrink-0">{getIcon()}</div>
+      <div className="flex-1 text-sm font-medium">{toast.message}</div>
+      <button 
+        className="text-xl font-bold hover:opacity-70 transition-opacity flex-shrink-0" 
+        onClick={handleClose}
+      >
+        ×
+      </button>
     </div>
   );
 };

@@ -9,7 +9,6 @@ import Login from './pages/login';
 import Register from './pages/register';
 import { ToastProvider } from './components/Toast';
 import { mockClubs, mockMembers } from './data/mockData';
-import './App.css';
 
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -103,49 +102,64 @@ function AppContent() {
   // Show student dashboard if authenticated as student
   if (userRole === 'student') {
     return (
-      <div className="App">
-        <nav className="navbar">
-          <div className="nav-brand">
-            <h1>FPT University - Hệ thống quản lý CLB</h1>
+      <div className="min-h-screen flex flex-col">
+        <nav className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white px-6 py-4 shadow-lg sticky top-0 z-50 flex justify-between items-center gap-5 min-h-[70px]">
+          <div className="flex-shrink-0 min-w-0">
+            <h1 className="text-2xl font-bold m-0 tracking-tight flex items-center gap-2.5 whitespace-nowrap flex-shrink min-w-0">
+              <span className="text-3xl flex-shrink-0">🎓</span>
+              FPT University - Hệ thống quản lý CLB
+            </h1>
           </div>
-          <div className="nav-menu">
+          <div className="flex gap-2 items-center flex-wrap flex-shrink-0 overflow-x-auto flex-1 justify-end">
             <button
-              className={`nav-item ${currentPage === 'clubs' ? 'active' : ''}`}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit transition-all backdrop-blur-sm border-2 border-transparent ${
+                currentPage === 'clubs' 
+                  ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                  : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+              }`}
               onClick={() => setCurrentPage('clubs')}
             >
-              <span className="nav-icon">🏛️</span>
+              <span className="text-lg">🏛️</span>
               Danh sách CLB
             </button>
             <button
-              className={`nav-item ${currentPage === 'unpaid-fees' ? 'active' : ''}`}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+                currentPage === 'unpaid-fees' 
+                  ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                  : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+              }`}
               onClick={() => setCurrentPage('unpaid-fees')}
             >
-              <span className="nav-icon">💰</span>
+              <span className="text-lg">💰</span>
               Phí chưa nộp
             </button>
             <button
-              className={`nav-item ${currentPage === 'profile' ? 'active' : ''}`}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+                currentPage === 'profile' 
+                  ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                  : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+              }`}
               onClick={() => setCurrentPage('profile')}
             >
-              <span className="nav-icon">👤</span>
+              <span className="text-lg">👤</span>
               Hồ sơ
             </button>
             <button
-              className="nav-item logout"
+              className="px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit bg-white/20 text-white hover:bg-red-600/80 border-2 border-transparent transition-all"
               onClick={handleLogout}
             >
-              <span className="nav-icon">🚪</span>
+              <span className="text-lg">🚪</span>
               Đăng xuất
             </button>
           </div>
         </nav>
 
-        <main className="main-content">
+        <main className="flex-1 px-8 py-10 max-w-[1600px] mx-auto w-full bg-transparent">
           {renderStudentPage()}
         </main>
 
-        <footer className="footer">
-          <p>© 2024 FPT University - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
+        <footer className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white text-center py-6 px-5 shadow-lg mt-auto">
+          <p className="m-0 text-sm font-medium opacity-95">© 2024 FPT University - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
         </footer>
       </div>
     );
@@ -172,63 +186,86 @@ function AppContent() {
   // Show club leader dashboard if authenticated as club_leader
   if (userRole === 'club_leader') {
     return (
-      <div className="App">
-        <nav className="navbar">
-          <div className="nav-brand">
-            <h1>FPT University - Hệ thống quản lý CLB</h1>
+      <div className="min-h-screen flex flex-col">
+        <nav className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white px-6 py-4 shadow-lg sticky top-0 z-50 flex justify-between items-center gap-5 min-h-[70px]">
+          <div className="flex-shrink-0 min-w-0">
+            <h1 className="text-2xl font-bold m-0 tracking-tight flex items-center gap-2.5 whitespace-nowrap flex-shrink min-w-0">
+              <span className="text-3xl flex-shrink-0">🎓</span>
+              FPT University - Hệ thống quản lý CLB
+            </h1>
           </div>
-          <div className="nav-menu">
+          <div className="flex gap-2 items-center flex-wrap flex-shrink-0 overflow-x-auto flex-1 justify-end">
             <button
-              className={`nav-item ${currentPage === 'manage' ? 'active' : ''}`}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+                currentPage === 'manage' 
+                  ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                  : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+              }`}
               onClick={() => setCurrentPage('manage')}
             >
-              <span className="nav-icon">⚙️</span>
+              <span className="text-lg">⚙️</span>
               Quản lý Club
             </button>
             <button
-              className={`nav-item ${currentPage === 'requests' ? 'active' : ''}`}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+                currentPage === 'requests' 
+                  ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                  : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+              }`}
               onClick={() => setCurrentPage('requests')}
             >
-              <span className="nav-icon">📋</span>
+              <span className="text-lg">📋</span>
               Duyệt yêu cầu
             </button>
             <button
-              className={`nav-item ${currentPage === 'members' ? 'active' : ''}`}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+                currentPage === 'members' 
+                  ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                  : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+              }`}
               onClick={() => setCurrentPage('members')}
             >
-              <span className="nav-icon">👥</span>
+              <span className="text-lg">👥</span>
               Quản lý thành viên
             </button>
             <button
-              className={`nav-item ${currentPage === 'activities' ? 'active' : ''}`}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+                currentPage === 'activities' 
+                  ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                  : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+              }`}
               onClick={() => setCurrentPage('activities')}
             >
-              <span className="nav-icon">📅</span>
+              <span className="text-lg">📅</span>
               Hoạt động
             </button>
             <button
-              className={`nav-item ${currentPage === 'profile' ? 'active' : ''}`}
+              className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+                currentPage === 'profile' 
+                  ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                  : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+              }`}
               onClick={() => setCurrentPage('profile')}
             >
-              <span className="nav-icon">👤</span>
+              <span className="text-lg">👤</span>
               Hồ sơ
             </button>
             <button
-              className="nav-item logout"
+              className="px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit bg-white/20 text-white hover:bg-red-600/80 border-2 border-transparent transition-all"
               onClick={handleLogout}
             >
-              <span className="nav-icon">🚪</span>
+              <span className="text-lg">🚪</span>
               Đăng xuất
             </button>
           </div>
         </nav>
 
-        <main className="main-content">
+        <main className="flex-1 px-8 py-10 max-w-[1600px] mx-auto w-full bg-transparent">
           {renderLeaderPage()}
         </main>
 
-        <footer className="footer">
-          <p>© 2024 FPT University - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
+        <footer className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white text-center py-6 px-5 shadow-lg mt-auto">
+          <p className="m-0 text-sm font-medium opacity-95">© 2024 FPT University - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
         </footer>
       </div>
     );
@@ -236,57 +273,76 @@ function AppContent() {
 
   // Show admin dashboard if authenticated as admin
   return (
-    <div className="App">
-      <nav className="navbar">
-        <div className="nav-brand">
-          <h1>FPT University - Hệ thống quản lý CLB</h1>
+    <div className="min-h-screen flex flex-col">
+      <nav className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white px-6 py-4 shadow-lg sticky top-0 z-50 flex justify-between items-center gap-5 min-h-[70px]">
+        <div className="flex-shrink-0 min-w-0">
+          <h1 className="text-2xl font-bold m-0 tracking-tight flex items-center gap-2.5 whitespace-nowrap flex-shrink min-w-0">
+            <span className="text-3xl flex-shrink-0">🎓</span>
+            FPT University - Hệ thống quản lý CLB
+          </h1>
         </div>
-        <div className="nav-menu">
+        <div className="flex gap-2 items-center flex-wrap flex-shrink-0 overflow-x-auto flex-1 justify-end">
           <button
-            className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
+            className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+              currentPage === 'dashboard' 
+                ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+            }`}
             onClick={() => setCurrentPage('dashboard')}
           >
-            <span className="nav-icon">📊</span>
+            <span className="text-lg">📊</span>
             Tổng quan
           </button>
           <button
-            className={`nav-item ${currentPage === 'clubs' ? 'active' : ''}`}
+            className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+              currentPage === 'clubs' 
+                ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+            }`}
             onClick={() => setCurrentPage('clubs')}
           >
-            <span className="nav-icon">🏛️</span>
+            <span className="text-lg">🏛️</span>
             Câu lạc bộ
           </button>
           <button
-            className={`nav-item ${currentPage === 'members' ? 'active' : ''}`}
+            className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+              currentPage === 'members' 
+                ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+            }`}
             onClick={() => setCurrentPage('members')}
           >
-            <span className="nav-icon">👥</span>
+            <span className="text-lg">👥</span>
             Thành viên
           </button>
           <button
-            className={`nav-item ${currentPage === 'profile' ? 'active' : ''}`}
+            className={`px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit border-2 border-transparent ${
+              currentPage === 'profile' 
+                ? 'bg-fpt-orange text-white border-fpt-orange shadow-lg shadow-fpt-orange/40 font-bold' 
+                : 'bg-white/15 text-white hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-md'
+            }`}
             onClick={() => setCurrentPage('profile')}
           >
-            <span className="nav-icon">👤</span>
+            <span className="text-lg">👤</span>
             Hồ sơ
           </button>
           <button
-            className="nav-item logout"
+            className="px-4 py-2.5 text-sm font-semibold rounded-lg cursor-pointer flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 min-w-fit bg-white/20 text-white hover:bg-red-600/80 border-2 border-transparent transition-all"
             onClick={handleLogout}
           >
-            <span className="nav-icon">🚪</span>
+            <span className="text-lg">🚪</span>
             Đăng xuất
           </button>
         </div>
       </nav>
 
-      <main className="main-content">
+      <main className="flex-1 px-8 py-10 max-w-[1600px] mx-auto w-full bg-transparent">
         {renderPage()}
       </main>
 
-        <footer className="footer">
-          <p>© 2024 FPT University - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
-        </footer>
+      <footer className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white text-center py-6 px-5 shadow-lg mt-auto">
+        <p className="m-0 text-sm font-medium opacity-95">© 2024 FPT University - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
+      </footer>
     </div>
   );
 }

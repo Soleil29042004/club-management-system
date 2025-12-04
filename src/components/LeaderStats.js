@@ -1,35 +1,45 @@
 import React from 'react';
-import './LeaderStats.css';
 
 const LeaderStats = ({ memberCount, pendingRequestsCount, category, location }) => {
   return (
-    <div className="leader-stats">
-      <div className="stat-card">
-        <div className="stat-icon">👥</div>
-        <div className="stat-info">
-          <h3>Thành viên</h3>
-          <p className="stat-number">{memberCount}</p>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-md flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-lg border border-fpt-blue/8">
+        <div className="text-5xl w-16 h-16 flex items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex-shrink-0">
+          👥
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">Thành viên</h3>
+          <p className="text-3xl font-bold text-fpt-blue">{memberCount}</p>
         </div>
       </div>
-      <div className="stat-card">
-        <div className="stat-icon">📋</div>
-        <div className="stat-info">
-          <h3>Yêu cầu chờ duyệt</h3>
-          <p className="stat-number">{pendingRequestsCount}</p>
+      
+      <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-md flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-lg border border-fpt-blue/8">
+        <div className="text-5xl w-16 h-16 flex items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex-shrink-0">
+          📋
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">Yêu cầu chờ duyệt</h3>
+          <p className="text-3xl font-bold text-fpt-blue">{pendingRequestsCount}</p>
         </div>
       </div>
-      <div className="stat-card">
-        <div className="stat-icon">📂</div>
-        <div className="stat-info">
-          <h3>Danh mục</h3>
-          <p className="stat-number">{category}</p>
+      
+      <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-md flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-lg border border-fpt-blue/8">
+        <div className="text-5xl w-16 h-16 flex items-center justify-center rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex-shrink-0">
+          📂
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">Danh mục</h3>
+          <p className="text-lg font-semibold text-fpt-blue truncate">{category}</p>
         </div>
       </div>
-      <div className="stat-card">
-        <div className="stat-icon">📍</div>
-        <div className="stat-info">
-          <h3>Địa điểm</h3>
-          <p className="stat-number-small">{location}</p>
+      
+      <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-md flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-lg border border-fpt-blue/8">
+        <div className="text-5xl w-16 h-16 flex items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex-shrink-0">
+          📍
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">Địa điểm</h3>
+          <p className="text-lg font-semibold text-fpt-blue truncate">{location}</p>
         </div>
       </div>
     </div>
@@ -37,4 +47,5 @@ const LeaderStats = ({ memberCount, pendingRequestsCount, category, location }) 
 };
 
 export default LeaderStats;
+
 

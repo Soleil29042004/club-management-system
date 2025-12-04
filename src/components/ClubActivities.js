@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import './ClubActivities.css';
 
 const ClubActivities = ({ club, onUpdateActivities }) => {
   const [activities, setActivities] = useState(club?.activities || []);
@@ -93,11 +92,13 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
   };
 
   return (
-    <div className="club-activities">
-      <div className="activities-header">
-        <h2>📅 Quản lý hoạt động</h2>
+    <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b-2 border-gray-200">
+        <h2 className="text-2xl font-bold text-fpt-blue m-0 flex items-center gap-2">
+          <span>📅</span> Quản lý hoạt động
+        </h2>
         <button 
-          className="btn-add-activity"
+          className="px-6 py-3 bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all shadow-md hover:-translate-y-1 hover:shadow-lg"
           onClick={() => setShowAddForm(true)}
         >
           + Thêm hoạt động
@@ -105,12 +106,14 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
       </div>
 
       {showAddForm && (
-        <div className="activity-form-container">
-          <form onSubmit={handleSubmit} className="activity-form">
-            <h3>{editingIndex !== null ? 'Chỉnh sửa hoạt động' : 'Thêm hoạt động mới'}</h3>
+        <div className="bg-gray-50 p-6 rounded-xl mb-6 border border-gray-200">
+          <form onSubmit={handleSubmit}>
+            <h3 className="text-lg font-semibold text-fpt-blue mb-6 m-0">
+              {editingIndex !== null ? 'Chỉnh sửa hoạt động' : 'Thêm hoạt động mới'}
+            </h3>
             
-            <div className="form-group">
-              <label htmlFor="title">Tên hoạt động *</label>
+            <div className="mb-5">
+              <label htmlFor="title" className="block mb-2 text-sm font-semibold text-gray-800">Tên hoạt động *</label>
               <input
                 type="text"
                 id="title"
@@ -118,13 +121,15 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="VD: Workshop Lập trình Web"
-                className={errors.title ? 'error' : ''}
+                className={`w-full px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                  errors.title ? 'border-red-500' : 'border-gray-200'
+                }`}
               />
-              {errors.title && <span className="error-message">{errors.title}</span>}
+              {errors.title && <span className="block mt-1 text-xs text-red-500">{errors.title}</span>}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="description">Mô tả</label>
+            <div className="mb-5">
+              <label htmlFor="description" className="block mb-2 text-sm font-semibold text-gray-800">Mô tả</label>
               <textarea
                 id="description"
                 name="description"
@@ -132,25 +137,28 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
                 onChange={handleChange}
                 placeholder="Mô tả chi tiết về hoạt động..."
                 rows="4"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans resize-y min-h-[100px] focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
               />
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="date">Ngày tổ chức *</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+              <div>
+                <label htmlFor="date" className="block mb-2 text-sm font-semibold text-gray-800">Ngày tổ chức *</label>
                 <input
                   type="date"
                   id="date"
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
-                  className={errors.date ? 'error' : ''}
+                  className={`w-full px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                    errors.date ? 'border-red-500' : 'border-gray-200'
+                  }`}
                 />
-                {errors.date && <span className="error-message">{errors.date}</span>}
+                {errors.date && <span className="block mt-1 text-xs text-red-500">{errors.date}</span>}
               </div>
 
-              <div className="form-group">
-                <label htmlFor="location">Địa điểm</label>
+              <div>
+                <label htmlFor="location" className="block mb-2 text-sm font-semibold text-gray-800">Địa điểm</label>
                 <input
                   type="text"
                   id="location"
@@ -158,15 +166,23 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
                   value={formData.location}
                   onChange={handleChange}
                   placeholder="VD: Phòng A301"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
                 />
               </div>
             </div>
 
-            <div className="form-actions">
-              <button type="button" onClick={handleCancel} className="btn-cancel">
+            <div className="flex gap-3 justify-end pt-5 border-t-2 border-gray-200">
+              <button 
+                type="button" 
+                onClick={handleCancel} 
+                className="px-6 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all bg-gray-200 text-gray-600 hover:bg-gray-300"
+              >
                 Hủy
               </button>
-              <button type="submit" className="btn-submit">
+              <button 
+                type="submit" 
+                className="px-6 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-md hover:-translate-y-0.5 hover:shadow-lg"
+              >
                 {editingIndex !== null ? 'Cập nhật' : 'Thêm mới'}
               </button>
             </div>
@@ -174,41 +190,45 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
         </div>
       )}
 
-      <div className="activities-list">
+      <div className="space-y-4">
         {activities.length === 0 ? (
-          <div className="no-activities">
-            <p>Chưa có hoạt động nào. Hãy thêm hoạt động đầu tiên!</p>
+          <div className="text-center py-12 px-5 text-gray-500 italic bg-gray-50 rounded-xl">
+            <p className="m-0">Chưa có hoạt động nào. Hãy thêm hoạt động đầu tiên!</p>
           </div>
         ) : (
           activities.map((activity, index) => (
-            <div key={activity.id || index} className="activity-card">
-              <div className="activity-card-header">
-                <h4>{activity.title}</h4>
-                <div className="activity-actions">
+            <div key={activity.id || index} className="bg-white border-2 border-gray-200 rounded-xl p-5 transition-all hover:border-fpt-blue hover:shadow-lg hover:-translate-y-1">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                <h4 className="text-lg font-semibold text-gray-800 m-0">{activity.title}</h4>
+                <div className="flex gap-2">
                   <button 
-                    className="btn-edit"
+                    className="px-4 py-2 bg-green-500 text-white border-none rounded-lg text-xs font-medium cursor-pointer transition-all hover:bg-green-600"
                     onClick={() => handleEdit(index)}
                   >
                     ✏️ Sửa
                   </button>
                   <button 
-                    className="btn-delete"
+                    className="px-4 py-2 bg-red-500 text-white border-none rounded-lg text-xs font-medium cursor-pointer transition-all hover:bg-red-600"
                     onClick={() => handleDelete(index)}
                   >
                     🗑️ Xóa
                   </button>
                 </div>
               </div>
-              <div className="activity-card-body">
+              <div className="mt-4">
                 {activity.description && (
-                  <p className="activity-desc">{activity.description}</p>
+                  <p className="text-gray-600 leading-relaxed mb-4">{activity.description}</p>
                 )}
-                <div className="activity-info">
-                  <span className="activity-date">
-                    📅 {activity.date ? new Date(activity.date).toLocaleDateString('vi-VN') : 'N/A'}
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                  <span className="flex items-center gap-2">
+                    <span>📅</span>
+                    {activity.date ? new Date(activity.date).toLocaleDateString('vi-VN') : 'N/A'}
                   </span>
                   {activity.location && (
-                    <span className="activity-location">📍 {activity.location}</span>
+                    <span className="flex items-center gap-2">
+                      <span>📍</span>
+                      {activity.location}
+                    </span>
                   )}
                 </div>
               </div>

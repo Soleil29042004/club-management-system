@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import MemberList from './MemberList';
 import MemberForm from './MemberForm';
 import { getNextMemberId } from '../data/mockData';
-import './MemberManagement.css';
 
 const MemberManagement = ({ members, setMembers, clubs }) => {
   const [showForm, setShowForm] = useState(false);
@@ -48,14 +47,17 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
   };
 
   return (
-    <div className="member-management">
-      <div className="management-header">
+    <div className="max-w-[1400px] mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 p-8 md:p-9 bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-lg mb-9 border border-fpt-blue/10">
         <div>
-          <h1>Quản lý Thành viên</h1>
-          <p className="subtitle">Quản lý thông tin thành viên các câu lạc bộ</p>
+          <h1 className="m-0 mb-2.5 text-fpt-blue text-[34px] md:text-3xl font-bold tracking-tight">Quản lý Thành viên</h1>
+          <p className="m-0 text-gray-600 text-base font-medium">Quản lý thông tin thành viên các câu lạc bộ</p>
         </div>
-        <button onClick={handleAdd} className="btn-add-new">
-          <span className="plus-icon">+</span>
+        <button 
+          onClick={handleAdd} 
+          className="w-full md:w-auto bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white border-none px-8 py-4 text-base font-semibold rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all shadow-lg hover:-translate-y-1 hover:shadow-xl"
+        >
+          <span className="text-2xl font-light">+</span>
           Thêm thành viên mới
         </button>
       </div>

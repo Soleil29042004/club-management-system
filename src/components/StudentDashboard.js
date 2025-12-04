@@ -6,7 +6,6 @@ import StudentUnpaidFees from './StudentUnpaidFees';
 import JoinRequestModal from './JoinRequestModal';
 import PaymentModal from './PaymentModal';
 import ClubDetailsModal from './ClubDetailsModal';
-import './StudentDashboard.css';
 
 const StudentDashboard = ({ clubs, currentPage }) => {
   const { showToast } = useToast();
@@ -142,10 +141,10 @@ const StudentDashboard = ({ clubs, currentPage }) => {
   const unpaidFees = getUnpaidFees();
 
   return (
-    <div className="student-dashboard">
-      <div className="student-header">
-        <h1>🎓 Trang Sinh Viên</h1>
-        <p>Khám phá và tham gia các câu lạc bộ</p>
+    <div className="max-w-[1400px] mx-auto p-5">
+      <div className="bg-gradient-to-br from-white to-blue-50 p-8 rounded-2xl shadow-lg mb-8 border border-fpt-blue/10">
+        <h1 className="text-3xl font-bold text-fpt-blue mb-2 m-0">🎓 Trang Sinh Viên</h1>
+        <p className="text-gray-600 text-lg m-0">Khám phá và tham gia các câu lạc bộ</p>
       </div>
 
       <StudentStats

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import './Profile.css';
 
 const Profile = ({ userRole, clubs, members }) => {
   const [user, setUser] = useState(null);
@@ -214,22 +213,22 @@ const Profile = ({ userRole, clubs, members }) => {
 
   if (!user) {
     return (
-      <div className="profile-container">
-        <div className="loading-message">Đang tải thông tin...</div>
+      <div className="p-5 max-w-[1000px] mx-auto">
+        <div className="text-center py-16 px-5 text-gray-600 text-lg">Đang tải thông tin...</div>
       </div>
     );
   }
 
   return (
-    <div className="profile-container">
-      <div className="profile-header">
-        <div className="profile-avatar">
+    <div className="p-5 max-w-[1000px] mx-auto">
+      <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light rounded-2xl p-10 flex flex-col md:flex-row items-center gap-8 mb-8 text-white shadow-lg">
+        <div className="w-[100px] h-[100px] rounded-full bg-white/20 flex items-center justify-center text-5xl font-bold border-4 border-white/30 flex-shrink-0">
           {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
         </div>
-        <div className="profile-header-info">
-          <h1>{user.name}</h1>
-          <p className="profile-email">{user.email}</p>
-          <span className={`profile-role-badge role-${userRole}`}>
+        <div className="flex-1 text-center md:text-left">
+          <h1 className="m-0 mb-2.5 text-3xl font-bold">{user.name}</h1>
+          <p className="m-0 mb-4 text-base opacity-90">{user.email}</p>
+          <span className="inline-block px-4 py-2 rounded-full text-sm font-semibold bg-white/20 backdrop-blur-sm">
             {userRole === 'admin' ? '👑 Admin' : 
              userRole === 'club_leader' ? '👑 Club Leader' : 
              '🎓 Sinh viên'}
@@ -238,27 +237,39 @@ const Profile = ({ userRole, clubs, members }) => {
       </div>
 
       {successMessage && (
-        <div className="success-message">
+        <div className="bg-green-500 text-white px-5 py-4 rounded-lg mb-5 text-center font-medium animate-slide-in">
           {successMessage}
         </div>
       )}
 
-      <div className="profile-tabs">
+      <div className="flex gap-2.5 mb-8 bg-white p-2.5 rounded-xl shadow-md flex-wrap">
         <button
-          className={`profile-tab ${activeTab === 'info' ? 'active' : ''}`}
+          className={`px-5 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all ${
+            activeTab === 'info' 
+              ? 'bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg' 
+              : 'bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+          }`}
           onClick={() => setActiveTab('info')}
         >
           📝 Thông tin cá nhân
         </button>
         <button
-          className={`profile-tab ${activeTab === 'password' ? 'active' : ''}`}
+          className={`px-5 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all ${
+            activeTab === 'password' 
+              ? 'bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg' 
+              : 'bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+          }`}
           onClick={() => setActiveTab('password')}
         >
           🔒 Đổi mật khẩu
         </button>
         {userRole === 'student' && myMemberships.length > 0 && (
           <button
-            className={`profile-tab ${activeTab === 'memberships' ? 'active' : ''}`}
+            className={`px-5 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all ${
+              activeTab === 'memberships' 
+                ? 'bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg' 
+                : 'bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+            }`}
             onClick={() => setActiveTab('memberships')}
           >
             🏛️ Câu lạc bộ của tôi
@@ -266,7 +277,11 @@ const Profile = ({ userRole, clubs, members }) => {
         )}
         {userRole === 'club_leader' && myClub && (
           <button
-            className={`profile-tab ${activeTab === 'club' ? 'active' : ''}`}
+            className={`px-5 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all ${
+              activeTab === 'club' 
+                ? 'bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg' 
+                : 'bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+            }`}
             onClick={() => setActiveTab('club')}
           >
             🏛️ Câu lạc bộ quản lý
@@ -276,121 +291,140 @@ const Profile = ({ userRole, clubs, members }) => {
 
       {/* Personal Info Tab */}
       {activeTab === 'info' && (
-        <div className="profile-content">
-          <div className="profile-section">
-            <div className="section-header">
-              <h2>Thông tin cá nhân</h2>
+        <div className="bg-white rounded-xl p-8 shadow-md">
+          <div className="w-full">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+              <h2 className="m-0 text-2xl text-gray-800 font-semibold">Thông tin cá nhân</h2>
               {!isEditing && (
-                <button className="btn-edit" onClick={() => setIsEditing(true)}>
+                <button 
+                  className="px-5 py-2.5 bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white border-none rounded-lg text-sm font-medium cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" 
+                  onClick={() => setIsEditing(true)}
+                >
                   ✏️ Chỉnh sửa
                 </button>
               )}
             </div>
 
             {!isEditing ? (
-              <div className="info-display">
-                <div className="info-row">
-                  <span className="info-label">Họ và tên:</span>
-                  <span className="info-value">{formData.name}</span>
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
+                  <span className="text-sm text-gray-500 font-medium">Họ và tên:</span>
+                  <span className="text-base text-gray-800 font-semibold">{formData.name}</span>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Email:</span>
-                  <span className="info-value">{formData.email}</span>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
+                  <span className="text-sm text-gray-500 font-medium">Email:</span>
+                  <span className="text-base text-gray-800 font-semibold">{formData.email}</span>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Số điện thoại:</span>
-                  <span className="info-value">{formData.phone || 'Chưa cập nhật'}</span>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
+                  <span className="text-sm text-gray-500 font-medium">Số điện thoại:</span>
+                  <span className="text-base text-gray-800 font-semibold">{formData.phone || 'Chưa cập nhật'}</span>
                 </div>
                 {userRole === 'student' && (
                   <>
-                    <div className="info-row">
-                      <span className="info-label">Mã sinh viên:</span>
-                      <span className="info-value">{formData.studentId || 'Chưa cập nhật'}</span>
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
+                      <span className="text-sm text-gray-500 font-medium">Mã sinh viên:</span>
+                      <span className="text-base text-gray-800 font-semibold">{formData.studentId || 'Chưa cập nhật'}</span>
                     </div>
-                    <div className="info-row">
-                      <span className="info-label">Chuyên ngành:</span>
-                      <span className="info-value">{formData.major || 'Chưa cập nhật'}</span>
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
+                      <span className="text-sm text-gray-500 font-medium">Chuyên ngành:</span>
+                      <span className="text-base text-gray-800 font-semibold">{formData.major || 'Chưa cập nhật'}</span>
                     </div>
                   </>
                 )}
                 {userRole === 'club_leader' && myClub && (
-                  <div className="info-row">
-                    <span className="info-label">Câu lạc bộ quản lý:</span>
-                    <span className="info-value">{myClub.name}</span>
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
+                    <span className="text-sm text-gray-500 font-medium">Câu lạc bộ quản lý:</span>
+                    <span className="text-base text-gray-800 font-semibold">{myClub.name}</span>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="info-form">
-                <div className="form-group">
-                  <label>Họ và tên *</label>
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-800">Họ và tên *</label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleFormChange}
-                    className={errors.name ? 'error' : ''}
+                    className={`px-3 py-3 border-2 rounded-lg text-sm font-sans transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                      errors.name ? 'border-red-500' : 'border-gray-200'
+                    }`}
                   />
-                  {errors.name && <span className="error-message">{errors.name}</span>}
+                  {errors.name && <span className="text-red-500 text-xs flex items-center gap-1">⚠️ {errors.name}</span>}
                 </div>
 
-                <div className="form-group">
-                  <label>Email *</label>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-800">Email *</label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleFormChange}
-                    className={errors.email ? 'error' : ''}
+                    className={`px-3 py-3 border-2 rounded-lg text-sm font-sans transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                      errors.email ? 'border-red-500' : 'border-gray-200'
+                    }`}
                   />
-                  {errors.email && <span className="error-message">{errors.email}</span>}
+                  {errors.email && <span className="text-red-500 text-xs flex items-center gap-1">⚠️ {errors.email}</span>}
                 </div>
 
-                <div className="form-group">
-                  <label>Số điện thoại *</label>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-800">Số điện thoại *</label>
                   <input
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleFormChange}
-                    className={errors.phone ? 'error' : ''}
+                    className={`px-3 py-3 border-2 rounded-lg text-sm font-sans transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                      errors.phone ? 'border-red-500' : 'border-gray-200'
+                    }`}
                   />
-                  {errors.phone && <span className="error-message">{errors.phone}</span>}
+                  {errors.phone && <span className="text-red-500 text-xs flex items-center gap-1">⚠️ {errors.phone}</span>}
                 </div>
 
                 {userRole === 'student' && (
                   <>
-                    <div className="form-group">
-                      <label>Mã sinh viên *</label>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-medium text-gray-800">Mã sinh viên *</label>
                       <input
                         type="text"
                         name="studentId"
                         value={formData.studentId}
                         onChange={handleFormChange}
-                        className={errors.studentId ? 'error' : ''}
+                        className={`px-3 py-3 border-2 rounded-lg text-sm font-sans transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                          errors.studentId ? 'border-red-500' : 'border-gray-200'
+                        }`}
                       />
-                      {errors.studentId && <span className="error-message">{errors.studentId}</span>}
+                      {errors.studentId && <span className="text-red-500 text-xs flex items-center gap-1">⚠️ {errors.studentId}</span>}
                     </div>
 
-                    <div className="form-group">
-                      <label>Chuyên ngành *</label>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-medium text-gray-800">Chuyên ngành *</label>
                       <input
                         type="text"
                         name="major"
                         value={formData.major}
                         onChange={handleFormChange}
-                        className={errors.major ? 'error' : ''}
+                        className={`px-3 py-3 border-2 rounded-lg text-sm font-sans transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                          errors.major ? 'border-red-500' : 'border-gray-200'
+                        }`}
                       />
-                      {errors.major && <span className="error-message">{errors.major}</span>}
+                      {errors.major && <span className="text-red-500 text-xs flex items-center gap-1">⚠️ {errors.major}</span>}
                     </div>
                   </>
                 )}
 
-                <div className="form-actions">
-                  <button className="btn-cancel" onClick={() => setIsEditing(false)}>
+                <div className="flex gap-2.5 justify-end mt-2.5 pt-5 border-t-2 border-gray-100">
+                  <button 
+                    className="px-6 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all bg-gray-200 text-gray-800 hover:bg-gray-300" 
+                    onClick={() => setIsEditing(false)}
+                  >
                     Hủy
                   </button>
-                  <button className="btn-save" onClick={handleSaveInfo}>
+                  <button 
+                    className="px-6 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white hover:-translate-y-0.5 hover:shadow-lg" 
+                    onClick={handleSaveInfo}
+                  >
                     Lưu thay đổi
                   </button>
                 </div>
@@ -402,52 +436,61 @@ const Profile = ({ userRole, clubs, members }) => {
 
       {/* Change Password Tab */}
       {activeTab === 'password' && (
-        <div className="profile-content">
-          <div className="profile-section">
-            <div className="section-header">
-              <h2>Đổi mật khẩu</h2>
+        <div className="bg-white rounded-xl p-8 shadow-md">
+          <div className="w-full">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+              <h2 className="m-0 text-2xl text-gray-800 font-semibold">Đổi mật khẩu</h2>
             </div>
 
-            <div className="password-form">
-              <div className="form-group">
-                <label>Mật khẩu hiện tại *</label>
+            <div className="max-w-[500px]">
+              <div className="flex flex-col gap-2 mb-5">
+                <label className="text-sm font-medium text-gray-800">Mật khẩu hiện tại *</label>
                 <input
                   type="password"
                   name="currentPassword"
                   value={passwordData.currentPassword}
                   onChange={handlePasswordChange}
-                  className={errors.currentPassword ? 'error' : ''}
+                  className={`px-3 py-3 border-2 rounded-lg text-sm font-sans transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                    errors.currentPassword ? 'border-red-500' : 'border-gray-200'
+                  }`}
                 />
-                {errors.currentPassword && <span className="error-message">{errors.currentPassword}</span>}
+                {errors.currentPassword && <span className="text-red-500 text-xs flex items-center gap-1">⚠️ {errors.currentPassword}</span>}
               </div>
 
-              <div className="form-group">
-                <label>Mật khẩu mới *</label>
+              <div className="flex flex-col gap-2 mb-5">
+                <label className="text-sm font-medium text-gray-800">Mật khẩu mới *</label>
                 <input
                   type="password"
                   name="newPassword"
                   value={passwordData.newPassword}
                   onChange={handlePasswordChange}
-                  className={errors.newPassword ? 'error' : ''}
+                  className={`px-3 py-3 border-2 rounded-lg text-sm font-sans transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                    errors.newPassword ? 'border-red-500' : 'border-gray-200'
+                  }`}
                   placeholder="Tối thiểu 6 ký tự"
                 />
-                {errors.newPassword && <span className="error-message">{errors.newPassword}</span>}
+                {errors.newPassword && <span className="text-red-500 text-xs flex items-center gap-1">⚠️ {errors.newPassword}</span>}
               </div>
 
-              <div className="form-group">
-                <label>Xác nhận mật khẩu mới *</label>
+              <div className="flex flex-col gap-2 mb-5">
+                <label className="text-sm font-medium text-gray-800">Xác nhận mật khẩu mới *</label>
                 <input
                   type="password"
                   name="confirmPassword"
                   value={passwordData.confirmPassword}
                   onChange={handlePasswordChange}
-                  className={errors.confirmPassword ? 'error' : ''}
+                  className={`px-3 py-3 border-2 rounded-lg text-sm font-sans transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                    errors.confirmPassword ? 'border-red-500' : 'border-gray-200'
+                  }`}
                 />
-                {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+                {errors.confirmPassword && <span className="text-red-500 text-xs flex items-center gap-1">⚠️ {errors.confirmPassword}</span>}
               </div>
 
-              <div className="form-actions">
-                <button className="btn-save" onClick={handleChangePassword}>
+              <div className="flex gap-2.5 justify-end mt-2.5 pt-5 border-t-2 border-gray-100">
+                <button 
+                  className="px-6 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white hover:-translate-y-0.5 hover:shadow-lg" 
+                  onClick={handleChangePassword}
+                >
                   Đổi mật khẩu
                 </button>
               </div>
@@ -458,30 +501,30 @@ const Profile = ({ userRole, clubs, members }) => {
 
       {/* My Memberships Tab (Student) */}
       {activeTab === 'memberships' && userRole === 'student' && (
-        <div className="profile-content">
-          <div className="profile-section">
-            <div className="section-header">
-              <h2>Câu lạc bộ của tôi ({myMemberships.length})</h2>
+        <div className="bg-white rounded-xl p-8 shadow-md">
+          <div className="w-full">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+              <h2 className="m-0 text-2xl text-gray-800 font-semibold">Câu lạc bộ của tôi ({myMemberships.length})</h2>
             </div>
 
             {myMemberships.length === 0 ? (
-              <div className="empty-state">
+              <div className="text-center py-10 px-5 text-gray-500">
                 <p>Bạn chưa tham gia câu lạc bộ nào.</p>
               </div>
             ) : (
-              <div className="memberships-list">
+              <div className="flex flex-col gap-5">
                 {myMemberships.map((item) => (
-                  <div key={item.id} className="membership-card">
-                    <div className="membership-header">
-                      <h3>{item.club.name}</h3>
-                      <span className="membership-status approved">Đã tham gia</span>
+                  <div key={item.id} className="bg-gray-50 rounded-xl border-2 border-gray-200 overflow-hidden transition-all hover:border-fpt-blue hover:shadow-lg hover:-translate-y-0.5">
+                    <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-5 flex justify-between items-center">
+                      <h3 className="m-0 text-xl font-semibold">{item.club.name}</h3>
+                      <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/30">Đã tham gia</span>
                     </div>
-                    <div className="membership-body">
-                      <div className="membership-info">
-                        <span><strong>Danh mục:</strong> {item.club.category}</span>
-                        <span><strong>Chủ tịch:</strong> {item.club.president}</span>
-                        <span><strong>Ngày tham gia:</strong> {item.requestDate}</span>
-                        <span><strong>Số thành viên:</strong> {item.club.memberCount}</span>
+                    <div className="p-5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Danh mục:</strong> {item.club.category}</span>
+                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Chủ tịch:</strong> {item.club.president}</span>
+                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Ngày tham gia:</strong> {item.requestDate}</span>
+                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Số thành viên:</strong> {item.club.memberCount}</span>
                       </div>
                     </div>
                   </div>
@@ -494,39 +537,39 @@ const Profile = ({ userRole, clubs, members }) => {
 
       {/* My Club Tab (Leader) */}
       {activeTab === 'club' && userRole === 'club_leader' && myClub && (
-        <div className="profile-content">
-          <div className="profile-section">
-            <div className="section-header">
-              <h2>Câu lạc bộ quản lý</h2>
+        <div className="bg-white rounded-xl p-8 shadow-md">
+          <div className="w-full">
+            <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+              <h2 className="m-0 text-2xl text-gray-800 font-semibold">Câu lạc bộ quản lý</h2>
             </div>
 
-            <div className="club-card">
-              <div className="club-card-header">
-                <h3>{myClub.name}</h3>
-                <span className="club-status">{myClub.status}</span>
+            <div className="bg-gray-50 rounded-xl border-2 border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-5 flex justify-between items-center">
+                <h3 className="m-0 text-2xl font-semibold">{myClub.name}</h3>
+                <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/30">{myClub.status}</span>
               </div>
-              <div className="club-card-body">
-                <p className="club-description">{myClub.description}</p>
-                <div className="club-details">
-                  <div className="detail-item">
-                    <span className="detail-label">Danh mục:</span>
-                    <span className="detail-value">{myClub.category}</span>
+              <div className="p-5">
+                <p className="text-gray-600 leading-relaxed mb-5 text-base">{myClub.description}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="flex flex-col gap-1.5 p-4 bg-white rounded-lg">
+                    <span className="text-xs text-gray-500 font-medium uppercase">Danh mục:</span>
+                    <span className="text-base text-gray-800 font-semibold">{myClub.category}</span>
                   </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Ngày thành lập:</span>
-                    <span className="detail-value">{myClub.foundedDate}</span>
+                  <div className="flex flex-col gap-1.5 p-4 bg-white rounded-lg">
+                    <span className="text-xs text-gray-500 font-medium uppercase">Ngày thành lập:</span>
+                    <span className="text-base text-gray-800 font-semibold">{myClub.foundedDate}</span>
                   </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Số thành viên:</span>
-                    <span className="detail-value">{myClub.memberCount}</span>
+                  <div className="flex flex-col gap-1.5 p-4 bg-white rounded-lg">
+                    <span className="text-xs text-gray-500 font-medium uppercase">Số thành viên:</span>
+                    <span className="text-base text-gray-800 font-semibold">{myClub.memberCount}</span>
                   </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Địa điểm:</span>
-                    <span className="detail-value">{myClub.location}</span>
+                  <div className="flex flex-col gap-1.5 p-4 bg-white rounded-lg">
+                    <span className="text-xs text-gray-500 font-medium uppercase">Địa điểm:</span>
+                    <span className="text-base text-gray-800 font-semibold">{myClub.location}</span>
                   </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Email:</span>
-                    <span className="detail-value">{myClub.email}</span>
+                  <div className="flex flex-col gap-1.5 p-4 bg-white rounded-lg">
+                    <span className="text-xs text-gray-500 font-medium uppercase">Email:</span>
+                    <span className="text-base text-gray-800 font-semibold">{myClub.email}</span>
                   </div>
                 </div>
               </div>

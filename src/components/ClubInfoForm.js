@@ -1,120 +1,136 @@
 import React from 'react';
 import { clubCategories, statusOptions } from '../data/mockData';
-import './ClubInfoForm.css';
 
 const ClubInfoForm = ({ formData, onFormChange, onFormSubmit, onFormCancel }) => {
   return (
-    <div className="manage-club-section">
-      <div className="edit-club-form">
-        <div className="form-header">
-          <h2>Chỉnh sửa thông tin Câu lạc bộ</h2>
-        </div>
-        <form onSubmit={onFormSubmit} className="club-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label>Tên câu lạc bộ *</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={onFormChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Danh mục *</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={onFormChange}
-                required
-              >
-                {clubCategories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Mô tả *</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={onFormChange}
-              rows="4"
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Ngày thành lập *</label>
-              <input
-                type="date"
-                name="foundedDate"
-                value={formData.foundedDate}
-                onChange={onFormChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Trạng thái *</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={onFormChange}
-                required
-              >
-                {statusOptions.map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={onFormChange}
-              />
-            </div>
-            <div className="form-group">
-              <label>Địa điểm</label>
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={onFormChange}
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Số thành viên</label>
-            <input
-              type="number"
-              name="memberCount"
-              value={formData.memberCount}
-              onChange={onFormChange}
-              min="0"
-            />
-          </div>
-
-          <div className="form-actions">
-            <button type="button" className="btn-cancel" onClick={onFormCancel}>
-              Hủy
-            </button>
-            <button type="submit" className="btn-submit">
-              Lưu thay đổi
-            </button>
-          </div>
-        </form>
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+      <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light p-6">
+        <h2 className="text-2xl font-bold text-white m-0">Chỉnh sửa thông tin Câu lạc bộ</h2>
       </div>
+      
+      <form onSubmit={onFormSubmit} className="p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-800 text-sm">Tên câu lạc bộ *</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={onFormChange}
+              required
+              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+            />
+          </div>
+          
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-800 text-sm">Danh mục *</label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={onFormChange}
+              required
+              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+            >
+              {clubCategories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <label className="mb-2 font-semibold text-gray-800 text-sm block">Mô tả *</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={onFormChange}
+            rows="4"
+            required
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans resize-y focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-800 text-sm">Ngày thành lập *</label>
+            <input
+              type="date"
+              name="foundedDate"
+              value={formData.foundedDate}
+              onChange={onFormChange}
+              required
+              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+            />
+          </div>
+          
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-800 text-sm">Trạng thái *</label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={onFormChange}
+              required
+              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+            >
+              {statusOptions.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-800 text-sm">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={onFormChange}
+              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+            />
+          </div>
+          
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-800 text-sm">Địa điểm</label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={onFormChange}
+              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+            />
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <label className="mb-2 font-semibold text-gray-800 text-sm block">Số thành viên</label>
+          <input
+            type="number"
+            name="memberCount"
+            value={formData.memberCount}
+            onChange={onFormChange}
+            min="0"
+            className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+          />
+        </div>
+
+        <div className="flex gap-4 justify-end pt-6 border-t-2 border-gray-100">
+          <button 
+            type="button" 
+            className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gray-200 text-gray-600 hover:bg-gray-300" 
+            onClick={onFormCancel}
+          >
+            Hủy
+          </button>
+          <button 
+            type="submit" 
+            className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
+          >
+            Lưu thay đổi
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './StudentClubList.css';
 
 const StudentClubList = ({ 
   clubs, 
@@ -23,22 +22,22 @@ const StudentClubList = ({
   const categories = [...new Set(clubs.map(club => club.category))];
 
   return (
-    <div className="clubs-section">
-      <div className="filters-section">
-        <div className="search-box">
+    <div>
+      <div className="bg-white p-5 rounded-lg shadow-md mb-6">
+        <div className="mb-4">
           <input
             type="text"
             placeholder="Tìm kiếm câu lạc bộ..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
+            className="w-full px-5 py-3 text-base border-2 border-gray-300 rounded-lg transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
           />
         </div>
-        <div className="filter-group">
+        <div>
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="filter-select"
+            className="w-full md:w-auto px-4 py-2.5 text-sm border-2 border-gray-300 rounded-lg bg-white cursor-pointer transition-all focus:outline-none focus:border-fpt-blue"
           >
             <option value="all">Tất cả danh mục</option>
             {categories.map(category => (
@@ -48,9 +47,9 @@ const StudentClubList = ({
         </div>
       </div>
 
-      <div className="clubs-grid">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredClubs.length === 0 ? (
-          <div className="no-results">
+          <div className="text-center py-16 px-5 text-gray-500 text-lg col-span-full">
             <p>Không tìm thấy câu lạc bộ nào</p>
           </div>
         ) : (
@@ -59,66 +58,77 @@ const StudentClubList = ({
             const paid = hasPayment(club.id);
             
             return (
-              <div key={club.id} className="club-card">
-                <div className="club-card-header">
-                  <h3>{club.name}</h3>
-                  <span className="status-badge status-active">
+              <div key={club.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all">
+                <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-5 flex justify-between items-center">
+                  <h3 className="m-0 text-xl font-semibold flex-1">{club.name}</h3>
+                  <span className="px-3 py-1.5 rounded-full text-xs font-semibold uppercase bg-green-500 text-white">
                     {club.status}
                   </span>
                 </div>
-                <div className="club-card-body">
-                  <p className="club-description">{club.description}</p>
-                  <div className="club-info">
-                    <div className="info-item">
-                      <span className="info-label">Danh mục:</span>
-                      <span className="info-value">{club.category}</span>
+                
+                <div className="p-5">
+                  <p className="text-gray-600 mb-5 leading-relaxed min-h-[50px]">{club.description}</p>
+                  <div className="flex flex-col gap-2.5 mb-5">
+                    <div className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-500 font-medium">Danh mục:</span>
+                      <span className="text-gray-800 font-semibold">{club.category}</span>
                     </div>
-                    <div className="info-item">
-                      <span className="info-label">Chủ tịch:</span>
-                      <span className="info-value">{club.president}</span>
+                    <div className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-500 font-medium">Chủ tịch:</span>
+                      <span className="text-gray-800 font-semibold">{club.president}</span>
                     </div>
-                    <div className="info-item">
-                      <span className="info-label">Số thành viên:</span>
-                      <span className="info-value">{club.memberCount}</span>
+                    <div className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-500 font-medium">Số thành viên:</span>
+                      <span className="text-gray-800 font-semibold">{club.memberCount}</span>
                     </div>
-                    <div className="info-item">
-                      <span className="info-label">Địa điểm:</span>
-                      <span className="info-value">{club.location}</span>
+                    <div className="flex justify-between py-2 border-b border-gray-100">
+                      <span className="text-gray-500 font-medium">Địa điểm:</span>
+                      <span className="text-gray-800 font-semibold">{club.location}</span>
                     </div>
-                    <div className="info-item">
-                      <span className="info-label">Phí tham gia:</span>
-                      <span className="info-value">
+                    <div className="flex justify-between py-2">
+                      <span className="text-gray-500 font-medium">Phí tham gia:</span>
+                      <span className="text-gray-800 font-semibold">
                         {club.participationFee ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="club-card-actions">
+                
+                <div className="p-4 bg-gray-50 flex flex-col gap-2.5">
                   <button 
                     onClick={() => onViewDetails && onViewDetails(club)} 
-                    className="btn-details"
+                    className="px-4 py-2 border-none rounded-md text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-fpt-blue-light to-fpt-blue text-white shadow-md hover:bg-gradient-to-l hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     📋 Chi tiết
                   </button>
+                  
                   {requestStatus === 'pending' && (
-                    <span className="request-badge pending">Đang chờ duyệt</span>
+                    <span className="px-4 py-2 text-center rounded-md text-sm font-semibold bg-amber-500 text-white">
+                      Đang chờ duyệt
+                    </span>
                   )}
                   {requestStatus === 'approved' && (
-                    <span className="request-badge approved">Đã được chấp nhận</span>
+                    <span className="px-4 py-2 text-center rounded-md text-sm font-semibold bg-green-500 text-white">
+                      Đã được chấp nhận
+                    </span>
                   )}
                   {requestStatus === 'rejected' && (
-                    <span className="request-badge rejected">Đã bị từ chối</span>
+                    <span className="px-4 py-2 text-center rounded-md text-sm font-semibold bg-red-500 text-white">
+                      Đã bị từ chối
+                    </span>
                   )}
                   {!requestStatus && (
                     <button 
                       onClick={() => onJoinRequest(club)} 
-                      className="btn-join"
+                      className="px-4 py-2 border-none rounded-md text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md hover:bg-gradient-to-l hover:-translate-y-0.5 hover:shadow-lg"
                     >
                       Gửi yêu cầu tham gia
                     </button>
                   )}
                   {paid && (
-                    <span className="payment-badge">✓ Đã nộp phí</span>
+                    <span className="px-4 py-2 text-center rounded-md text-sm font-semibold bg-blue-500 text-white">
+                      ✓ Đã nộp phí
+                    </span>
                   )}
                 </div>
               </div>

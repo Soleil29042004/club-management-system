@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import '../styles/login.css';
 
 const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
   
@@ -108,18 +107,20 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <div className="login-logo">🎓</div>
-          <h1>FPT University</h1>
-          <p>Hệ thống quản lý Câu lạc bộ Sinh viên</p>
+    <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-fpt-blue via-fpt-blue-light to-green-500 p-5 font-sans relative overflow-hidden">
+      <div className="absolute top-[-50%] right-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(243,113,36,0.1)_0%,transparent_70%)] animate-spin-slow"></div>
+      
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[460px] p-11 animate-slide-in relative z-10 border border-white/20">
+        <div className="text-center mb-5">
+          <div className="text-6xl mb-4 animate-bounce">🎓</div>
+          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">FPT University</h1>
+          <p className="text-gray-600 text-[15px] font-medium">Hệ thống quản lý Câu lạc bộ Sinh viên</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Email Input */}
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="email" className="text-sm font-semibold text-gray-800">Email</label>
             <input
               type="email"
               id="email"
@@ -127,15 +128,24 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
               value={formData.email}
               onChange={handleChange}
               placeholder="Nhập email của bạn"
-              className={errors.email ? 'error' : ''}
+              className={`px-4 py-3.5 border-2 rounded-xl text-[15px] transition-all font-sans ${
+                errors.email 
+                  ? 'border-red-500' 
+                  : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
+              }`}
             />
-            {errors.email && <span className="error-message">{errors.email}</span>}
+            {errors.email && (
+              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.email}
+              </span>
+            )}
           </div>
 
           {/* Password Input */}
-          <div className="form-group">
-            <label htmlFor="password">Mật khẩu</label>
-            <div className="password-input-wrapper">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="password" className="text-sm font-semibold text-gray-800">Mật khẩu</label>
+            <div className="relative flex items-center">
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
@@ -143,33 +153,42 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Nhập mật khẩu"
-                className={errors.password ? 'error' : ''}
+                className={`w-full px-4 py-3.5 pr-12 border-2 rounded-xl text-[15px] transition-all font-sans ${
+                  errors.password 
+                    ? 'border-red-500' 
+                    : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
+                }`}
               />
               <button
                 type="button"
-                className="toggle-password"
+                className="absolute right-3 bg-transparent border-none cursor-pointer text-xl p-2 transition-transform hover:scale-110"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
-            {errors.password && <span className="error-message">{errors.password}</span>}
+            {errors.password && (
+              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.password}
+              </span>
+            )}
           </div>
 
           {/* Remember Me & Forgot Password */}
-          <div className="form-options">
-            <label className="checkbox-label">
-              <input type="checkbox" name="remember" />
+          <div className="flex justify-between items-center text-sm mt-[-8px]">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="remember" className="w-[18px] h-[18px] cursor-pointer" />
               <span>Ghi nhớ đăng nhập</span>
             </label>
-            <a href="#" className="forgot-link" onClick={(e) => e.preventDefault()}>
+            <a href="#" className="text-fpt-blue no-underline font-semibold transition-all hover:text-fpt-orange hover:underline" onClick={(e) => e.preventDefault()}>
               Quên mật khẩu?
             </a>
           </div>
 
           {/* Submit Error */}
           {errors.submit && (
-            <div className="alert alert-error">
+            <div className="p-3.5 rounded-xl text-sm animate-shake bg-red-50 text-red-700 border-2 border-red-400">
               {errors.submit}
             </div>
           )}
@@ -177,12 +196,12 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="btn-login"
+            className="py-4 bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white border-none rounded-xl text-base font-bold cursor-pointer transition-all flex items-center justify-center gap-2 mt-2.5 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed hover:shadow-xl hover:-translate-y-1 active:translate-y-0 active:shadow-lg"
             disabled={loading}
           >
             {loading ? (
               <>
-                <span className="spinner"></span>
+                <span className="w-[18px] h-[18px] border-[3px] border-white/30 border-t-white rounded-full animate-spin"></span>
                 Đang đăng nhập...
               </>
             ) : 'Đăng nhập'}
@@ -190,10 +209,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
         </form>
 
         {/* Register Link */}
-        <div className="login-footer">
+        <div className="text-center mt-7 pt-6 border-t border-gray-300 text-sm text-gray-600">
           <p>
             Chưa có tài khoản?{' '}
-            <a href="#" className="register-link" onClick={(e) => {
+            <a href="#" className="text-fpt-blue no-underline font-bold transition-all hover:text-fpt-orange hover:underline" onClick={(e) => {
               e.preventDefault();
               if (onSwitchToRegister) {
                 onSwitchToRegister();
