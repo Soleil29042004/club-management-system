@@ -6,6 +6,7 @@ import StudentUnpaidFees from './StudentUnpaidFees';
 import JoinRequestModal from './JoinRequestModal';
 import PaymentModal from './PaymentModal';
 import ClubDetailsModal from './ClubDetailsModal';
+import { initializeMockData } from '../data/mockData';
 
 const StudentDashboard = ({ clubs, currentPage }) => {
   const { showToast } = useToast();
@@ -18,6 +19,9 @@ const StudentDashboard = ({ clubs, currentPage }) => {
 
   // Load data from localStorage on mount
   useEffect(() => {
+    // Đảm bảo mock data được khởi tạo
+    initializeMockData();
+    
     const savedRequests = localStorage.getItem('joinRequests');
     const savedPayments = localStorage.getItem('payments');
     if (savedRequests) {

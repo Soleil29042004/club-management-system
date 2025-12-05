@@ -5,7 +5,7 @@ import ClubInfo from './ClubInfo';
 import JoinRequestsList from './JoinRequestsList';
 import MembersList from './MembersList';
 import ClubActivities from './ClubActivities';
-import { clubCategories, statusOptions } from '../data/mockData';
+import { clubCategories, statusOptions, initializeMockData } from '../data/mockData';
 
 const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage }) => {
   const { showToast } = useToast();
@@ -26,9 +26,14 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
   // Load data from localStorage on mount
   useEffect(() => {
+    // Đảm bảo mock data được khởi tạo
+    initializeMockData();
+    
+    // Load requests sau khi đã initialize
     const savedRequests = localStorage.getItem('joinRequests');
     if (savedRequests) {
-      setJoinRequests(JSON.parse(savedRequests));
+      const requests = JSON.parse(savedRequests);
+      setJoinRequests(requests);
     }
 
     // Find club managed by this leader

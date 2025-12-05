@@ -205,3 +205,248 @@ export const statusOptions = [
   "Ngừng hoạt động"
 ];
 
+// Mock data cho join requests - để test chức năng duyệt request của leader
+export const mockJoinRequests = [
+  {
+    id: 1,
+    clubId: 1,
+    clubName: "Club Lập trình",
+    studentEmail: "student1@student.com",
+    studentName: "Nguyễn Văn Học",
+    phone: "0911111111",
+    studentId: "SE150100",
+    major: "Kỹ thuật phần mềm",
+    reason: "Tôi muốn học hỏi và phát triển kỹ năng lập trình, đặc biệt là về React và Node.js",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "pending",
+    requestDate: "2024-11-25",
+    message: "Yêu cầu tham gia Club Lập trình"
+  },
+  {
+    id: 2,
+    clubId: 1,
+    clubName: "Club Lập trình",
+    studentEmail: "student2@student.com",
+    studentName: "Trần Thị Code",
+    phone: "0922222222",
+    studentId: "SE150101",
+    major: "Kỹ thuật phần mềm",
+    reason: "Đam mê lập trình và muốn tham gia các dự án thực tế",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "pending",
+    requestDate: "2024-11-26",
+    message: "Yêu cầu tham gia Club Lập trình"
+  },
+  {
+    id: 3,
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    studentEmail: "student3@student.com",
+    studentName: "Lê Văn English",
+    phone: "0933333333",
+    studentId: "BA150200",
+    major: "Quản trị kinh doanh",
+    reason: "Muốn cải thiện khả năng giao tiếp tiếng Anh để phục vụ công việc sau này",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "pending",
+    requestDate: "2024-11-27",
+    message: "Yêu cầu tham gia Club Tiếng Anh"
+  },
+  {
+    id: 4,
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    studentEmail: "student4@student.com",
+    studentName: "Phạm Thị Speaking",
+    phone: "0944444444",
+    studentId: "SE150201",
+    major: "Kỹ thuật phần mềm",
+    reason: "Cần luyện tập tiếng Anh để đọc tài liệu kỹ thuật",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "pending",
+    requestDate: "2024-11-28",
+    message: "Yêu cầu tham gia Club Tiếng Anh"
+  },
+  {
+    id: 5,
+    clubId: 3,
+    clubName: "Club Thể thao",
+    studentEmail: "student5@student.com",
+    studentName: "Hoàng Văn Sport",
+    phone: "0955555555",
+    studentId: "SP150300",
+    major: "Giáo dục thể chất",
+    reason: "Yêu thích bóng đá và muốn tham gia các giải đấu",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "pending",
+    requestDate: "2024-11-29",
+    message: "Yêu cầu tham gia Club Thể thao"
+  },
+  {
+    id: 6,
+    clubId: 1,
+    clubName: "Club Lập trình",
+    studentEmail: "student6@student.com",
+    studentName: "Vũ Thị Developer",
+    phone: "0966666666",
+    studentId: "SE150102",
+    major: "Kỹ thuật phần mềm",
+    reason: "Muốn học thêm về backend development",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "approved",
+    requestDate: "2024-11-20",
+    message: "Yêu cầu tham gia Club Lập trình"
+  },
+  {
+    id: 7,
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    studentEmail: "student7@student.com",
+    studentName: "Đỗ Văn IELTS",
+    phone: "0977777777",
+    studentId: "BA150201",
+    major: "Quản trị kinh doanh",
+    reason: "Chuẩn bị thi IELTS",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "approved",
+    requestDate: "2024-11-21",
+    message: "Yêu cầu tham gia Club Tiếng Anh"
+  },
+  {
+    id: 8,
+    clubId: 3,
+    clubName: "Club Thể thao",
+    studentEmail: "student8@student.com",
+    studentName: "Bùi Thị Fitness",
+    phone: "0988888888",
+    studentId: "SP150301",
+    major: "Giáo dục thể chất",
+    reason: "Muốn rèn luyện sức khỏe",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "approved",
+    requestDate: "2024-11-22",
+    message: "Yêu cầu tham gia Club Thể thao"
+  },
+  {
+    id: 9,
+    clubId: 4,
+    clubName: "Club Nhiếp ảnh",
+    studentEmail: "student9@student.com",
+    studentName: "Ngô Văn Photo",
+    phone: "0999999999",
+    studentId: "GD150400",
+    major: "Thiết kế đồ họa",
+    reason: "Đam mê nhiếp ảnh và muốn học hỏi kỹ thuật chụp ảnh",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "approved",
+    requestDate: "2024-11-23",
+    message: "Yêu cầu tham gia Club Nhiếp ảnh"
+  },
+  {
+    id: 10,
+    clubId: 1,
+    clubName: "Club Lập trình",
+    studentEmail: "student10@student.com",
+    studentName: "Lý Thị Rejected",
+    phone: "0900000000",
+    studentId: "SE150103",
+    major: "Kỹ thuật phần mềm",
+    reason: "Muốn tham gia",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "rejected",
+    requestDate: "2024-11-15",
+    message: "Yêu cầu tham gia Club Lập trình"
+  },
+  {
+    id: 11,
+    clubId: 4,
+    clubName: "Club Nhiếp ảnh",
+    studentEmail: "student@gmail.com",
+    studentName: "Nguyễn Văn A",
+    phone: "0911111111",
+    studentId: "SE150200",
+    major: "Kỹ thuật phần mềm",
+    reason: "Muốn học nhiếp ảnh để bổ trợ cho công việc thiết kế",
+    startDate: "2024-12-01",
+    endDate: "2025-06-30",
+    status: "approved",
+    requestDate: "2024-11-24",
+    message: "Yêu cầu tham gia Club Nhiếp ảnh"
+  }
+];
+
+// Mock data cho payments - để test chức năng trả phí của student
+export const mockPayments = [
+  {
+    id: 1,
+    clubId: 1,
+    clubName: "Club Lập trình",
+    studentEmail: "student6@student.com",
+    studentName: "Vũ Thị Developer",
+    amount: 50000,
+    note: "Nộp phí tham gia Club Lập trình",
+    paymentDate: "2024-11-25",
+    status: "completed"
+  },
+  {
+    id: 2,
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    studentEmail: "student7@student.com",
+    studentName: "Đỗ Văn IELTS",
+    amount: 30000,
+    note: "Nộp phí tham gia Club Tiếng Anh",
+    paymentDate: "2024-11-26",
+    status: "completed"
+  }
+  // Lưu ý: student8 và student9 đã được approved nhưng chưa nộp phí
+  // Điều này tạo ra unpaid fees để test chức năng trả phí
+];
+
+// Hàm khởi tạo mock data vào localStorage (nếu chưa có)
+export const initializeMockData = () => {
+  // Khởi tạo join requests nếu chưa có hoặc rỗng
+  const existingRequests = localStorage.getItem('joinRequests');
+  if (!existingRequests || existingRequests === '[]' || JSON.parse(existingRequests).length === 0) {
+    localStorage.setItem('joinRequests', JSON.stringify(mockJoinRequests));
+  } else {
+    // Merge mock data với dữ liệu hiện có (tránh trùng lặp)
+    const currentRequests = JSON.parse(existingRequests);
+    const currentRequestIds = new Set(currentRequests.map(r => r.id));
+    const newRequests = mockJoinRequests.filter(r => !currentRequestIds.has(r.id));
+    if (newRequests.length > 0) {
+      localStorage.setItem('joinRequests', JSON.stringify([...currentRequests, ...newRequests]));
+    }
+  }
+  
+  // Khởi tạo payments nếu chưa có hoặc rỗng
+  const existingPayments = localStorage.getItem('payments');
+  if (!existingPayments || existingPayments === '[]' || JSON.parse(existingPayments).length === 0) {
+    localStorage.setItem('payments', JSON.stringify(mockPayments));
+  } else {
+    // Merge mock data với dữ liệu hiện có (tránh trùng lặp)
+    const currentPayments = JSON.parse(existingPayments);
+    const currentPaymentIds = new Set(currentPayments.map(p => p.id));
+    const newPayments = mockPayments.filter(p => !currentPaymentIds.has(p.id));
+    if (newPayments.length > 0) {
+      localStorage.setItem('payments', JSON.stringify([...currentPayments, ...newPayments]));
+    }
+  }
+};
+
+// Hàm reset mock data (xóa và load lại từ đầu)
+export const resetMockData = () => {
+  localStorage.setItem('joinRequests', JSON.stringify(mockJoinRequests));
+  localStorage.setItem('payments', JSON.stringify(mockPayments));
+};
+

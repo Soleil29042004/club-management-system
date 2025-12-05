@@ -8,7 +8,7 @@ import Profile from './components/Profile';
 import Login from './pages/login';
 import Register from './pages/register';
 import { ToastProvider } from './components/Toast';
-import { mockClubs, mockMembers } from './data/mockData';
+import { mockClubs, mockMembers, initializeMockData } from './data/mockData';
 
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -29,6 +29,11 @@ function AppContent() {
       setCurrentPage('dashboard');
     }
   }, [userRole]);
+
+  // Initialize mock data on component mount
+  useEffect(() => {
+    initializeMockData();
+  }, []);
 
   // Check if user is already logged in on component mount
   useEffect(() => {
