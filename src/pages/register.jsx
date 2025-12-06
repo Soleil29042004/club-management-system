@@ -8,7 +8,7 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student',
+    role: 'student', // Default role is student
     studentId: '',
     phone: '',
     major: ''
@@ -139,20 +139,25 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-fpt-blue via-fpt-blue-light to-green-500 p-5 font-sans relative overflow-hidden">
+    <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-blue-600 via-blue-400 to-green-500 p-5 font-sans relative overflow-hidden">
       <div className="absolute top-[-50%] right-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(243,113,36,0.1)_0%,transparent_70%)] animate-spin-slow"></div>
       
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[460px] p-11 animate-slide-in relative z-10 border border-white/20 max-h-[90vh] overflow-y-auto">
         <div className="text-center mb-5">
-          <div className="text-6xl mb-4 animate-bounce">🎓</div>
+          {/* 3D Graduation Cap Icon */}
+          <div className="mb-4 flex justify-center">
+            <div className="text-6xl" style={{ filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))' }}>
+              🎓
+            </div>
+          </div>
           <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">FPT University</h1>
           <p className="text-gray-600 text-[15px] font-medium">Đăng ký tài khoản mới</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Full Name Input */}
-          <div className="form-group">
-            <label htmlFor="fullName">Họ và tên *</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="fullName" className="text-sm font-semibold text-gray-800">Họ và tên *</label>
             <input
               type="text"
               id="fullName"
@@ -160,14 +165,23 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               value={formData.fullName}
               onChange={handleChange}
               placeholder="Nhập họ và tên của bạn"
-              className={errors.fullName ? 'error' : ''}
+              className={`px-4 py-3.5 border-2 rounded-xl text-[15px] transition-all font-sans ${
+                errors.fullName 
+                  ? 'border-red-500' 
+                  : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
+              }`}
             />
-            {errors.fullName && <span className="error-message">{errors.fullName}</span>}
+            {errors.fullName && (
+              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.fullName}
+              </span>
+            )}
           </div>
 
           {/* Email Input */}
-          <div className="form-group">
-            <label htmlFor="email">Email *</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="email" className="text-sm font-semibold text-gray-800">Email *</label>
             <input
               type="email"
               id="email"
@@ -175,64 +189,95 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               value={formData.email}
               onChange={handleChange}
               placeholder="Nhập email của bạn"
-              className={errors.email ? 'error' : ''}
+              className={`px-4 py-3.5 border-2 rounded-xl text-[15px] transition-all font-sans ${
+                errors.email 
+                  ? 'border-red-500' 
+                  : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
+              }`}
             />
-            {errors.email && <span className="error-message">{errors.email}</span>}
+            {errors.email && (
+              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.email}
+              </span>
+            )}
           </div>
 
-          {/* Role Selection */}
-          <div className="form-group">
-            <label htmlFor="role">Vai trò *</label>
+          {/* Role Selection - Hidden, default is student */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="role" className="text-sm font-semibold text-gray-800">Vai trò *</label>
             <select
               id="role"
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className={errors.role ? 'error' : ''}
+              className={`px-4 py-3.5 border-2 rounded-xl text-[15px] transition-all font-sans bg-gray-50 cursor-pointer ${
+                errors.role 
+                  ? 'border-red-500' 
+                  : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
+              }`}
             >
               <option value="student">Sinh viên</option>
-              <option value="club_leader">Club Leader</option>
             </select>
-            {errors.role && <span className="error-message">{errors.role}</span>}
+            {errors.role && (
+              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.role}
+              </span>
+            )}
           </div>
 
-          {/* Student ID (only for students) */}
-          {formData.role === 'student' && (
-            <div className="form-group">
-              <label htmlFor="studentId">Mã sinh viên *</label>
-              <input
-                type="text"
-                id="studentId"
-                name="studentId"
-                value={formData.studentId}
-                onChange={handleChange}
-                placeholder="Nhập mã sinh viên"
-                className={errors.studentId ? 'error' : ''}
-              />
-              {errors.studentId && <span className="error-message">{errors.studentId}</span>}
-            </div>
-          )}
+          {/* Student ID */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="studentId" className="text-sm font-semibold text-gray-800">Mã sinh viên *</label>
+            <input
+              type="text"
+              id="studentId"
+              name="studentId"
+              value={formData.studentId}
+              onChange={handleChange}
+              placeholder="Nhập mã sinh viên"
+              className={`px-4 py-3.5 border-2 rounded-xl text-[15px] transition-all font-sans ${
+                errors.studentId 
+                  ? 'border-red-500' 
+                  : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
+              }`}
+            />
+            {errors.studentId && (
+              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.studentId}
+              </span>
+            )}
+          </div>
 
-          {/* Major (only for students) */}
-          {formData.role === 'student' && (
-            <div className="form-group">
-              <label htmlFor="major">Chuyên ngành *</label>
-              <input
-                type="text"
-                id="major"
-                name="major"
-                value={formData.major}
-                onChange={handleChange}
-                placeholder="Nhập chuyên ngành"
-                className={errors.major ? 'error' : ''}
-              />
-              {errors.major && <span className="error-message">{errors.major}</span>}
-            </div>
-          )}
+          {/* Major */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="major" className="text-sm font-semibold text-gray-800">Chuyên ngành *</label>
+            <input
+              type="text"
+              id="major"
+              name="major"
+              value={formData.major}
+              onChange={handleChange}
+              placeholder="Nhập chuyên ngành"
+              className={`px-4 py-3.5 border-2 rounded-xl text-[15px] transition-all font-sans ${
+                errors.major 
+                  ? 'border-red-500' 
+                  : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
+              }`}
+            />
+            {errors.major && (
+              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.major}
+              </span>
+            )}
+          </div>
 
           {/* Phone Input */}
-          <div className="form-group">
-            <label htmlFor="phone">Số điện thoại *</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="phone" className="text-sm font-semibold text-gray-800">Số điện thoại *</label>
             <input
               type="tel"
               id="phone"
@@ -240,15 +285,24 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               value={formData.phone}
               onChange={handleChange}
               placeholder="Nhập số điện thoại"
-              className={errors.phone ? 'error' : ''}
+              className={`px-4 py-3.5 border-2 rounded-xl text-[15px] transition-all font-sans ${
+                errors.phone 
+                  ? 'border-red-500' 
+                  : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
+              }`}
             />
-            {errors.phone && <span className="error-message">{errors.phone}</span>}
+            {errors.phone && (
+              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.phone}
+              </span>
+            )}
           </div>
 
           {/* Password Input */}
-          <div className="form-group">
-            <label htmlFor="password">Mật khẩu *</label>
-            <div className="password-input-wrapper">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="password" className="text-sm font-semibold text-gray-800">Mật khẩu *</label>
+            <div className="relative flex items-center">
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
@@ -256,23 +310,32 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                className={errors.password ? 'error' : ''}
+                className={`w-full px-4 py-3.5 pr-12 border-2 rounded-xl text-[15px] transition-all font-sans ${
+                  errors.password 
+                    ? 'border-red-500' 
+                    : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
+                }`}
               />
               <button
                 type="button"
-                className="toggle-password"
+                className="absolute right-3 bg-transparent border-none cursor-pointer text-xl p-2 transition-transform hover:scale-110 text-purple-600"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
-            {errors.password && <span className="error-message">{errors.password}</span>}
+            {errors.password && (
+              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.password}
+              </span>
+            )}
           </div>
 
           {/* Confirm Password Input */}
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Xác nhận mật khẩu *</label>
-            <div className="password-input-wrapper">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-800">Xác nhận mật khẩu *</label>
+            <div className="relative flex items-center">
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"
@@ -280,22 +343,31 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="Nhập lại mật khẩu"
-                className={errors.confirmPassword ? 'error' : ''}
+                className={`w-full px-4 py-3.5 pr-12 border-2 rounded-xl text-[15px] transition-all font-sans ${
+                  errors.confirmPassword 
+                    ? 'border-red-500' 
+                    : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
+                }`}
               />
               <button
                 type="button"
-                className="toggle-password"
+                className="absolute right-3 bg-transparent border-none cursor-pointer text-xl p-2 transition-transform hover:scale-110 text-purple-600"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
                 {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
-            {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+            {errors.confirmPassword && (
+              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.confirmPassword}
+              </span>
+            )}
           </div>
 
           {/* Submit Error */}
           {errors.submit && (
-            <div className="alert alert-error">
+            <div className="p-3.5 rounded-xl text-sm animate-shake bg-red-50 text-red-700 border-2 border-red-400">
               {errors.submit}
             </div>
           )}
@@ -303,12 +375,12 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="btn-login"
+            className="py-4 bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white border-none rounded-xl text-base font-bold cursor-pointer transition-all flex items-center justify-center gap-2 mt-2.5 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed hover:shadow-xl hover:-translate-y-1 active:translate-y-0 active:shadow-lg"
             disabled={loading}
           >
             {loading ? (
               <>
-                <span className="spinner"></span>
+                <span className="w-[18px] h-[18px] border-[3px] border-white/30 border-t-white rounded-full animate-spin"></span>
                 Đang đăng ký...
               </>
             ) : 'Đăng ký'}
@@ -316,10 +388,10 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
         </form>
 
         {/* Login Link */}
-        <div className="login-footer">
+        <div className="text-center mt-7 pt-6 border-t border-gray-300 text-sm text-gray-600">
           <p>
             Đã có tài khoản?{' '}
-            <a href="#" className="register-link" onClick={(e) => {
+            <a href="#" className="text-fpt-blue no-underline font-bold transition-all hover:text-fpt-orange hover:underline" onClick={(e) => {
               e.preventDefault();
               if (onSwitchToLogin) {
                 onSwitchToLogin();
