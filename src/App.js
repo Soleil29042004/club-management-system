@@ -5,6 +5,7 @@ import MemberManagement from './components/MemberManagement';
 import StudentDashboard from './components/StudentDashboard';
 import ClubLeaderDashboard from './components/ClubLeaderDashboard';
 import Profile from './components/Profile';
+import ClubRequestsManagement from './components/ClubRequestsManagement';
 import Login from './pages/login';
 import Register from './pages/register';
 import { ToastProvider } from './components/Toast';
@@ -61,6 +62,8 @@ function AppContent() {
         return <ClubManagement clubs={clubs} setClubs={setClubs} />;
       case 'members':
         return <MemberManagement members={members} setMembers={setMembers} clubs={clubs} />;
+      case 'club-requests':
+        return <ClubRequestsManagement clubs={clubs} setClubs={setClubs} />;
       case 'profile':
         return <Profile userRole={userRole} clubs={clubs} members={members} />;
       default:
@@ -90,13 +93,13 @@ function AppContent() {
   const renderStudentPage = () => {
     switch (currentPage) {
       case 'clubs':
-        return <StudentDashboard clubs={clubs} currentPage={currentPage} />;
+        return <StudentDashboard clubs={clubs} currentPage={currentPage} setClubs={setClubs} />;
       case 'unpaid-fees':
-        return <StudentDashboard clubs={clubs} currentPage={currentPage} />;
+        return <StudentDashboard clubs={clubs} currentPage={currentPage} setClubs={setClubs} />;
       case 'profile':
         return <Profile userRole={userRole} clubs={clubs} members={members} />;
       default:
-        return <StudentDashboard clubs={clubs} currentPage="clubs" />;
+        return <StudentDashboard clubs={clubs} currentPage="clubs" setClubs={setClubs} />;
     }
   };
 
@@ -443,6 +446,20 @@ function AppContent() {
           </button>
           <button
             className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+              currentPage === 'club-requests' 
+                ? 'bg-fpt-orange text-white shadow-lg' 
+                : 'text-white/90 hover:bg-white/10 hover:text-white'
+            }`}
+            onClick={() => {
+              setCurrentPage('club-requests');
+              if (window.innerWidth < 1024) setSidebarOpen(false);
+            }}
+          >
+            <span className="text-xl flex-shrink-0">📝</span>
+            <span className="whitespace-nowrap">Duyệt yêu cầu CLB</span>
+          </button>
+          <button
+            className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
               currentPage === 'profile' 
                 ? 'bg-fpt-orange text-white shadow-lg' 
                 : 'text-white/90 hover:bg-white/10 hover:text-white'
@@ -482,6 +499,7 @@ function AppContent() {
                 {currentPage === 'dashboard' && 'Tổng quan hệ thống'}
                 {currentPage === 'clubs' && 'Quản lý Câu lạc bộ'}
                 {currentPage === 'members' && 'Quản lý Thành viên'}
+                {currentPage === 'club-requests' && 'Duyệt yêu cầu đăng ký mở Club'}
                 {currentPage === 'profile' && 'Hồ sơ cá nhân'}
               </h2>
             </div>

@@ -407,4 +407,3 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
 };
 
 export default Register;
-
