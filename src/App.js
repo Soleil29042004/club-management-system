@@ -9,7 +9,7 @@ import ClubRequestsManagement from './components/ClubRequestsManagement';
 import Login from './pages/login';
 import Register from './pages/register';
 import { ToastProvider } from './components/Toast';
-import { mockClubs, mockMembers } from './data/mockData';
+import { mockClubs, mockMembers, initializeDemoData } from './data/mockData';
 
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,6 +30,11 @@ function AppContent() {
       setCurrentPage('dashboard');
     }
   }, [userRole]);
+
+  // Initialize demo data on component mount
+  useEffect(() => {
+    initializeDemoData();
+  }, []);
 
   // Check if user is already logged in on component mount
   useEffect(() => {

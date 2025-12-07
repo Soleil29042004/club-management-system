@@ -7,6 +7,7 @@ import JoinRequestModal from './JoinRequestModal';
 import PaymentModal from './PaymentModal';
 import ClubDetailsModal from './ClubDetailsModal';
 import RegisterClubModal from './RegisterClubModal';
+import { initializeDemoData } from '../data/mockData';
 
 const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   const { showToast } = useToast();
@@ -21,17 +22,33 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
 
   // Load data from localStorage on mount
   useEffect(() => {
+    // Đảm bảo dữ liệu được khởi tạo trước khi load
+    initializeDemoData();
+    
     const savedRequests = localStorage.getItem('joinRequests');
     const savedPayments = localStorage.getItem('payments');
     const savedClubRequests = localStorage.getItem('clubRequests');
+    
     if (savedRequests) {
-      setJoinRequests(JSON.parse(savedRequests));
+      try {
+        setJoinRequests(JSON.parse(savedRequests));
+      } catch (e) {
+        console.error('Error parsing joinRequests:', e);
+      }
     }
     if (savedPayments) {
-      setPayments(JSON.parse(savedPayments));
+      try {
+        setPayments(JSON.parse(savedPayments));
+      } catch (e) {
+        console.error('Error parsing payments:', e);
+      }
     }
     if (savedClubRequests) {
-      setClubRequests(JSON.parse(savedClubRequests));
+      try {
+        setClubRequests(JSON.parse(savedClubRequests));
+      } catch (e) {
+        console.error('Error parsing clubRequests:', e);
+      }
     }
   }, []);
 

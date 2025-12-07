@@ -14,7 +14,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
   // Mock data for testing
   const mockUsers = {
     'student@gmail.com': { password: '123456', role: 'student', name: 'Nguyễn Văn A' },
-    'leader@gmail.com': { password: '123456', role: 'club_leader', name: 'Trần Thị B' },
+    'leader@gmail.com': { password: '123456', role: 'club_leader', name: 'Trần Thị B' }, // Club Tiếng Anh
+    'leader1@gmail.com': { password: '123456', role: 'club_leader', name: 'Nguyễn Văn A' }, // Club Lập trình
+    'leader2@gmail.com': { password: '123456', role: 'club_leader', name: 'Lê Văn C' }, // Club Thể thao
+    'leader3@gmail.com': { password: '123456', role: 'club_leader', name: 'Phạm Thị D' }, // Club Nhiếp ảnh
     'admin@gmail.com': { password: '123456', role: 'admin', name: 'Admin' }
   };
 
