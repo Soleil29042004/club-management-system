@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const JoinRequestsList = ({ requests, onApprove, onReject }) => {
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
   if (requests.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
@@ -11,86 +14,191 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
     );
   }
 
+  const handleViewDetails = (request) => {
+    setSelectedRequest(request);
+    setShowDetailModal(true);
+  };
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      pending: { bg: 'bg-amber-500', text: 'Chờ duyệt' },
+      approved: { bg: 'bg-green-500', text: 'Đã chấp nhận' },
+      rejected: { bg: 'bg-red-500', text: 'Đã từ chối' }
+    };
+
+    const config = statusConfig[status] || statusConfig.pending;
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase text-white ${config.bg}`}>
+        {config.text}
+      </span>
+    );
+  };
+
   return (
-    <div className="space-y-6">
-      {requests.map((request) => (
-        <div key={request.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all">
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200">
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-gray-800 m-0 mb-2">{request.studentName}</h3>
-              <span className="text-gray-600 text-sm">{request.studentEmail}</span>
+    <>
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Tên sinh viên</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Email</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Mã sinh viên</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Ngày gửi</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Trạng thái</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {requests.map((request) => (
+                <tr key={`${request.id}-${request.status}`} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="font-semibold text-gray-800">{request.studentName}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-600">{request.studentEmail}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-800">{request.studentId || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {new Date(request.requestDate).toLocaleDateString('vi-VN')}
+                  </td>
+                  <td className="px-6 py-4">
+                    {getStatusBadge(request.status)}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-start gap-2">
+                      <button
+                        onClick={() => handleViewDetails(request)}
+                        className="px-4 py-2 bg-fpt-blue text-white rounded-lg text-sm font-medium hover:bg-fpt-blue-light transition-all"
+                      >
+                        Chi tiết
+                      </button>
+                      {request.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => onApprove(request.id)}
+                            className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all"
+                          >
+                            ✅ Chấp nhận
+                          </button>
+                          <button
+                            onClick={() => onReject(request.id)}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all"
+                          >
+                            ❌ Từ chối
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Detail Modal */}
+      {showDetailModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] p-5" onClick={() => setShowDetailModal(false)}>
+          <div className="bg-white rounded-xl w-full max-w-[700px] max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-6 flex justify-between items-center rounded-t-xl sticky top-0 z-10">
+              <h2 className="text-2xl font-bold m-0">Chi tiết yêu cầu tham gia</h2>
+              <button 
+                className="bg-transparent border-none text-white text-3xl cursor-pointer p-0 w-10 h-10 flex items-center justify-center rounded-full transition-colors hover:bg-white/20" 
+                onClick={() => setShowDetailModal(false)}
+              >
+                ×
+              </button>
             </div>
-            <span className="px-4 py-2 bg-amber-500 text-white rounded-full text-xs font-semibold uppercase">
-              Đang chờ
-            </span>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-500 font-medium mb-1">Ngày gửi yêu cầu:</span>
-                <span className="text-sm font-semibold text-gray-800">{request.requestDate}</span>
+
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-bold text-gray-800 m-0">{selectedRequest.studentName}</h3>
+                  {getStatusBadge(selectedRequest.status)}
+                </div>
+                <div className="text-sm text-gray-500">
+                  Email: {selectedRequest.studentEmail}
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-500 font-medium mb-1">Câu lạc bộ:</span>
-                <span className="text-sm font-semibold text-gray-800">{request.clubName}</span>
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="font-semibold text-gray-700 block mb-2">Mã sinh viên:</label>
+                    <p className="text-gray-800 m-0">{selectedRequest.studentId || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-gray-700 block mb-2">Số điện thoại:</label>
+                    <p className="text-gray-800 m-0">{selectedRequest.phone || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-gray-700 block mb-2">Chuyên ngành:</label>
+                    <p className="text-gray-800 m-0">{selectedRequest.major || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-gray-700 block mb-2">Ngày gửi yêu cầu:</label>
+                    <p className="text-gray-800 m-0">{new Date(selectedRequest.requestDate).toLocaleDateString('vi-VN')}</p>
+                  </div>
+                  {selectedRequest.startDate && selectedRequest.endDate && (
+                    <>
+                      <div>
+                        <label className="font-semibold text-gray-700 block mb-2">Từ ngày:</label>
+                        <p className="text-gray-800 m-0">{new Date(selectedRequest.startDate).toLocaleDateString('vi-VN')}</p>
+                      </div>
+                      <div>
+                        <label className="font-semibold text-gray-700 block mb-2">Đến ngày:</label>
+                        <p className="text-gray-800 m-0">{new Date(selectedRequest.endDate).toLocaleDateString('vi-VN')}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {selectedRequest.reason && (
+                  <div>
+                    <label className="font-semibold text-gray-700 block mb-2">Lý do gia nhập:</label>
+                    <p className="text-gray-800 leading-relaxed m-0 bg-gray-50 p-4 rounded-lg">{selectedRequest.reason}</p>
+                  </div>
+                )}
+
+                {selectedRequest.message && (
+                  <div>
+                    <label className="font-semibold text-gray-700 block mb-2">Tin nhắn:</label>
+                    <p className="text-gray-800 leading-relaxed m-0 bg-gray-50 p-4 rounded-lg italic">{selectedRequest.message}</p>
+                  </div>
+                )}
               </div>
-              {request.studentId && (
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500 font-medium mb-1">Mã sinh viên:</span>
-                  <span className="text-sm font-semibold text-gray-800">{request.studentId}</span>
-                </div>
-              )}
-              {request.phone && (
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500 font-medium mb-1">Số điện thoại:</span>
-                  <span className="text-sm font-semibold text-gray-800">{request.phone}</span>
-                </div>
-              )}
-              {request.major && (
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500 font-medium mb-1">Chuyên ngành:</span>
-                  <span className="text-sm font-semibold text-gray-800">{request.major}</span>
-                </div>
-              )}
-              {request.startDate && request.endDate && (
-                <div className="flex flex-col md:col-span-2">
-                  <span className="text-xs text-gray-500 font-medium mb-1">Thời gian tham gia:</span>
-                  <span className="text-sm font-semibold text-gray-800">
-                    {request.startDate} - {request.endDate}
-                  </span>
+
+              {selectedRequest.status === 'pending' && (
+                <div className="flex gap-4 justify-end mt-8 pt-5 border-t-2 border-gray-100">
+                  <button
+                    onClick={() => {
+                      onReject(selectedRequest.id);
+                      setShowDetailModal(false);
+                    }}
+                    className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-red-500 text-white hover:bg-red-600 shadow-lg hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    Từ chối
+                  </button>
+                  <button
+                    onClick={() => {
+                      onApprove(selectedRequest.id);
+                      setShowDetailModal(false);
+                    }}
+                    className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    Chấp nhận
+                  </button>
                 </div>
               )}
             </div>
-            
-            {request.reason && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
-                <strong className="text-sm text-gray-700 block mb-2">Lý do gia nhập:</strong>
-                <p className="text-sm text-gray-600 m-0">{request.reason}</p>
-              </div>
-            )}
-            {request.message && (
-              <p className="mt-4 text-sm text-gray-600 italic">{request.message}</p>
-            )}
-          </div>
-          
-          <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end border-t border-gray-200">
-            <button
-              onClick={() => onReject(request.id)}
-              className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-all shadow-md hover:-translate-y-0.5 hover:shadow-lg"
-            >
-              ❌ Từ chối
-            </button>
-            <button
-              onClick={() => onApprove(request.id)}
-              className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-all shadow-md hover:-translate-y-0.5 hover:shadow-lg"
-            >
-              ✅ Chấp nhận
-            </button>
           </div>
         </div>
-      ))}
-    </div>
+      )}
+    </>
   );
 };
 
