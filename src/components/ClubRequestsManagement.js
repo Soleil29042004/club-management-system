@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
-import { getNextClubId } from '../data/mockData';
+import { getNextClubId, initializeDemoData } from '../data/mockData';
 
 const ClubRequestsManagement = ({ clubs, setClubs }) => {
   const { showToast } = useToast();
@@ -11,9 +11,16 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
 
   // Load club requests from localStorage
   useEffect(() => {
+    // Đảm bảo dữ liệu được khởi tạo trước khi load
+    initializeDemoData();
+    
     const savedRequests = localStorage.getItem('clubRequests');
     if (savedRequests) {
-      setClubRequests(JSON.parse(savedRequests));
+      try {
+        setClubRequests(JSON.parse(savedRequests));
+      } catch (e) {
+        console.error('Error parsing clubRequests:', e);
+      }
     }
   }, []);
 
@@ -48,13 +55,17 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
       // Add club to clubs list
       setClubs([...clubs, newClub]);
 
-      // Update request status
-      const updatedRequests = clubRequests.map(req =>
-        req.id === request.id
-          ? { ...req, status: 'approved', approvedDate: new Date().toISOString().split('T')[0] }
-          : req
-      );
-      setClubRequests(updatedRequests);
+      // Update request status - sử dụng functional update
+      setClubRequests(prevRequests => {
+        const updated = prevRequests.map(req =>
+          req.id === request.id
+            ? { ...req, status: 'approved', approvedDate: new Date().toISOString().split('T')[0] }
+            : req
+        );
+        // Lưu vào localStorage ngay lập tức
+        localStorage.setItem('clubRequests', JSON.stringify(updated));
+        return updated;
+      });
 
       setShowDetailModal(false);
       setSelectedRequest(null);
@@ -65,17 +76,22 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
   const handleReject = (request) => {
     const reason = window.prompt('Vui lòng nhập lý do từ chối (tùy chọn):');
     
-    const updatedRequests = clubRequests.map(req =>
-      req.id === request.id
-        ? { 
-            ...req, 
-            status: 'rejected', 
-            rejectedDate: new Date().toISOString().split('T')[0],
-            rejectionReason: reason || ''
-          }
-        : req
-    );
-    setClubRequests(updatedRequests);
+    // Update request status - sử dụng functional update
+    setClubRequests(prevRequests => {
+      const updated = prevRequests.map(req =>
+        req.id === request.id
+          ? { 
+              ...req, 
+              status: 'rejected', 
+              rejectedDate: new Date().toISOString().split('T')[0],
+              rejectionReason: reason || ''
+            }
+          : req
+      );
+      // Lưu vào localStorage ngay lập tức
+      localStorage.setItem('clubRequests', JSON.stringify(updated));
+      return updated;
+    });
 
     setShowDetailModal(false);
     setSelectedRequest(null);
@@ -192,7 +208,7 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredRequests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={`${request.id}-${request.status}`} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-semibold text-gray-800">{request.name}</div>
                       <div className="text-sm text-gray-500 mt-1">{request.email}</div>
@@ -213,12 +229,12 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
                       {getStatusBadge(request.status)}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-start gap-2">
                         <button
                           onClick={() => handleViewDetails(request)}
                           className="px-4 py-2 bg-fpt-blue text-white rounded-lg text-sm font-medium hover:bg-fpt-blue-light transition-all"
                         >
-                          Xem chi tiết
+                          Chi tiết
                         </button>
                         {request.status === 'pending' && (
                           <>
@@ -226,13 +242,13 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
                               onClick={() => handleApprove(request)}
                               className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all"
                             >
-                              Duyệt
+                              ✅ Duyệt
                             </button>
                             <button
                               onClick={() => handleReject(request)}
                               className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all"
                             >
-                              Từ chối
+                              ❌ Từ chối
                             </button>
                           </>
                         )}
