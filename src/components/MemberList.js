@@ -93,14 +93,13 @@ const MemberList = ({ members, clubs, onEdit, onDelete }) => {
               <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold">Tên thành viên</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Mã sinh viên</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Số điện thoại</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Câu lạc bộ</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Vai trò</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Chuyên ngành</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Ngày tham gia</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Trạng thái</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold">Thao tác</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Mã sinh viên</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Số điện thoại</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Câu lạc bộ</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Vai trò</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Chuyên ngành</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Trạng thái</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold whitespace-nowrap">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -110,44 +109,41 @@ const MemberList = ({ members, clubs, onEdit, onDelete }) => {
                       <div className="font-semibold text-gray-800">{member.fullName}</div>
                       <div className="text-sm text-gray-500 mt-1">{member.email}</div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-semibold text-fpt-blue">{member.studentId}</span>
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
                       {member.phone || '-'}
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold whitespace-nowrap inline-block">
                         {member.clubName}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-semibold uppercase ${getRoleBadgeClass(member.role)}`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-semibold uppercase whitespace-nowrap ${getRoleBadgeClass(member.role)}`}>
                         {member.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
                       {member.major || '-'}
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {new Date(member.joinDate).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase text-white ${getStatusBadgeClass(member.status)}`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase text-white whitespace-nowrap inline-block ${getStatusBadgeClass(member.status)}`}>
                         {member.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center justify-start gap-2">
                         <button 
                           onClick={() => onEdit(member)} 
-                          className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all"
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all whitespace-nowrap"
                         >
                           ✅ Sửa
                         </button>
                         <button 
                           onClick={() => onDelete(member.id)} 
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all"
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap"
                         >
                           ❌ Xóa
                         </button>
