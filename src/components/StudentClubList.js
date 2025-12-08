@@ -68,6 +68,37 @@ const StudentClubList = ({
                 
                 <div className="p-5">
                   <p className="text-gray-600 mb-5 leading-relaxed min-h-[50px]">{club.description}</p>
+                  
+                  {/* Phí tham gia và Thời hạn - Highlight */}
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-300 mb-5">
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-gray-700 font-medium text-sm flex items-center gap-2">
+                        <span>Phí tham gia:</span>
+                      </span>
+                      <span className="text-fpt-blue font-bold text-lg">
+                        {club.participationFee ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-gray-700 font-medium text-sm flex items-center gap-2">
+                        <span>Thời hạn:</span>
+                      </span>
+                      <span className="text-fpt-blue font-bold text-lg">
+                        {club.membershipDuration ? `${club.membershipDuration} tháng` : '6 tháng'}
+                      </span>
+                    </div>
+                    {club.membershipStartDate && club.membershipEndDate && (
+                      <div className="mt-2 pt-2 border-t border-green-300">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 font-medium text-xs">Khoảng thời gian:</span>
+                          <span className="text-gray-700 font-semibold text-sm">
+                            {new Date(club.membershipStartDate).toLocaleDateString('vi-VN')} - {new Date(club.membershipEndDate).toLocaleDateString('vi-VN')}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex flex-col gap-2.5 mb-5">
                     <div className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-gray-500 font-medium">Danh mục:</span>
@@ -81,15 +112,9 @@ const StudentClubList = ({
                       <span className="text-gray-500 font-medium">Số thành viên:</span>
                       <span className="text-gray-800 font-semibold">{club.memberCount}</span>
                     </div>
-                    <div className="flex justify-between py-2 border-b border-gray-100">
+                    <div className="flex justify-between py-2">
                       <span className="text-gray-500 font-medium">Địa điểm:</span>
                       <span className="text-gray-800 font-semibold">{club.location}</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="text-gray-500 font-medium">Phí tham gia:</span>
-                      <span className="text-gray-800 font-semibold">
-                        {club.participationFee ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}
-                      </span>
                     </div>
                   </div>
                 </div>
