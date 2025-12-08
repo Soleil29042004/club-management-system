@@ -162,7 +162,7 @@ export const mockMembers = [
     clubName: "Club Tiếng Anh",
     role: "Thành viên",
     joinDate: "2019-10-15",
-    status: "Hoạt động",
+    status: "Hết hạn",
     major: "Kỹ thuật phần mềm"
   },
   {
@@ -441,7 +441,6 @@ export const initializeDemoData = () => {
   // Luôn reset joinRequests từ mockData để đảm bảo dữ liệu demo mới nhất
   // Merge với requests hiện có (giữ lại các requests mới mà user đã tạo)
   const existingRequests = JSON.parse(localStorage.getItem('joinRequests') || '[]');
-  const existingRequestIds = existingRequests.map(r => r.id);
   const mockRequestIds = mockJoinRequests.map(r => r.id);
   
   // Giữ lại các requests mới mà user đã tạo (không có trong mockData)

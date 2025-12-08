@@ -2,11 +2,59 @@ import React from 'react';
 import { memberRoles } from '../data/mockData';
 
 const MembersList = ({ members, club, onUpdateRole, onDeleteMember }) => {
-  const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('vi-VN');
+  const parseDate = (value) => {
+    if (!value) return null;
+    if (typeof value === 'string' && value.includes('/')) {
+      const [d, m, y] = value.split('/').map(Number);
+      if (!Number.isNaN(d) && !Number.isNaN(m) && !Number.isNaN(y)) {
+        const parsed = new Date(y, m - 1, d);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+    }
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? null : value;
+    }
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  const formatDate = (date) => {
+    const d = date instanceof Date ? date : parseDate(date);
+    if (!d) return '-';
+    return d.toLocaleDateString('vi-VN');
+  };
 
   const getMembershipInfo = (member) => {
+    const statusText = member.status ? member.status.toLowerCase() : '';
+
+    // Ưu tiên trạng thái khai báo sẵn
+    if (statusText === 'hết hạn') {
+      return {
+        expiryDate: formatDate(member.expiryDate || null),
+        status: 'Hết hạn',
+        badgeClass: 'bg-red-100 text-red-700'
+      };
+    }
+    if (statusText === 'hoạt động') {
+      return {
+        expiryDate: formatDate(member.expiryDate || null),
+        status: 'Còn hiệu lực',
+        badgeClass: 'bg-green-100 text-green-700'
+      };
+    }
+
     const durationMonths = club?.membershipDuration || 6;
-    const join = new Date(member.joinDate);
+    const join = parseDate(member.joinDate);
+
+    // Nếu không parse được ngày tham gia, hiển thị còn hiệu lực để tránh crash UI
+    if (!join) {
+      return {
+        expiryDate: '-',
+        status: 'Còn hiệu lực',
+        badgeClass: 'bg-green-100 text-green-700'
+      };
+    }
+
     const expiry = new Date(join);
     expiry.setMonth(expiry.getMonth() + durationMonths);
 
@@ -14,6 +62,7 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember }) => {
     today.setHours(0, 0, 0, 0);
 
     const diffDays = Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
+
     let status = 'Còn hiệu lực';
     let badgeClass = 'bg-green-100 text-green-700';
 
@@ -80,10 +129,12 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember }) => {
                       <span className="text-sm font-semibold text-fpt-blue">{member.studentId}</span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
-                      {member.phone || '-'}
+                      <span className="whitespace-nowrap">{member.phone || '-'}</span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
-                      {member.major || '-'}
+                      <span className="whitespace-nowrap truncate block max-w-[180px]">
+                        {member.major || '-'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
                       {formatDate(member.joinDate)}
