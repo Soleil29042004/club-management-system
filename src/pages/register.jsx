@@ -150,7 +150,7 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               🎓
             </div>
           </div>
-          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">FPT University</h1>
+          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">ClubHub</h1>
           <p className="text-gray-600 text-[15px] font-medium">Đăng ký tài khoản mới</p>
         </div>
 
@@ -199,30 +199,6 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
                 <span>⚠️</span>
                 {errors.email}
-              </span>
-            )}
-          </div>
-
-          {/* Role Selection - Hidden, default is student */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="role" className="text-sm font-semibold text-gray-800">Vai trò *</label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className={`px-4 py-3.5 border-2 rounded-xl text-[15px] transition-all font-sans bg-gray-50 cursor-pointer ${
-                errors.role 
-                  ? 'border-red-500' 
-                  : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
-              }`}
-            >
-              <option value="student">Sinh viên</option>
-            </select>
-            {errors.role && (
-              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
-                <span>⚠️</span>
-                {errors.role}
               </span>
             )}
           </div>

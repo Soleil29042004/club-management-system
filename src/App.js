@@ -129,7 +129,7 @@ function AppContent() {
               <div>
                 <h1 className="text-xl font-bold m-0 flex items-center gap-2">
                   <span className="text-2xl">🎓</span>
-                  <span className="whitespace-nowrap">FPT University</span>
+                  <span className="whitespace-nowrap">ClubHub</span>
                 </h1>
                 <p className="text-xs text-white/80 mt-1 whitespace-nowrap">Hệ thống quản lý CLB</p>
               </div>
@@ -213,7 +213,7 @@ function AppContent() {
             {renderStudentPage()}
           </main>
           <footer className="bg-white border-t border-gray-200 text-center py-4 px-5">
-            <p className="m-0 text-sm text-gray-600">© 2024 FPT University - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
+            <p className="m-0 text-sm text-gray-600">© 2024 ClubHub - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
           </footer>
         </div>
       </div>
@@ -259,7 +259,7 @@ function AppContent() {
               <div>
                 <h1 className="text-xl font-bold m-0 flex items-center gap-2">
                   <span className="text-2xl">🎓</span>
-                  <span className="whitespace-nowrap">FPT University</span>
+                  <span className="whitespace-nowrap">ClubHub</span>
                 </h1>
                 <p className="text-xs text-white/80 mt-1 whitespace-nowrap">Hệ thống quản lý CLB</p>
               </div>
@@ -373,7 +373,7 @@ function AppContent() {
             {renderLeaderPage()}
           </main>
           <footer className="bg-white border-t border-gray-200 text-center py-4 px-5">
-            <p className="m-0 text-sm text-gray-600">© 2024 FPT University - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
+            <p className="m-0 text-sm text-gray-600">© 2024 ClubHub - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
           </footer>
         </div>
       </div>
@@ -400,7 +400,7 @@ function AppContent() {
             <div>
               <h1 className="text-xl font-bold m-0 flex items-center gap-2">
                 <span className="text-2xl">🎓</span>
-                <span className="whitespace-nowrap">FPT University</span>
+                <span className="whitespace-nowrap">ClubHub</span>
               </h1>
               <p className="text-xs text-white/80 mt-1 whitespace-nowrap">Hệ thống quản lý CLB</p>
             </div>
@@ -514,7 +514,7 @@ function AppContent() {
           {renderPage()}
         </main>
         <footer className="bg-white border-t border-gray-200 text-center py-4 px-5">
-          <p className="m-0 text-sm text-gray-600">© 2024 FPT University - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
+          <p className="m-0 text-sm text-gray-600">© 2024 ClubHub - Hệ thống quản lý Câu lạc bộ Sinh viên</p>
         </footer>
       </div>
     </div>
