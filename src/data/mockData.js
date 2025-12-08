@@ -87,6 +87,28 @@ export const mockClubs = [
     location: "Phòng C102",
     participationFee: 75000,
     activities: []
+  },
+  {
+    id: 5,
+    name: "Club Âm nhạc",
+    description: "Câu lạc bộ dành cho những người yêu thích âm nhạc, học chơi nhạc cụ và biểu diễn",
+    category: "Nghệ thuật",
+    foundedDate: "2022-02-14",
+    president: "Hoàng Văn Em",
+    memberCount: 52,
+    status: "Hoạt động",
+    email: "music@club.com",
+    location: "Phòng D401",
+    participationFee: 60000,
+    activities: [
+      {
+        id: 1,
+        title: "Buổi biểu diễn tháng 12",
+        description: "Chương trình biểu diễn âm nhạc của các thành viên",
+        date: "2024-12-25",
+        location: "Hội trường lớn"
+      }
+    ]
   }
 ];
 
@@ -205,248 +227,273 @@ export const statusOptions = [
   "Ngừng hoạt động"
 ];
 
-// Mock data cho join requests - để test chức năng duyệt request của leader
+// Demo data cho join requests (yêu cầu tham gia club)
 export const mockJoinRequests = [
   {
     id: 1,
     clubId: 1,
     clubName: "Club Lập trình",
-    studentEmail: "student1@student.com",
-    studentName: "Nguyễn Văn Học",
-    phone: "0911111111",
+    studentEmail: "student@gmail.com",
+    studentName: "Nguyễn Văn A",
+    phone: "0912345678",
     studentId: "SE150100",
     major: "Kỹ thuật phần mềm",
-    reason: "Tôi muốn học hỏi và phát triển kỹ năng lập trình, đặc biệt là về React và Node.js",
+    reason: "Em muốn học hỏi và phát triển kỹ năng lập trình",
     startDate: "2024-12-01",
-    endDate: "2025-06-30",
-    status: "pending",
+    endDate: "2025-06-01",
+    status: "approved",
     requestDate: "2024-11-25",
     message: "Yêu cầu tham gia Club Lập trình"
   },
   {
     id: 2,
-    clubId: 1,
-    clubName: "Club Lập trình",
-    studentEmail: "student2@student.com",
-    studentName: "Trần Thị Code",
-    phone: "0922222222",
-    studentId: "SE150101",
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    studentEmail: "student@gmail.com",
+    studentName: "Nguyễn Văn A",
+    phone: "0912345678",
+    studentId: "SE150100",
     major: "Kỹ thuật phần mềm",
-    reason: "Đam mê lập trình và muốn tham gia các dự án thực tế",
+    reason: "Em muốn cải thiện khả năng giao tiếp tiếng Anh",
     startDate: "2024-12-01",
-    endDate: "2025-06-30",
-    status: "pending",
-    requestDate: "2024-11-26",
-    message: "Yêu cầu tham gia Club Lập trình"
+    endDate: "2025-06-01",
+    status: "approved",
+    requestDate: "2024-11-20",
+    message: "Yêu cầu tham gia Club Tiếng Anh"
   },
   {
     id: 3,
+    clubId: 3,
+    clubName: "Club Thể thao",
+    studentEmail: "student@gmail.com",
+    studentName: "Nguyễn Văn A",
+    phone: "0912345678",
+    studentId: "SE150100",
+    major: "Kỹ thuật phần mềm",
+    reason: "Em yêu thích thể thao và muốn rèn luyện sức khỏe",
+    startDate: "2024-12-01",
+    endDate: "2025-06-01",
+    status: "approved",
+    requestDate: "2024-11-15",
+    message: "Yêu cầu tham gia Club Thể thao"
+  },
+  {
+    id: 4,
+    clubId: 4,
+    clubName: "Club Nhiếp ảnh",
+    studentEmail: "student@gmail.com",
+    studentName: "Nguyễn Văn A",
+    phone: "0912345678",
+    studentId: "SE150100",
+    major: "Kỹ thuật phần mềm",
+    reason: "Em đam mê nhiếp ảnh và muốn học hỏi thêm",
+    startDate: "2024-12-01",
+    endDate: "2025-06-01",
+    status: "rejected",
+    requestDate: "2024-11-10",
+    message: "Yêu cầu tham gia Club Nhiếp ảnh"
+  },
+  {
+    id: 5,
+    clubId: 1,
+    clubName: "Club Lập trình",
+    studentEmail: "student2@example.com",
+    studentName: "Lê Thị Mai",
+    phone: "0923456789",
+    studentId: "SE150200",
+    major: "Kỹ thuật phần mềm",
+    reason: "Em muốn tham gia các hoạt động lập trình và hackathon",
+    startDate: "2024-12-01",
+    endDate: "2025-06-01",
+    status: "pending",
+    requestDate: "2024-11-28",
+    message: "Yêu cầu tham gia Club Lập trình"
+  },
+  {
+    id: 6,
     clubId: 2,
     clubName: "Club Tiếng Anh",
-    studentEmail: "student3@student.com",
-    studentName: "Lê Văn English",
-    phone: "0933333333",
-    studentId: "BA150200",
+    studentEmail: "student3@example.com",
+    studentName: "Trần Văn Nam",
+    phone: "0934567890",
+    studentId: "BA150300",
     major: "Quản trị kinh doanh",
-    reason: "Muốn cải thiện khả năng giao tiếp tiếng Anh để phục vụ công việc sau này",
+    reason: "Em cần cải thiện tiếng Anh để phục vụ công việc tương lai",
     startDate: "2024-12-01",
-    endDate: "2025-06-30",
+    endDate: "2025-06-01",
     status: "pending",
     requestDate: "2024-11-27",
     message: "Yêu cầu tham gia Club Tiếng Anh"
   },
   {
-    id: 4,
-    clubId: 2,
-    clubName: "Club Tiếng Anh",
-    studentEmail: "student4@student.com",
-    studentName: "Phạm Thị Speaking",
-    phone: "0944444444",
-    studentId: "SE150201",
-    major: "Kỹ thuật phần mềm",
-    reason: "Cần luyện tập tiếng Anh để đọc tài liệu kỹ thuật",
-    startDate: "2024-12-01",
-    endDate: "2025-06-30",
-    status: "pending",
-    requestDate: "2024-11-28",
-    message: "Yêu cầu tham gia Club Tiếng Anh"
-  },
-  {
-    id: 5,
-    clubId: 3,
-    clubName: "Club Thể thao",
-    studentEmail: "student5@student.com",
-    studentName: "Hoàng Văn Sport",
-    phone: "0955555555",
-    studentId: "SP150300",
-    major: "Giáo dục thể chất",
-    reason: "Yêu thích bóng đá và muốn tham gia các giải đấu",
-    startDate: "2024-12-01",
-    endDate: "2025-06-30",
-    status: "pending",
-    requestDate: "2024-11-29",
-    message: "Yêu cầu tham gia Club Thể thao"
-  },
-  {
-    id: 6,
-    clubId: 1,
-    clubName: "Club Lập trình",
-    studentEmail: "student6@student.com",
-    studentName: "Vũ Thị Developer",
-    phone: "0966666666",
-    studentId: "SE150102",
-    major: "Kỹ thuật phần mềm",
-    reason: "Muốn học thêm về backend development",
-    startDate: "2024-12-01",
-    endDate: "2025-06-30",
-    status: "approved",
-    requestDate: "2024-11-20",
-    message: "Yêu cầu tham gia Club Lập trình"
-  },
-  {
     id: 7,
-    clubId: 2,
-    clubName: "Club Tiếng Anh",
-    studentEmail: "student7@student.com",
-    studentName: "Đỗ Văn IELTS",
-    phone: "0977777777",
-    studentId: "BA150201",
-    major: "Quản trị kinh doanh",
-    reason: "Chuẩn bị thi IELTS",
-    startDate: "2024-12-01",
-    endDate: "2025-06-30",
-    status: "approved",
-    requestDate: "2024-11-21",
-    message: "Yêu cầu tham gia Club Tiếng Anh"
-  },
-  {
-    id: 8,
-    clubId: 3,
-    clubName: "Club Thể thao",
-    studentEmail: "student8@student.com",
-    studentName: "Bùi Thị Fitness",
-    phone: "0988888888",
-    studentId: "SP150301",
-    major: "Giáo dục thể chất",
-    reason: "Muốn rèn luyện sức khỏe",
-    startDate: "2024-12-01",
-    endDate: "2025-06-30",
-    status: "approved",
-    requestDate: "2024-11-22",
-    message: "Yêu cầu tham gia Club Thể thao"
-  },
-  {
-    id: 9,
-    clubId: 4,
-    clubName: "Club Nhiếp ảnh",
-    studentEmail: "student9@student.com",
-    studentName: "Ngô Văn Photo",
-    phone: "0999999999",
-    studentId: "GD150400",
-    major: "Thiết kế đồ họa",
-    reason: "Đam mê nhiếp ảnh và muốn học hỏi kỹ thuật chụp ảnh",
-    startDate: "2024-12-01",
-    endDate: "2025-06-30",
-    status: "approved",
-    requestDate: "2024-11-23",
-    message: "Yêu cầu tham gia Club Nhiếp ảnh"
-  },
-  {
-    id: 10,
-    clubId: 1,
-    clubName: "Club Lập trình",
-    studentEmail: "student10@student.com",
-    studentName: "Lý Thị Rejected",
-    phone: "0900000000",
-    studentId: "SE150103",
-    major: "Kỹ thuật phần mềm",
-    reason: "Muốn tham gia",
-    startDate: "2024-12-01",
-    endDate: "2025-06-30",
-    status: "rejected",
-    requestDate: "2024-11-15",
-    message: "Yêu cầu tham gia Club Lập trình"
-  },
-  {
-    id: 11,
     clubId: 4,
     clubName: "Club Nhiếp ảnh",
     studentEmail: "student@gmail.com",
     studentName: "Nguyễn Văn A",
-    phone: "0911111111",
-    studentId: "SE150200",
+    phone: "0912345678",
+    studentId: "SE150100",
     major: "Kỹ thuật phần mềm",
-    reason: "Muốn học nhiếp ảnh để bổ trợ cho công việc thiết kế",
+    reason: "Em muốn học hỏi kỹ thuật chụp ảnh chuyên nghiệp",
     startDate: "2024-12-01",
-    endDate: "2025-06-30",
+    endDate: "2025-06-01",
     status: "approved",
-    requestDate: "2024-11-24",
+    requestDate: "2024-11-28",
     message: "Yêu cầu tham gia Club Nhiếp ảnh"
   }
 ];
 
-// Mock data cho payments - để test chức năng trả phí của student
+// Demo data cho payments (thanh toán phí)
 export const mockPayments = [
   {
     id: 1,
-    clubId: 1,
-    clubName: "Club Lập trình",
-    studentEmail: "student6@student.com",
-    studentName: "Vũ Thị Developer",
-    amount: 50000,
-    note: "Nộp phí tham gia Club Lập trình",
-    paymentDate: "2024-11-25",
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    studentEmail: "student@gmail.com",
+    studentName: "Nguyễn Văn A",
+    amount: 30000,
+    note: "Nộp phí tham gia Club Tiếng Anh",
+    paymentDate: "2024-11-22",
     status: "completed"
   },
   {
     id: 2,
-    clubId: 2,
-    clubName: "Club Tiếng Anh",
-    studentEmail: "student7@student.com",
-    studentName: "Đỗ Văn IELTS",
-    amount: 30000,
-    note: "Nộp phí tham gia Club Tiếng Anh",
-    paymentDate: "2024-11-26",
+    clubId: 3,
+    clubName: "Club Thể thao",
+    studentEmail: "student@gmail.com",
+    studentName: "Nguyễn Văn A",
+    amount: 100000,
+    note: "Nộp phí tham gia Club Thể thao",
+    paymentDate: "2024-11-18",
     status: "completed"
   }
-  // Lưu ý: student8 và student9 đã được approved nhưng chưa nộp phí
-  // Điều này tạo ra unpaid fees để test chức năng trả phí
 ];
 
-// Hàm khởi tạo mock data vào localStorage (nếu chưa có)
-export const initializeMockData = () => {
-  // Khởi tạo join requests nếu chưa có hoặc rỗng
-  const existingRequests = localStorage.getItem('joinRequests');
-  if (!existingRequests || existingRequests === '[]' || JSON.parse(existingRequests).length === 0) {
-    localStorage.setItem('joinRequests', JSON.stringify(mockJoinRequests));
-  } else {
-    // Merge mock data với dữ liệu hiện có (tránh trùng lặp)
-    const currentRequests = JSON.parse(existingRequests);
-    const currentRequestIds = new Set(currentRequests.map(r => r.id));
-    const newRequests = mockJoinRequests.filter(r => !currentRequestIds.has(r.id));
-    if (newRequests.length > 0) {
-      localStorage.setItem('joinRequests', JSON.stringify([...currentRequests, ...newRequests]));
-    }
+// Demo data cho club registration requests (yêu cầu đăng ký mở club)
+export const mockClubRequests = [
+  {
+    id: 1,
+    name: "Club Khiêu vũ",
+    description: "Câu lạc bộ dành cho những người yêu thích khiêu vũ và nhảy múa. Tổ chức các lớp học khiêu vũ hiện đại, Latin, và các buổi biểu diễn.",
+    category: "Nghệ thuật",
+    email: "dance@club.com",
+    location: "Phòng D301",
+    participationFee: 80000,
+    applicantName: "Nguyễn Thị Lan",
+    applicantEmail: "lannguyen@student.com",
+    reason: "Em muốn tạo một môi trường để các bạn sinh viên có thể học và thực hành khiêu vũ, giúp giải tỏa căng thẳng sau giờ học.",
+    goals: "Tổ chức các lớp học khiêu vũ hàng tuần, tham gia các cuộc thi khiêu vũ trong và ngoài trường, tổ chức các buổi biểu diễn định kỳ.",
+    requestDate: "2024-11-20",
+    status: "pending"
+  },
+  {
+    id: 2,
+    name: "Club Robotics",
+    description: "Câu lạc bộ nghiên cứu và phát triển robot, IoT, và các công nghệ tự động hóa. Tổ chức các workshop và cuộc thi robot.",
+    category: "Công nghệ",
+    email: "robotics@club.com",
+    location: "Phòng Lab A",
+    participationFee: 120000,
+    applicantName: "Phạm Văn Hùng",
+    applicantEmail: "hungpham@student.com",
+    reason: "Em muốn tạo một cộng đồng cho những người đam mê robot và tự động hóa, nơi mọi người có thể học hỏi và phát triển dự án.",
+    goals: "Tổ chức các workshop về lập trình robot, tham gia các cuộc thi robot quốc gia và quốc tế, phát triển các dự án IoT thực tế.",
+    requestDate: "2024-11-15",
+    status: "approved",
+    approvedDate: "2024-11-18"
+  },
+  {
+    id: 3,
+    name: "Club Đọc sách",
+    description: "Câu lạc bộ đọc sách và thảo luận về các tác phẩm văn học, khoa học, và triết học. Tổ chức các buổi thảo luận sách hàng tuần.",
+    category: "Văn hóa",
+    email: "reading@club.com",
+    location: "Thư viện - Phòng đọc",
+    participationFee: 0,
+    applicantName: "Lê Thị Hoa",
+    applicantEmail: "hoale@student.com",
+    reason: "Em muốn tạo một không gian để các bạn sinh viên có thể chia sẻ và thảo luận về sách, phát triển văn hóa đọc.",
+    goals: "Tổ chức các buổi thảo luận sách hàng tuần, mời các tác giả đến chia sẻ, tổ chức các cuộc thi review sách.",
+    requestDate: "2024-11-10",
+    status: "rejected",
+    rejectedDate: "2024-11-12",
+    rejectionReason: "Đã có quá nhiều câu lạc bộ văn hóa trong hệ thống. Vui lòng tham gia các câu lạc bộ hiện có."
+  },
+  {
+    id: 4,
+    name: "Club Khởi nghiệp",
+    description: "Câu lạc bộ dành cho những người có ý tưởng khởi nghiệp. Tổ chức các workshop về kinh doanh, pitch ý tưởng, và kết nối với các nhà đầu tư.",
+    category: "Xã hội",
+    email: "startup@club.com",
+    location: "Phòng E205",
+    participationFee: 50000,
+    applicantName: "Vũ Văn Đức",
+    applicantEmail: "ducvu@student.com",
+    reason: "Em muốn tạo một môi trường để các bạn sinh viên có thể học hỏi về khởi nghiệp và phát triển các dự án kinh doanh của mình.",
+    goals: "Tổ chức các workshop về khởi nghiệp, kết nối với các mentor và nhà đầu tư, hỗ trợ các dự án khởi nghiệp của sinh viên.",
+    requestDate: "2024-11-25",
+    status: "pending"
   }
-  
-  // Khởi tạo payments nếu chưa có hoặc rỗng
-  const existingPayments = localStorage.getItem('payments');
-  if (!existingPayments || existingPayments === '[]' || JSON.parse(existingPayments).length === 0) {
-    localStorage.setItem('payments', JSON.stringify(mockPayments));
-  } else {
-    // Merge mock data với dữ liệu hiện có (tránh trùng lặp)
-    const currentPayments = JSON.parse(existingPayments);
-    const currentPaymentIds = new Set(currentPayments.map(p => p.id));
-    const newPayments = mockPayments.filter(p => !currentPaymentIds.has(p.id));
-    if (newPayments.length > 0) {
-      localStorage.setItem('payments', JSON.stringify([...currentPayments, ...newPayments]));
-    }
-  }
-};
+];
 
-// Hàm reset mock data (xóa và load lại từ đầu)
-export const resetMockData = () => {
-  localStorage.setItem('joinRequests', JSON.stringify(mockJoinRequests));
-  localStorage.setItem('payments', JSON.stringify(mockPayments));
+// Hàm khởi tạo dữ liệu demo vào localStorage
+export const initializeDemoData = () => {
+  // Luôn reset joinRequests từ mockData để đảm bảo dữ liệu demo mới nhất
+  // Merge với requests hiện có (giữ lại các requests mới mà user đã tạo)
+  const existingRequests = JSON.parse(localStorage.getItem('joinRequests') || '[]');
+  const existingRequestIds = existingRequests.map(r => r.id);
+  const mockRequestIds = mockJoinRequests.map(r => r.id);
+  
+  // Giữ lại các requests mới mà user đã tạo (không có trong mockData)
+  const userCreatedRequests = existingRequests.filter(r => !mockRequestIds.includes(r.id));
+  
+  // Kết hợp: mockData requests + user created requests
+  localStorage.setItem('joinRequests', JSON.stringify([...mockJoinRequests, ...userCreatedRequests]));
+  
+  // Reset payments: chỉ giữ payments từ mockData để đảm bảo demo đúng
+  // Merge với payments mới mà user đã tạo (có id >= 1000 để tránh conflict với mockData)
+  const existingPayments = JSON.parse(localStorage.getItem('payments') || '[]');
+  // Giữ lại các payments mới mà user đã tạo (id >= 1000)
+  const userCreatedPayments = existingPayments.filter(p => p.id >= 1000);
+  // Kết hợp: mockPayments + user created payments
+  localStorage.setItem('payments', JSON.stringify([...mockPayments, ...userCreatedPayments]));
+  
+  // Merge clubRequests: giữ lại requests cũ và thêm requests mới từ mockData nếu chưa có
+  const existingClubRequests = JSON.parse(localStorage.getItem('clubRequests') || '[]');
+  const existingClubRequestIds = existingClubRequests.map(r => r.id);
+  const newClubRequests = mockClubRequests.filter(r => !existingClubRequestIds.includes(r.id));
+  localStorage.setItem('clubRequests', JSON.stringify([...existingClubRequests, ...newClubRequests]));
+  
+  // Khởi tạo registeredUsers nếu chưa có, hoặc merge thêm users mới
+  const existingUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+  const existingUserEmails = existingUsers.map(u => u.email);
+  const demoUsers = [
+    {
+      email: "student2@example.com",
+      password: "123456",
+      name: "Lê Thị Mai",
+      role: "student"
+    },
+    {
+      email: "student3@example.com",
+      password: "123456",
+      name: "Trần Văn Nam",
+      role: "student"
+    },
+    {
+      email: "lannguyen@student.com",
+      password: "123456",
+      name: "Nguyễn Thị Lan",
+      role: "student"
+    },
+    {
+      email: "hungpham@student.com",
+      password: "123456",
+      name: "Phạm Văn Hùng",
+      role: "student"
+    }
+  ];
+  const newUsers = demoUsers.filter(u => !existingUserEmails.includes(u.email));
+  localStorage.setItem('registeredUsers', JSON.stringify([...existingUsers, ...newUsers]));
 };
 

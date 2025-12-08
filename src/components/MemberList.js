@@ -81,71 +81,79 @@ const MemberList = ({ members, clubs, onEdit, onDelete }) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md overflow-x-auto">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
         {filteredMembers.length === 0 ? (
           <div className="text-center py-16 px-5 text-gray-500 text-lg">
+            <p className="text-6xl mb-4">👥</p>
             <p>Không tìm thấy thành viên nào</p>
           </div>
         ) : (
-          <table className="w-full border-collapse min-w-[1200px]">
-            <thead>
-              <tr className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
-                <th className="px-3 py-4 text-left font-semibold text-sm uppercase tracking-wide">MSSV</th>
-                <th className="px-3 py-4 text-left font-semibold text-sm uppercase tracking-wide">Họ và tên</th>
-                <th className="px-3 py-4 text-left font-semibold text-sm uppercase tracking-wide">Email</th>
-                <th className="px-3 py-4 text-left font-semibold text-sm uppercase tracking-wide">Số điện thoại</th>
-                <th className="px-3 py-4 text-left font-semibold text-sm uppercase tracking-wide">Câu lạc bộ</th>
-                <th className="px-3 py-4 text-left font-semibold text-sm uppercase tracking-wide">Vai trò</th>
-                <th className="px-3 py-4 text-left font-semibold text-sm uppercase tracking-wide">Chuyên ngành</th>
-                <th className="px-3 py-4 text-left font-semibold text-sm uppercase tracking-wide">Ngày tham gia</th>
-                <th className="px-3 py-4 text-left font-semibold text-sm uppercase tracking-wide">Trạng thái</th>
-                <th className="px-3 py-4 text-left font-semibold text-sm uppercase tracking-wide">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredMembers.map(member => (
-                <tr key={member.id} className="border-b border-gray-100 transition-colors hover:bg-gray-50">
-                  <td className="px-3 py-4 text-sm font-semibold text-fpt-blue">{member.studentId}</td>
-                  <td className="px-3 py-4 text-sm font-semibold text-gray-800">{member.fullName}</td>
-                  <td className="px-3 py-4 text-sm text-gray-800">{member.email}</td>
-                  <td className="px-3 py-4 text-sm text-gray-800">{member.phone}</td>
-                  <td className="px-3 py-4 text-sm">
-                    <span className="inline-block px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
-                      {member.clubName}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4 text-sm">
-                    <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-semibold uppercase ${getRoleBadgeClass(member.role)}`}>
-                      {member.role}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4 text-sm text-gray-800">{member.major}</td>
-                  <td className="px-3 py-4 text-sm text-gray-800">{new Date(member.joinDate).toLocaleDateString('vi-VN')}</td>
-                  <td className="px-3 py-4 text-sm">
-                    <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-semibold uppercase ${getStatusBadgeClass(member.status)}`}>
-                      {member.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4 text-sm">
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => onEdit(member)} 
-                        className="px-3 py-1.5 border-none rounded-md text-xs font-medium cursor-pointer transition-all bg-green-500 text-white hover:bg-green-600"
-                      >
-                        Sửa
-                      </button>
-                      <button 
-                        onClick={() => onDelete(member.id)} 
-                        className="px-3 py-1.5 border-none rounded-md text-xs font-medium cursor-pointer transition-all bg-red-500 text-white hover:bg-red-600"
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold">Tên thành viên</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Mã sinh viên</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Số điện thoại</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Câu lạc bộ</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Vai trò</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Chuyên ngành</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Trạng thái</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold whitespace-nowrap">Thao tác</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredMembers.map(member => (
+                  <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-gray-800">{member.fullName}</div>
+                      <div className="text-sm text-gray-500 mt-1">{member.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-semibold text-fpt-blue">{member.studentId}</span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
+                      {member.phone || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold whitespace-nowrap inline-block">
+                        {member.clubName}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-semibold uppercase whitespace-nowrap ${getRoleBadgeClass(member.role)}`}>
+                        {member.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
+                      {member.major || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase text-white whitespace-nowrap inline-block ${getStatusBadgeClass(member.status)}`}>
+                        {member.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center justify-start gap-2">
+                        <button 
+                          onClick={() => onEdit(member)} 
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all whitespace-nowrap"
+                        >
+                          ✅ Sửa
+                        </button>
+                        <button 
+                          onClick={() => onDelete(member.id)} 
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap"
+                        >
+                          ❌ Xóa
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

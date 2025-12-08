@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useToast } from './Toast';
 import LeaderStats from './LeaderStats';
 import ClubInfo from './ClubInfo';
 import JoinRequestsList from './JoinRequestsList';
 import MembersList from './MembersList';
 import ClubActivities from './ClubActivities';
-import { clubCategories, statusOptions, initializeMockData } from '../data/mockData';
+import { clubCategories, statusOptions, initializeDemoData } from '../data/mockData';
 
 const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage }) => {
   const { showToast } = useToast();
@@ -26,19 +26,23 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
   // Load data from localStorage on mount
   useEffect(() => {
-    // Đảm bảo mock data được khởi tạo
-    initializeMockData();
+    // Đảm bảo dữ liệu được khởi tạo trước khi load
+    initializeDemoData();
     
-    // Load requests sau khi đã initialize
     const savedRequests = localStorage.getItem('joinRequests');
     if (savedRequests) {
-      const requests = JSON.parse(savedRequests);
-      setJoinRequests(requests);
+      try {
+        setJoinRequests(JSON.parse(savedRequests));
+      } catch (e) {
+        console.error('Error parsing joinRequests:', e);
+      }
     }
+  }, []); // Chỉ chạy một lần khi mount
 
-    // Find club managed by this leader
+  // Find club managed by this leader - tách riêng useEffect
+  useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (user) {
+    if (user && clubs.length > 0) {
       const club = clubs.find(c => c.president === user.name);
       if (club) {
         setMyClub(club);
@@ -52,24 +56,52 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     localStorage.setItem('joinRequests', JSON.stringify(joinRequests));
   }, [joinRequests]);
 
-  // Get pending requests for this leader's club
-  const getPendingRequests = () => {
+  // Get all requests for this leader's club (pending, approved, rejected)
+  // Sắp xếp: pending trước, sau đó approved, cuối cùng rejected
+  const getAllRequests = (requestsList) => {
     if (!myClub) return [];
+    const requests = (requestsList || joinRequests).filter(
+      request => request.clubId === myClub.id
+    );
+    
+    // Sắp xếp theo thứ tự: pending -> approved -> rejected
+    const statusOrder = { pending: 1, approved: 2, rejected: 3 };
+    return requests.sort((a, b) => {
+      const orderA = statusOrder[a.status] || 99;
+      const orderB = statusOrder[b.status] || 99;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      // Nếu cùng status, sắp xếp theo ngày gửi (mới nhất trước)
+      return new Date(b.requestDate) - new Date(a.requestDate);
+    });
+  };
+
+  // Get pending requests count for stats
+  const getPendingRequestsCount = () => {
+    if (!myClub) return 0;
     return joinRequests.filter(
       request => request.clubId === myClub.id && request.status === 'pending'
-    );
+    ).length;
   };
 
   const handleApprove = (requestId) => {
-    setJoinRequests(joinRequests.map(request => 
-      request.id === requestId 
-        ? { ...request, status: 'approved' }
-        : request
-    ));
+    // Sử dụng functional update để đảm bảo state được cập nhật đúng
+    setJoinRequests(prevRequests => {
+      const updated = prevRequests.map(request => {
+        if (request.id === requestId) {
+          return { ...request, status: 'approved' };
+        }
+        return request;
+      });
+      // Lưu vào localStorage ngay lập tức
+      localStorage.setItem('joinRequests', JSON.stringify(updated));
+      return updated;
+    });
     
     // Update member count
     if (myClub) {
-      setClubs(clubs.map(club =>
+      setClubs(prevClubs => prevClubs.map(club =>
         club.id === myClub.id
           ? { ...club, memberCount: club.memberCount + 1 }
           : club
@@ -81,11 +113,18 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
   const handleReject = (requestId) => {
     if (window.confirm('Bạn có chắc chắn muốn từ chối yêu cầu này?')) {
-      setJoinRequests(joinRequests.map(request => 
-        request.id === requestId 
-          ? { ...request, status: 'rejected' }
-          : request
-      ));
+      // Sử dụng functional update để đảm bảo state được cập nhật đúng
+      setJoinRequests(prevRequests => {
+        const updated = prevRequests.map(request => {
+          if (request.id === requestId) {
+            return { ...request, status: 'rejected' };
+          }
+          return request;
+        });
+        // Lưu vào localStorage ngay lập tức
+        localStorage.setItem('joinRequests', JSON.stringify(updated));
+        return updated;
+      });
       showToast('Đã từ chối yêu cầu tham gia!', 'success');
     }
   };
@@ -174,8 +213,10 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     showToast('Đã cập nhật hoạt động thành công!', 'success');
   };
 
-  const pendingRequests = getPendingRequests();
-  const clubMembers = getClubMembers();
+  // Sử dụng useMemo để đảm bảo được tính toán lại khi dependencies thay đổi
+  const allRequests = useMemo(() => getAllRequests(joinRequests), [joinRequests, myClub]);
+  const pendingRequestsCount = useMemo(() => getPendingRequestsCount(), [joinRequests, myClub]);
+  const clubMembers = useMemo(() => getClubMembers(), [members, myClub]);
 
   if (!myClub) {
     return (
@@ -198,7 +239,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
       <LeaderStats
         memberCount={myClub.memberCount}
-        pendingRequestsCount={pendingRequests.length}
+        pendingRequestsCount={pendingRequestsCount}
         category={myClub.category}
         location={myClub.location}
       />
@@ -219,7 +260,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       {/* Join Requests Tab */}
       {currentPage === 'requests' && (
         <JoinRequestsList
-          requests={pendingRequests}
+          requests={allRequests}
           onApprove={handleApprove}
           onReject={handleReject}
         />
