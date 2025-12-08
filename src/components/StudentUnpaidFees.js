@@ -28,6 +28,38 @@ const StudentUnpaidFees = ({ unpaidFees, onPayment }) => {
           </div>
           
           <div className="p-6">
+            {/* Phí tham gia và Thời hạn - Highlight */}
+            <div className="bg-red-50 p-4 rounded-lg border border-red-300 mb-5">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-700 font-medium text-sm flex items-center gap-2">
+                  <span className="text-base">💵</span>
+                  <span>Phí cần nộp:</span>
+                </span>
+                <span className="text-red-600 font-bold text-lg">
+                  {item.club.participationFee ? `${item.club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-700 font-medium text-sm flex items-center gap-2">
+                  <span className="text-base">⏰</span>
+                  <span>Thời hạn:</span>
+                </span>
+                <span className="text-fpt-blue font-bold text-lg">
+                  {item.club.membershipDuration ? `${item.club.membershipDuration} tháng` : '6 tháng'}
+                </span>
+              </div>
+              {item.club.membershipStartDate && item.club.membershipEndDate && (
+                <div className="mt-2 pt-2 border-t border-red-300">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 font-medium text-xs">Khoảng thời gian:</span>
+                    <span className="text-gray-700 font-semibold text-sm">
+                      {new Date(item.club.membershipStartDate).toLocaleDateString('vi-VN')} - {new Date(item.club.membershipEndDate).toLocaleDateString('vi-VN')}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="flex flex-col">
                 <span className="text-xs text-gray-500 font-medium mb-1">Ngày được chấp nhận:</span>

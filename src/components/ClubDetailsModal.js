@@ -61,12 +61,41 @@ const ClubDetailsModal = ({ club, onClose }) => {
                   {club.foundedDate ? new Date(club.foundedDate).toLocaleDateString('vi-VN') : 'N/A'}
                 </span>
               </div>
-              <div className="flex flex-col p-4 bg-gray-50 rounded-lg md:col-span-2">
-                <span className="text-xs text-gray-500 font-medium mb-1">Phí tham gia:</span>
-                <span className="text-sm font-semibold text-gray-800">
+            </div>
+          </div>
+
+          {/* Phí tham gia và Thời hạn - Highlight Section */}
+          <div className="mb-6">
+            <h4 className="text-lg font-semibold text-gray-800 mb-4">Phí và Thời hạn tham gia</h4>
+            <div className="bg-green-50 p-5 rounded-lg border border-green-300">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-700 font-medium text-sm flex items-center gap-2">
+                  <span className="text-base">💵</span>
+                  <span>Phí tham gia:</span>
+                </span>
+                <span className="text-fpt-blue font-bold text-lg">
                   {club.participationFee ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}
                 </span>
               </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-700 font-medium text-sm flex items-center gap-2">
+                  <span className="text-base">⏰</span>
+                  <span>Thời hạn:</span>
+                </span>
+                <span className="text-fpt-blue font-bold text-lg">
+                  {club.membershipDuration ? `${club.membershipDuration} tháng` : '6 tháng'}
+                </span>
+              </div>
+              {club.membershipStartDate && club.membershipEndDate && (
+                <div className="mt-2 pt-2 border-t border-green-300">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 font-medium text-xs">Khoảng thời gian:</span>
+                    <span className="text-gray-700 font-semibold text-sm">
+                      {new Date(club.membershipStartDate).toLocaleDateString('vi-VN')} - {new Date(club.membershipEndDate).toLocaleDateString('vi-VN')}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
