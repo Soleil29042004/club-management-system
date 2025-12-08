@@ -150,7 +150,7 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               🎓
             </div>
           </div>
-          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">FPT University</h1>
+          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">ClubHub</h1>
           <p className="text-gray-600 text-[15px] font-medium">Đăng ký tài khoản mới</p>
         </div>
 
