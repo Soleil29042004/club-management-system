@@ -116,7 +116,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[460px] p-11 animate-slide-in relative z-10 border border-white/20">
         <div className="text-center mb-5">
           <div className="text-6xl mb-4 animate-bounce">🎓</div>
-          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">FPT University</h1>
+          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">ClubHub</h1>
           <p className="text-gray-600 text-[15px] font-medium">Hệ thống quản lý Câu lạc bộ Sinh viên</p>
         </div>
 
