@@ -367,14 +367,17 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
         <div className="text-center mt-7 pt-6 border-t border-gray-300 text-sm text-gray-600">
           <p>
             Đã có tài khoản?{' '}
-            <a href="#" className="text-fpt-blue no-underline font-bold transition-all hover:text-fpt-orange hover:underline" onClick={(e) => {
-              e.preventDefault();
-              if (onSwitchToLogin) {
-                onSwitchToLogin();
-              }
-            }}>
-              Đăng nhập ngay
-            </a>
+              <button
+                type="button"
+                className="text-fpt-blue no-underline font-bold transition-all hover:text-fpt-orange hover:underline"
+                onClick={() => {
+                  if (onSwitchToLogin) {
+                    onSwitchToLogin();
+                  }
+                }}
+              >
+                Đăng nhập ngay
+              </button>
           </p>
         </div>
       </div>

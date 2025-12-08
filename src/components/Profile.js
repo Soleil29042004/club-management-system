@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 
 const Profile = ({ userRole, clubs, members }) => {
   const [user, setUser] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -29,7 +28,6 @@ const Profile = ({ userRole, clubs, members }) => {
     const detailedUser = registeredUsers.find(u => u.email === userData.email);
     
     if (detailedUser) {
-      setUserDetails(detailedUser);
       setFormData({
         name: detailedUser.name || userData.name || '',
         email: detailedUser.email || userData.email || '',

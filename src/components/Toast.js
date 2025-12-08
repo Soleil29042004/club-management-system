@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const ToastContext = createContext();
 
@@ -50,12 +50,12 @@ const ToastContainer = ({ toasts, removeToast }) => {
 const ToastItem = ({ toast, onClose }) => {
   const [isExiting, setIsExiting] = useState(false);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsExiting(true);
     setTimeout(() => {
       onClose();
     }, 300);
-  };
+  }, [onClose]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,7 +63,7 @@ const ToastItem = ({ toast, onClose }) => {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [handleClose]);
 
   const getIcon = () => {
     switch (toast.type) {
