@@ -203,30 +203,6 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
             )}
           </div>
 
-          {/* Role Selection - Hidden, default is student */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="role" className="text-sm font-semibold text-gray-800">Vai trò *</label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className={`px-4 py-3.5 border-2 rounded-xl text-[15px] transition-all font-sans bg-gray-50 cursor-pointer ${
-                errors.role 
-                  ? 'border-red-500' 
-                  : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 focus:bg-blue-50/50'
-              }`}
-            >
-              <option value="student">Sinh viên</option>
-            </select>
-            {errors.role && (
-              <span className="text-red-500 text-xs mt-[-4px] flex items-center gap-1">
-                <span>⚠️</span>
-                {errors.role}
-              </span>
-            )}
-          </div>
-
           {/* Student ID */}
           <div className="flex flex-col gap-2">
             <label htmlFor="studentId" className="text-sm font-semibold text-gray-800">Mã sinh viên *</label>
