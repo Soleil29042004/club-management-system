@@ -82,6 +82,8 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
       studentId: formData.studentId,
       major: formData.major,
       reason: formData.reason,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
       status: 'pending',
       requestDate: new Date().toISOString().split('T')[0],
       message: `Yêu cầu tham gia ${selectedClub.name}`
