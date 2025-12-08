@@ -28,7 +28,7 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
 
     const config = statusConfig[status] || statusConfig.pending;
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase text-white ${config.bg}`}>
+      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase text-white whitespace-nowrap inline-block ${config.bg}`}>
         {config.text}
       </span>
     );
@@ -39,39 +39,39 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
+              <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Tên sinh viên</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Email</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Mã sinh viên</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Ngày gửi</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Trạng thái</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold">Thao tác</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Tên sinh viên</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Email</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Mã sinh viên</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Ngày gửi</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Trạng thái</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold whitespace-nowrap">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {requests.map((request) => (
                 <tr key={`${request.id}-${request.status}`} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-semibold text-gray-800">{request.studentName}</div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">{request.studentEmail}</div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-800">{request.studentId || '-'}</div>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">
+                  <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
                     {new Date(request.requestDate).toLocaleDateString('vi-VN')}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(request.status)}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-start gap-2">
                       <button
                         onClick={() => handleViewDetails(request)}
-                        className="px-4 py-2 bg-fpt-blue text-white rounded-lg text-sm font-medium hover:bg-fpt-blue-light transition-all"
+                        className="px-4 py-2 bg-fpt-blue text-white rounded-lg text-sm font-medium hover:bg-fpt-blue-light transition-all whitespace-nowrap"
                       >
                         Chi tiết
                       </button>
@@ -79,13 +79,13 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
                         <>
                           <button
                             onClick={() => onApprove(request.id)}
-                            className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all"
+                            className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all whitespace-nowrap"
                           >
                             ✅ Chấp nhận
                           </button>
                           <button
                             onClick={() => onReject(request.id)}
-                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all"
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap"
                           >
                             ❌ Từ chối
                           </button>

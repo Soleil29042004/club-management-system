@@ -324,11 +324,6 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
                 </div>
 
                 <div>
-                  <label className="font-semibold text-gray-700 block mb-2">Lý do thành lập:</label>
-                  <p className="text-gray-800 leading-relaxed m-0 bg-gray-50 p-4 rounded-lg">{selectedRequest.reason}</p>
-                </div>
-
-                <div>
                   <label className="font-semibold text-gray-700 block mb-2">Mục tiêu hoạt động:</label>
                   <p className="text-gray-800 leading-relaxed m-0 bg-gray-50 p-4 rounded-lg">{selectedRequest.goals}</p>
                 </div>

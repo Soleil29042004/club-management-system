@@ -9,7 +9,6 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
     email: '',
     location: '',
     participationFee: '',
-    reason: '',
     goals: ''
   });
 
@@ -56,12 +55,6 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
       newErrors.participationFee = 'Phí tham gia phải là số';
     } else if (formData.participationFee && parseFloat(formData.participationFee) < 0) {
       newErrors.participationFee = 'Phí tham gia phải >= 0';
-    }
-
-    if (!formData.reason.trim()) {
-      newErrors.reason = 'Lý do thành lập là bắt buộc';
-    } else if (formData.reason.trim().length < 10) {
-      newErrors.reason = 'Lý do thành lập phải có ít nhất 10 ký tự';
     }
 
     if (!formData.goals.trim()) {
@@ -206,22 +199,6 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
                 }`}
               />
               {errors.participationFee && <span className="text-red-500 text-xs mt-1">{errors.participationFee}</span>}
-            </div>
-
-            <div className="flex flex-col md:col-span-2">
-              <label htmlFor="reason" className="mb-2 font-semibold text-gray-800 text-sm">Lý do thành lập *</label>
-              <textarea
-                id="reason"
-                name="reason"
-                value={formData.reason}
-                onChange={handleChange}
-                rows="3"
-                placeholder="Giải thích lý do bạn muốn thành lập câu lạc bộ này..."
-                className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans resize-y min-h-[80px] focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
-                  errors.reason ? 'border-red-500' : 'border-gray-200'
-                }`}
-              />
-              {errors.reason && <span className="text-red-500 text-xs mt-1">{errors.reason}</span>}
             </div>
 
             <div className="flex flex-col md:col-span-2">
