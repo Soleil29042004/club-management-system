@@ -143,18 +143,6 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
                     <label className="font-semibold text-gray-700 block mb-2">Ngày gửi yêu cầu:</label>
                     <p className="text-gray-800 m-0">{new Date(selectedRequest.requestDate).toLocaleDateString('vi-VN')}</p>
                   </div>
-                  {selectedRequest.startDate && selectedRequest.endDate && (
-                    <>
-                      <div>
-                        <label className="font-semibold text-gray-700 block mb-2">Từ ngày:</label>
-                        <p className="text-gray-800 m-0">{new Date(selectedRequest.startDate).toLocaleDateString('vi-VN')}</p>
-                      </div>
-                      <div>
-                        <label className="font-semibold text-gray-700 block mb-2">Đến ngày:</label>
-                        <p className="text-gray-800 m-0">{new Date(selectedRequest.endDate).toLocaleDateString('vi-VN')}</p>
-                      </div>
-                    </>
-                  )}
                 </div>
 
                 {selectedRequest.reason && (

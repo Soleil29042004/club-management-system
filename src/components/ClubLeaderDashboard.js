@@ -5,6 +5,7 @@ import ClubInfo from './ClubInfo';
 import JoinRequestsList from './JoinRequestsList';
 import MembersList from './MembersList';
 import ClubActivities from './ClubActivities';
+import ClubFeeManagement from './ClubFeeManagement';
 import { initializeDemoData } from '../data/mockData';
 
 const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage }) => {
@@ -213,6 +214,23 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     showToast('Đã cập nhật hoạt động thành công!', 'success');
   };
 
+  const handleUpdateFee = (feeData) => {
+    if (!myClub) return;
+    
+    const updatedClub = { 
+      ...myClub, 
+      participationFee: feeData.participationFee,
+      membershipDuration: feeData.membershipDuration
+    };
+    setMyClub(updatedClub);
+    setClubs(clubs.map(club =>
+      club.id === myClub.id
+        ? updatedClub
+        : club
+    ));
+    showToast('Đã cập nhật phí tham gia và thời hạn thành công!', 'success');
+  };
+
   // Sử dụng useMemo để đảm bảo được tính toán lại khi dependencies thay đổi
   const allRequests = useMemo(() => getAllRequests(joinRequests), [getAllRequests, joinRequests]);
   const pendingRequestsCount = useMemo(() => getPendingRequestsCount(), [getPendingRequestsCount]);
@@ -281,6 +299,14 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
         <ClubActivities
           club={myClub}
           onUpdateActivities={handleUpdateActivities}
+        />
+      )}
+
+      {/* Fee Management Tab */}
+      {currentPage === 'fee' && (
+        <ClubFeeManagement
+          club={myClub}
+          onUpdate={handleUpdateFee}
         />
       )}
     </div>

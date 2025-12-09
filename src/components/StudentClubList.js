@@ -88,7 +88,9 @@ const StudentClubList = ({
                     <div className="flex justify-between py-2">
                       <span className="text-gray-500 font-medium">Phí tham gia:</span>
                       <span className="text-gray-800 font-semibold">
-                        {club.participationFee ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}
+                        {club.participationFee 
+                          ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ / ${club.membershipDuration || 6} tháng`
+                          : `Miễn phí / ${club.membershipDuration || 6} tháng`}
                       </span>
                     </div>
                   </div>
