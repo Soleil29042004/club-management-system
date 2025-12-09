@@ -74,28 +74,27 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
   };
 
   const handleReject = (request) => {
-    const reason = window.prompt('Vui lòng nhập lý do từ chối (tùy chọn):');
-    
-    // Update request status - sử dụng functional update
-    setClubRequests(prevRequests => {
-      const updated = prevRequests.map(req =>
-        req.id === request.id
-          ? { 
-              ...req, 
-              status: 'rejected', 
-              rejectedDate: new Date().toISOString().split('T')[0],
-              rejectionReason: reason || ''
-            }
-          : req
-      );
-      // Lưu vào localStorage ngay lập tức
-      localStorage.setItem('clubRequests', JSON.stringify(updated));
-      return updated;
-    });
+    if (window.confirm(`Bạn có chắc chắn muốn từ chối yêu cầu đăng ký mở câu lạc bộ "${request.name}"?`)) {
+      // Update request status - sử dụng functional update
+      setClubRequests(prevRequests => {
+        const updated = prevRequests.map(req =>
+          req.id === request.id
+            ? { 
+                ...req, 
+                status: 'rejected', 
+                rejectedDate: new Date().toISOString().split('T')[0]
+              }
+            : req
+        );
+        // Lưu vào localStorage ngay lập tức
+        localStorage.setItem('clubRequests', JSON.stringify(updated));
+        return updated;
+      });
 
-    setShowDetailModal(false);
-    setSelectedRequest(null);
-    showToast(`Đã từ chối yêu cầu đăng ký mở câu lạc bộ "${request.name}"`, 'info');
+      setShowDetailModal(false);
+      setSelectedRequest(null);
+      showToast(`Đã từ chối yêu cầu đăng ký mở câu lạc bộ "${request.name}"`, 'info');
+    }
   };
 
   const handleViewDetails = (request) => {
