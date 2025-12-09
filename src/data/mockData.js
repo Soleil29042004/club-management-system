@@ -239,9 +239,7 @@ export const mockJoinRequests = [
     studentId: "SE150100",
     major: "Kỹ thuật phần mềm",
     reason: "Em muốn học hỏi và phát triển kỹ năng lập trình",
-    startDate: "2024-12-01",
-    endDate: "2025-06-01",
-    status: "approved",
+    status: "rejected",
     requestDate: "2024-11-25",
     message: "Yêu cầu tham gia Club Lập trình"
   },
@@ -255,43 +253,9 @@ export const mockJoinRequests = [
     studentId: "SE150100",
     major: "Kỹ thuật phần mềm",
     reason: "Em muốn cải thiện khả năng giao tiếp tiếng Anh",
-    startDate: "2024-12-01",
-    endDate: "2025-06-01",
     status: "approved",
     requestDate: "2024-11-20",
     message: "Yêu cầu tham gia Club Tiếng Anh"
-  },
-  {
-    id: 3,
-    clubId: 3,
-    clubName: "Club Thể thao",
-    studentEmail: "student@gmail.com",
-    studentName: "Nguyễn Văn A",
-    phone: "0912345678",
-    studentId: "SE150100",
-    major: "Kỹ thuật phần mềm",
-    reason: "Em yêu thích thể thao và muốn rèn luyện sức khỏe",
-    startDate: "2024-12-01",
-    endDate: "2025-06-01",
-    status: "approved",
-    requestDate: "2024-11-15",
-    message: "Yêu cầu tham gia Club Thể thao"
-  },
-  {
-    id: 4,
-    clubId: 4,
-    clubName: "Club Nhiếp ảnh",
-    studentEmail: "student@gmail.com",
-    studentName: "Nguyễn Văn A",
-    phone: "0912345678",
-    studentId: "SE150100",
-    major: "Kỹ thuật phần mềm",
-    reason: "Em đam mê nhiếp ảnh và muốn học hỏi thêm",
-    startDate: "2024-12-01",
-    endDate: "2025-06-01",
-    status: "rejected",
-    requestDate: "2024-11-10",
-    message: "Yêu cầu tham gia Club Nhiếp ảnh"
   },
   {
     id: 5,
@@ -325,22 +289,6 @@ export const mockJoinRequests = [
     requestDate: "2024-11-27",
     message: "Yêu cầu tham gia Club Tiếng Anh"
   },
-  {
-    id: 7,
-    clubId: 4,
-    clubName: "Club Nhiếp ảnh",
-    studentEmail: "student@gmail.com",
-    studentName: "Nguyễn Văn A",
-    phone: "0912345678",
-    studentId: "SE150100",
-    major: "Kỹ thuật phần mềm",
-    reason: "Em muốn học hỏi kỹ thuật chụp ảnh chuyên nghiệp",
-    startDate: "2024-12-01",
-    endDate: "2025-06-01",
-    status: "approved",
-    requestDate: "2024-11-28",
-    message: "Yêu cầu tham gia Club Nhiếp ảnh"
-  }
 ];
 
 // Demo data cho payments (thanh toán phí)
@@ -354,17 +302,6 @@ export const mockPayments = [
     amount: 30000,
     note: "Nộp phí tham gia Club Tiếng Anh",
     paymentDate: "2024-11-22",
-    status: "completed"
-  },
-  {
-    id: 2,
-    clubId: 3,
-    clubName: "Club Thể thao",
-    studentEmail: "student@gmail.com",
-    studentName: "Nguyễn Văn A",
-    amount: 100000,
-    note: "Nộp phí tham gia Club Thể thao",
-    paymentDate: "2024-11-18",
     status: "completed"
   }
 ];

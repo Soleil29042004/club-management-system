@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
-import StudentStats from './StudentStats';
 import StudentClubList from './StudentClubList';
 import StudentUnpaidFees from './StudentUnpaidFees';
 import JoinRequestModal from './JoinRequestModal';
@@ -195,13 +194,6 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
           </button>
         </div>
       </div>
-
-      <StudentStats
-        requestsCount={getMyRequests().length}
-        paymentsCount={getMyPayments().length}
-        unpaidFeesCount={unpaidFees.length}
-        clubsCount={clubs.filter(c => c.status === 'Hoạt động').length}
-      />
 
       {/* Clubs List Tab */}
       {currentPage === 'clubs' && (
