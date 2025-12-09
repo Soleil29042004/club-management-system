@@ -511,7 +511,24 @@ const Profile = ({ userRole, clubs, members }) => {
               </div>
             ) : (
               <div className="flex flex-col gap-5">
-                {myMemberships.map((item) => (
+                {myMemberships.map((item) => {
+                  const formatDate = (dateString) => {
+                    if (!dateString) return '-';
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('vi-VN');
+                  };
+
+                  const calculateExpiryDate = (requestDate, membershipDuration) => {
+                    if (!requestDate) return null;
+                    const startDate = new Date(requestDate);
+                    const expiryDate = new Date(startDate);
+                    expiryDate.setMonth(expiryDate.getMonth() + (membershipDuration || 6));
+                    return expiryDate.toISOString().split('T')[0];
+                  };
+
+                  const expiryDate = calculateExpiryDate(item.requestDate, item.club.membershipDuration || 6);
+
+                  return (
                   <div key={item.id} className="bg-gray-50 rounded-xl border-2 border-gray-200 overflow-hidden transition-all hover:border-fpt-blue hover:shadow-lg hover:-translate-y-0.5">
                     <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-5 flex justify-between items-center">
                       <h3 className="m-0 text-xl font-semibold">{item.club.name}</h3>
@@ -521,12 +538,19 @@ const Profile = ({ userRole, clubs, members }) => {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Danh mục:</strong> {item.club.category}</span>
                         <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Chủ tịch:</strong> {item.club.president}</span>
-                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Ngày tham gia:</strong> {item.requestDate}</span>
+                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Ngày bắt đầu:</strong> {formatDate(item.requestDate)}</span>
+                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Ngày hết hạn:</strong> {formatDate(expiryDate)}</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
                         <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Số thành viên:</strong> {item.club.memberCount}</span>
+                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Địa điểm:</strong> {item.club.location || '-'}</span>
+                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Phí tham gia:</strong> {item.club.participationFee ? `${item.club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}</span>
+                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Thời hạn:</strong> {item.club.membershipDuration || 6} tháng</span>
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

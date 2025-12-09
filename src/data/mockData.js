@@ -190,6 +190,45 @@ export const mockMembers = [
     joinDate: "2021-05-15",
     status: "Hoạt động",
     major: "Thiết kế đồ họa"
+  },
+  {
+    id: 7,
+    studentId: "BA150007",
+    fullName: "Nguyễn Thị Hoa",
+    email: "hoanguyen@student.com",
+    phone: "0907890123",
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    role: "Thành viên",
+    joinDate: "2024-11-20",
+    status: "Hoạt động",
+    major: "Quản trị kinh doanh"
+  },
+  {
+    id: 8,
+    studentId: "SE150008",
+    fullName: "Trần Văn Minh",
+    email: "minhtran@student.com",
+    phone: "0908901234",
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    role: "Thành viên",
+    joinDate: "2024-11-18",
+    status: "Hoạt động",
+    major: "Kỹ thuật phần mềm"
+  },
+  {
+    id: 9,
+    studentId: "BA150009",
+    fullName: "Lê Thị Lan",
+    email: "lanle@student.com",
+    phone: "0909012345",
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    role: "Thủ quỹ",
+    joinDate: "2024-11-15",
+    status: "Hoạt động",
+    major: "Quản trị kinh doanh"
   }
 ];
 
@@ -216,7 +255,6 @@ export const clubCategories = [
 export const memberRoles = [
   "Chủ tịch",
   "Phó chủ tịch",
-  "Thư ký",
   "Thủ quỹ",
   "Thành viên"
 ];
@@ -256,6 +294,34 @@ export const mockJoinRequests = [
     status: "approved",
     requestDate: "2024-11-20",
     message: "Yêu cầu tham gia Club Tiếng Anh"
+  },
+  {
+    id: 3,
+    clubId: 3,
+    clubName: "Club Thể thao",
+    studentEmail: "student@gmail.com",
+    studentName: "Nguyễn Văn A",
+    phone: "0912345678",
+    studentId: "SE150100",
+    major: "Kỹ thuật phần mềm",
+    reason: "Em yêu thích thể thao và muốn rèn luyện sức khỏe",
+    status: "approved",
+    requestDate: "2024-11-15",
+    message: "Yêu cầu tham gia Club Thể thao"
+  },
+  {
+    id: 4,
+    clubId: 4,
+    clubName: "Club Nhiếp ảnh",
+    studentEmail: "student@gmail.com",
+    studentName: "Nguyễn Văn A",
+    phone: "0912345678",
+    studentId: "SE150100",
+    major: "Kỹ thuật phần mềm",
+    reason: "Em đam mê nhiếp ảnh và muốn học hỏi thêm",
+    status: "approved",
+    requestDate: "2024-11-10",
+    message: "Yêu cầu tham gia Club Nhiếp ảnh"
   },
   {
     id: 5,
