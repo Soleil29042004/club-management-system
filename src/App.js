@@ -9,10 +9,11 @@ import ClubRequestsManagement from './components/ClubRequestsManagement';
 import Login from './pages/login';
 import Register from './pages/register';
 import Home from './pages/home';
-import { ToastProvider } from './components/Toast';
+import { ToastProvider, useToast } from './components/Toast';
 import { mockClubs, mockMembers, initializeDemoData } from './data/mockData';
 
 function AppContent() {
+  const { showToast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -60,13 +61,33 @@ function AppContent() {
     setShowRegister(false);
   };
 
-  const handleLogout = () => {
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+
+  const handleLogout = async () => {
+    const storedUser = localStorage.getItem('user');
+    const userData = storedUser ? JSON.parse(storedUser) : {};
+    const token = localStorage.getItem('authToken') || userData.token;
+
+    if (token) {
+      try {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    }
+
+    localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     setIsAuthenticated(false);
     setUserRole(null);
     setShowHome(true);
     setShowLogin(false);
     setShowRegister(false);
+    showToast('Đã đăng xuất', 'success');
   };
 
   const handleNavigateToLogin = () => {
