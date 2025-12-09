@@ -327,13 +327,6 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
                   <p className="text-gray-800 leading-relaxed m-0 bg-gray-50 p-4 rounded-lg">{selectedRequest.goals}</p>
                 </div>
 
-                {selectedRequest.status === 'rejected' && selectedRequest.rejectionReason && (
-                  <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-                    <label className="font-semibold text-red-700 block mb-2">Lý do từ chối:</label>
-                    <p className="text-red-800 m-0">{selectedRequest.rejectionReason}</p>
-                  </div>
-                )}
-
                 {selectedRequest.status === 'approved' && selectedRequest.approvedDate && (
                   <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
                     <p className="text-green-800 m-0">
