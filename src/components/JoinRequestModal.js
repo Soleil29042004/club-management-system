@@ -15,15 +15,24 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
     const detailedUser = registeredUsers.find(u => u.email === user.email);
     
+    // Auto-fill form with user data
     if (detailedUser) {
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
         phone: detailedUser.phone || '',
         studentId: detailedUser.studentId || '',
-        major: detailedUser.major || ''
-      }));
+        major: detailedUser.major || '',
+        reason: '' // Keep reason empty for user to fill
+      });
+    } else if (user.email) {
+      // If user exists but not in registeredUsers, try to get from mock data or use defaults
+      setFormData({
+        phone: '',
+        studentId: '',
+        major: '',
+        reason: ''
+      });
     }
-  }, []);
+  }, [club]); // Re-run when club changes (modal opens)
 
   if (!club) return null;
 

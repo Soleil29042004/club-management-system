@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useToast } from '../components/Toast';
 
 const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
+  const { showToast } = useToast();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -93,6 +95,17 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
           name: user.name,
           role: user.role
         }));
+        
+        // Get role display name
+        const roleNames = {
+          'admin': 'Quản trị viên',
+          'student': 'Sinh viên',
+          'club_leader': 'Leader câu lạc bộ'
+        };
+        const roleDisplayName = roleNames[user.role] || user.role;
+        
+        // Show success notification with role
+        showToast(`Đăng nhập thành công! Chào mừng ${user.name} - ${roleDisplayName}`, 'success');
         
         // Automatically navigate based on user role
         if (user.role === 'admin' || user.role === 'student' || user.role === 'club_leader') {

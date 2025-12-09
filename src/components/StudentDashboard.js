@@ -248,6 +248,8 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
             setShowDetailsModal(false);
             setSelectedClub(null);
           }}
+          onJoinRequest={handleJoinRequest}
+          getRequestStatus={getRequestStatus}
         />
       )}
 

@@ -13,6 +13,7 @@ export const mockClubs = [
     email: "programming@club.com",
     location: "Phòng A301",
     participationFee: 50000,
+    activityTime: "18:00 - 20:00",
     activities: [
       {
         id: 1,
@@ -42,6 +43,7 @@ export const mockClubs = [
     email: "english@club.com",
     location: "Phòng B205",
     participationFee: 30000,
+    activityTime: "19:00 - 21:00",
     activities: [
       {
         id: 1,
@@ -64,6 +66,7 @@ export const mockClubs = [
     email: "sports@club.com",
     location: "Sân vận động",
     participationFee: 100000,
+    activityTime: "17:00 - 19:00",
     activities: [
       {
         id: 1,
@@ -86,6 +89,7 @@ export const mockClubs = [
     email: "photo@club.com",
     location: "Phòng C102",
     participationFee: 75000,
+    activityTime: "18:30 - 20:30",
     activities: []
   },
   {
@@ -100,6 +104,7 @@ export const mockClubs = [
     email: "music@club.com",
     location: "Phòng D401",
     participationFee: 60000,
+    activityTime: "19:30 - 21:30",
     activities: [
       {
         id: 1,
@@ -470,6 +475,15 @@ export const initializeDemoData = () => {
   const existingUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
   const existingUserEmails = existingUsers.map(u => u.email);
   const demoUsers = [
+    {
+      email: "student@gmail.com",
+      password: "123456",
+      name: "Nguyễn Văn A",
+      role: "student",
+      phone: "0912345678",
+      studentId: "SE150100",
+      major: "Kỹ thuật phần mềm"
+    },
     {
       email: "student2@example.com",
       password: "123456",
