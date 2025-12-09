@@ -184,9 +184,13 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
               <input type="checkbox" name="remember" className="w-[18px] h-[18px] cursor-pointer" />
               <span>Ghi nhớ đăng nhập</span>
             </label>
-            <a href="#" className="text-fpt-blue no-underline font-semibold transition-all hover:text-fpt-orange hover:underline" onClick={(e) => e.preventDefault()}>
+            <button
+              type="button"
+              className="text-fpt-blue no-underline font-semibold transition-all hover:text-fpt-orange hover:underline"
+              onClick={(e) => e.preventDefault()}
+            >
               Quên mật khẩu?
-            </a>
+            </button>
           </div>
 
           {/* Submit Error */}
@@ -215,14 +219,17 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
         <div className="text-center mt-7 pt-6 border-t border-gray-300 text-sm text-gray-600">
           <p>
             Chưa có tài khoản?{' '}
-            <a href="#" className="text-fpt-blue no-underline font-bold transition-all hover:text-fpt-orange hover:underline" onClick={(e) => {
-              e.preventDefault();
-              if (onSwitchToRegister) {
-                onSwitchToRegister();
-              }
-            }}>
-              Đăng ký ngay
-            </a>
+              <button
+                type="button"
+                className="text-fpt-blue no-underline font-bold transition-all hover:text-fpt-orange hover:underline"
+                onClick={() => {
+                  if (onSwitchToRegister) {
+                    onSwitchToRegister();
+                  }
+                }}
+              >
+                Đăng ký ngay
+              </button>
           </p>
         </div>
       </div>

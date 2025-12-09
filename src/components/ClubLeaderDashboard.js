@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useToast } from './Toast';
 import LeaderStats from './LeaderStats';
 import ClubInfo from './ClubInfo';
 import JoinRequestsList from './JoinRequestsList';
 import MembersList from './MembersList';
 import ClubActivities from './ClubActivities';
-import { clubCategories, statusOptions, initializeDemoData } from '../data/mockData';
+import { initializeDemoData } from '../data/mockData';
 
 const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage }) => {
   const { showToast } = useToast();
@@ -58,9 +58,9 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
   // Get all requests for this leader's club (pending, approved, rejected)
   // Sắp xếp: pending trước, sau đó approved, cuối cùng rejected
-  const getAllRequests = (requestsList) => {
+  const getAllRequests = useCallback((requestsList = joinRequests) => {
     if (!myClub) return [];
-    const requests = (requestsList || joinRequests).filter(
+    const requests = requestsList.filter(
       request => request.clubId === myClub.id
     );
     
@@ -75,15 +75,15 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       // Nếu cùng status, sắp xếp theo ngày gửi (mới nhất trước)
       return new Date(b.requestDate) - new Date(a.requestDate);
     });
-  };
+  }, [joinRequests, myClub]);
 
   // Get pending requests count for stats
-  const getPendingRequestsCount = () => {
+  const getPendingRequestsCount = useCallback(() => {
     if (!myClub) return 0;
     return joinRequests.filter(
       request => request.clubId === myClub.id && request.status === 'pending'
     ).length;
-  };
+  }, [joinRequests, myClub]);
 
   const handleApprove = (requestId) => {
     // Sử dụng functional update để đảm bảo state được cập nhật đúng
@@ -168,10 +168,10 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   };
 
   // Get members of this club
-  const getClubMembers = () => {
+  const getClubMembers = useCallback(() => {
     if (!myClub) return [];
     return members.filter(member => member.clubId === myClub.id);
-  };
+  }, [members, myClub]);
 
   const handleDeleteMember = (memberId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa thành viên này khỏi club?')) {
@@ -214,9 +214,9 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   };
 
   // Sử dụng useMemo để đảm bảo được tính toán lại khi dependencies thay đổi
-  const allRequests = useMemo(() => getAllRequests(joinRequests), [joinRequests, myClub]);
-  const pendingRequestsCount = useMemo(() => getPendingRequestsCount(), [joinRequests, myClub]);
-  const clubMembers = useMemo(() => getClubMembers(), [members, myClub]);
+  const allRequests = useMemo(() => getAllRequests(joinRequests), [getAllRequests, joinRequests]);
+  const pendingRequestsCount = useMemo(() => getPendingRequestsCount(), [getPendingRequestsCount]);
+  const clubMembers = useMemo(() => getClubMembers(), [getClubMembers]);
 
   if (!myClub) {
     return (
@@ -270,6 +270,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       {currentPage === 'members' && (
         <MembersList
           members={clubMembers}
+          club={myClub}
           onUpdateRole={handleUpdateMemberRole}
           onDeleteMember={handleDeleteMember}
         />
