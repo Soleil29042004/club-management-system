@@ -22,7 +22,8 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     memberCount: 0,
     status: 'Hoạt động',
     email: '',
-    location: ''
+    location: '',
+    activityTime: ''
   });
 
   // Load data from localStorage on mount

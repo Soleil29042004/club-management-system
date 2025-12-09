@@ -1,7 +1,9 @@
 import React from 'react';
 
-const ClubDetailsModal = ({ club, onClose }) => {
+const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) => {
   if (!club) return null;
+
+  const requestStatus = getRequestStatus ? getRequestStatus(club.id) : null;
 
   const getStatusBadgeClass = (status) => {
     const statusLower = status.toLowerCase();
@@ -61,10 +63,16 @@ const ClubDetailsModal = ({ club, onClose }) => {
                   {club.foundedDate ? new Date(club.foundedDate).toLocaleDateString('vi-VN') : 'N/A'}
                 </span>
               </div>
-              <div className="flex flex-col p-4 bg-gray-50 rounded-lg md:col-span-2">
+              <div className="flex flex-col p-4 bg-gray-50 rounded-lg">
                 <span className="text-xs text-gray-500 font-medium mb-1">Phí tham gia:</span>
                 <span className="text-sm font-semibold text-gray-800">
                   {club.participationFee ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}
+                </span>
+              </div>
+              <div className="flex flex-col p-4 bg-gray-50 rounded-lg">
+                <span className="text-xs text-gray-500 font-medium mb-1">Thời gian sinh hoạt:</span>
+                <span className="text-sm font-semibold text-gray-800">
+                  {club.activityTime || 'Chưa cập nhật'}
                 </span>
               </div>
             </div>
@@ -111,12 +119,38 @@ const ClubDetailsModal = ({ club, onClose }) => {
         </div>
         
         <div className="bg-gray-50 px-6 py-4 flex justify-end border-t-2 border-gray-200 rounded-b-xl">
-          <button 
-            className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl" 
-            onClick={onClose}
-          >
-            Đóng
-          </button>
+          {onJoinRequest && (
+            <div className="flex gap-3">
+              {requestStatus === 'pending' && (
+                <span className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-amber-500 text-white">
+                  Đang chờ duyệt
+                </span>
+              )}
+              {requestStatus === 'approved' && (
+                <span className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-green-500 text-white">
+                  Đã được chấp nhận
+                </span>
+              )}
+              {requestStatus === 'rejected' && (
+                <span className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-red-500 text-white">
+                  Đã bị từ chối
+                </span>
+              )}
+              {!requestStatus && (
+                <button 
+                  className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:-translate-y-1 hover:shadow-xl" 
+                  onClick={() => {
+                    if (onJoinRequest) {
+                      onJoinRequest(club);
+                      onClose();
+                    }
+                  }}
+                >
+                  Tham gia
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

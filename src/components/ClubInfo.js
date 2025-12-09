@@ -101,6 +101,14 @@ const ClubInfo = ({ club, onEdit, showEditForm, formData, onFormChange, onFormSu
               </span>
             </div>
           </div>
+          
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-xl border border-indigo-200 flex items-start gap-4 hover:shadow-md transition-all">
+            <div className="text-3xl flex-shrink-0">🕐</div>
+            <div className="flex-1 min-w-0">
+              <span className="text-xs text-gray-600 font-medium uppercase tracking-wide block mb-1">Thời gian sinh hoạt</span>
+              <span className="text-base font-semibold text-gray-800">{club.activityTime || 'Chưa cập nhật'}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
