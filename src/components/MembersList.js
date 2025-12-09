@@ -107,7 +107,6 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember }) => {
                 <th className="px-6 py-4 text-left text-sm font-semibold">Số điện thoại</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Chuyên ngành</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Ngày tham gia</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Hết hạn</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Tình trạng</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Vai trò</th>
                 <th className="px-6 py-4 text-center text-sm font-semibold">Thao tác</th>
@@ -138,9 +137,6 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember }) => {
                     </td>
                     <td className="px-6 py-4 text-gray-600">
                       {formatDate(member.joinDate)}
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {membershipInfo.expiryDate}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${membershipInfo.badgeClass}`}>

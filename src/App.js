@@ -231,6 +231,8 @@ function AppContent() {
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
       case 'activities':
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
+      case 'fee':
+        return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
       case 'profile':
         return <Profile userRole={userRole} clubs={clubs} members={members} />;
       default:
@@ -324,6 +326,20 @@ function AppContent() {
             </button>
             <button
               className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                currentPage === 'fee' 
+                  ? 'bg-fpt-orange text-white shadow-lg' 
+                  : 'text-white/90 hover:bg-white/10 hover:text-white'
+              }`}
+              onClick={() => {
+                setCurrentPage('fee');
+                if (window.innerWidth < 1024) setSidebarOpen(false);
+              }}
+            >
+              <span className="text-xl flex-shrink-0">💰</span>
+              <span className="whitespace-nowrap">Phí & Thời hạn</span>
+            </button>
+            <button
+              className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 currentPage === 'profile' 
                   ? 'bg-fpt-orange text-white shadow-lg' 
                   : 'text-white/90 hover:bg-white/10 hover:text-white'
@@ -364,6 +380,7 @@ function AppContent() {
                   {currentPage === 'requests' && 'Duyệt yêu cầu'}
                   {currentPage === 'members' && 'Quản lý thành viên'}
                   {currentPage === 'activities' && 'Hoạt động'}
+                  {currentPage === 'fee' && 'Phí & Thời hạn'}
                   {currentPage === 'profile' && 'Hồ sơ cá nhân'}
                 </h2>
               </div>
