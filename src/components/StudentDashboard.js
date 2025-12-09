@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
-import StudentStats from './StudentStats';
 import StudentClubList from './StudentClubList';
 import StudentUnpaidFees from './StudentUnpaidFees';
 import JoinRequestModal from './JoinRequestModal';
@@ -82,8 +81,6 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
       studentId: formData.studentId,
       major: formData.major,
       reason: formData.reason,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
       status: 'pending',
       requestDate: new Date().toISOString().split('T')[0],
       message: `Yêu cầu tham gia ${selectedClub.name}`
@@ -198,13 +195,6 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
         </div>
       </div>
 
-      <StudentStats
-        requestsCount={getMyRequests().length}
-        paymentsCount={getMyPayments().length}
-        unpaidFeesCount={unpaidFees.length}
-        clubsCount={clubs.filter(c => c.status === 'Hoạt động').length}
-      />
-
       {/* Clubs List Tab */}
       {currentPage === 'clubs' && (
         <StudentClubList
@@ -258,6 +248,8 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
             setShowDetailsModal(false);
             setSelectedClub(null);
           }}
+          onJoinRequest={handleJoinRequest}
+          getRequestStatus={getRequestStatus}
         />
       )}
 

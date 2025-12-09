@@ -104,6 +104,19 @@ const ClubInfoForm = ({ formData, onFormChange, onFormSubmit, onFormCancel }) =>
         </div>
 
         <div className="mb-6">
+          <label className="mb-2 font-semibold text-gray-800 text-sm block">Thời gian sinh hoạt mỗi ngày</label>
+          <input
+            type="text"
+            name="activityTime"
+            value={formData.activityTime || ''}
+            onChange={onFormChange}
+            placeholder="VD: 18:00 - 20:00"
+            className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+          />
+          <p className="text-xs text-gray-500 mt-1">Nhập thời gian sinh hoạt hàng ngày của club (VD: 18:00 - 20:00)</p>
+        </div>
+
+        <div className="mb-6">
           <label className="mb-2 font-semibold text-gray-800 text-sm block">Số thành viên</label>
           <input
             type="number"

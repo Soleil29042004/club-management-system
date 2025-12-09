@@ -74,28 +74,27 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
   };
 
   const handleReject = (request) => {
-    const reason = window.prompt('Vui lòng nhập lý do từ chối (tùy chọn):');
-    
-    // Update request status - sử dụng functional update
-    setClubRequests(prevRequests => {
-      const updated = prevRequests.map(req =>
-        req.id === request.id
-          ? { 
-              ...req, 
-              status: 'rejected', 
-              rejectedDate: new Date().toISOString().split('T')[0],
-              rejectionReason: reason || ''
-            }
-          : req
-      );
-      // Lưu vào localStorage ngay lập tức
-      localStorage.setItem('clubRequests', JSON.stringify(updated));
-      return updated;
-    });
+    if (window.confirm(`Bạn có chắc chắn muốn từ chối yêu cầu đăng ký mở câu lạc bộ "${request.name}"?`)) {
+      // Update request status - sử dụng functional update
+      setClubRequests(prevRequests => {
+        const updated = prevRequests.map(req =>
+          req.id === request.id
+            ? { 
+                ...req, 
+                status: 'rejected', 
+                rejectedDate: new Date().toISOString().split('T')[0]
+              }
+            : req
+        );
+        // Lưu vào localStorage ngay lập tức
+        localStorage.setItem('clubRequests', JSON.stringify(updated));
+        return updated;
+      });
 
-    setShowDetailModal(false);
-    setSelectedRequest(null);
-    showToast(`Đã từ chối yêu cầu đăng ký mở câu lạc bộ "${request.name}"`, 'info');
+      setShowDetailModal(false);
+      setSelectedRequest(null);
+      showToast(`Đã từ chối yêu cầu đăng ký mở câu lạc bộ "${request.name}"`, 'info');
+    }
   };
 
   const handleViewDetails = (request) => {
@@ -327,13 +326,6 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
                   <label className="font-semibold text-gray-700 block mb-2">Mục tiêu hoạt động:</label>
                   <p className="text-gray-800 leading-relaxed m-0 bg-gray-50 p-4 rounded-lg">{selectedRequest.goals}</p>
                 </div>
-
-                {selectedRequest.status === 'rejected' && selectedRequest.rejectionReason && (
-                  <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-                    <label className="font-semibold text-red-700 block mb-2">Lý do từ chối:</label>
-                    <p className="text-red-800 m-0">{selectedRequest.rejectionReason}</p>
-                  </div>
-                )}
 
                 {selectedRequest.status === 'approved' && selectedRequest.approvedDate && (
                   <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">

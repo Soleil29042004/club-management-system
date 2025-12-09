@@ -5,9 +5,7 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     phone: '',
     studentId: '',
     major: '',
-    reason: '',
-    startDate: '',
-    endDate: ''
+    reason: ''
   });
   const [errors, setErrors] = useState({});
 
@@ -17,15 +15,24 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
     const detailedUser = registeredUsers.find(u => u.email === user.email);
     
+    // Auto-fill form with user data
     if (detailedUser) {
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
         phone: detailedUser.phone || '',
         studentId: detailedUser.studentId || '',
-        major: detailedUser.major || ''
-      }));
+        major: detailedUser.major || '',
+        reason: '' // Keep reason empty for user to fill
+      });
+    } else if (user.email) {
+      // If user exists but not in registeredUsers, try to get from mock data or use defaults
+      setFormData({
+        phone: '',
+        studentId: '',
+        major: '',
+        reason: ''
+      });
     }
-  }, []);
+  }, [club]); // Re-run when club changes (modal opens)
 
   if (!club) return null;
 
@@ -60,18 +67,6 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
 
     if (!formData.reason.trim()) {
       newErrors.reason = 'Lý do gia nhập không được để trống';
-    }
-
-    if (!formData.startDate) {
-      newErrors.startDate = 'Ngày bắt đầu không được để trống';
-    }
-
-    if (!formData.endDate) {
-      newErrors.endDate = 'Ngày kết thúc không được để trống';
-    }
-
-    if (formData.startDate && formData.endDate && formData.startDate > formData.endDate) {
-      newErrors.endDate = 'Ngày kết thúc phải sau ngày bắt đầu';
     }
 
     setErrors(newErrors);
@@ -174,42 +169,6 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
                   }`}
                 />
                 {errors.reason && <span className="text-red-500 text-xs mt-1">{errors.reason}</span>}
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Thời gian tham gia</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <label htmlFor="startDate" className="mb-2 font-semibold text-gray-800 text-sm">Từ ngày *</label>
-                  <input
-                    type="date"
-                    id="startDate"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleChange}
-                    className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
-                      errors.startDate ? 'border-red-500' : 'border-gray-200'
-                    }`}
-                  />
-                  {errors.startDate && <span className="text-red-500 text-xs mt-1">{errors.startDate}</span>}
-                </div>
-
-                <div className="flex flex-col">
-                  <label htmlFor="endDate" className="mb-2 font-semibold text-gray-800 text-sm">Đến ngày *</label>
-                  <input
-                    type="date"
-                    id="endDate"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                    min={formData.startDate}
-                    className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
-                      errors.endDate ? 'border-red-500' : 'border-gray-200'
-                    }`}
-                  />
-                  {errors.endDate && <span className="text-red-500 text-xs mt-1">{errors.endDate}</span>}
-                </div>
               </div>
             </div>
 

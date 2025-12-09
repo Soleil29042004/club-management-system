@@ -13,6 +13,7 @@ export const mockClubs = [
     email: "programming@club.com",
     location: "Phòng A301",
     participationFee: 50000,
+    activityTime: "18:00 - 20:00",
     activities: [
       {
         id: 1,
@@ -42,6 +43,7 @@ export const mockClubs = [
     email: "english@club.com",
     location: "Phòng B205",
     participationFee: 30000,
+    activityTime: "19:00 - 21:00",
     activities: [
       {
         id: 1,
@@ -64,6 +66,7 @@ export const mockClubs = [
     email: "sports@club.com",
     location: "Sân vận động",
     participationFee: 100000,
+    activityTime: "17:00 - 19:00",
     activities: [
       {
         id: 1,
@@ -86,6 +89,7 @@ export const mockClubs = [
     email: "photo@club.com",
     location: "Phòng C102",
     participationFee: 75000,
+    activityTime: "18:30 - 20:30",
     activities: []
   },
   {
@@ -100,6 +104,7 @@ export const mockClubs = [
     email: "music@club.com",
     location: "Phòng D401",
     participationFee: 60000,
+    activityTime: "19:30 - 21:30",
     activities: [
       {
         id: 1,
@@ -190,6 +195,45 @@ export const mockMembers = [
     joinDate: "2021-05-15",
     status: "Hoạt động",
     major: "Thiết kế đồ họa"
+  },
+  {
+    id: 7,
+    studentId: "BA150007",
+    fullName: "Nguyễn Thị Hoa",
+    email: "hoanguyen@student.com",
+    phone: "0907890123",
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    role: "Thành viên",
+    joinDate: "2024-11-20",
+    status: "Hoạt động",
+    major: "Quản trị kinh doanh"
+  },
+  {
+    id: 8,
+    studentId: "SE150008",
+    fullName: "Trần Văn Minh",
+    email: "minhtran@student.com",
+    phone: "0908901234",
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    role: "Thành viên",
+    joinDate: "2024-11-18",
+    status: "Hoạt động",
+    major: "Kỹ thuật phần mềm"
+  },
+  {
+    id: 9,
+    studentId: "BA150009",
+    fullName: "Lê Thị Lan",
+    email: "lanle@student.com",
+    phone: "0909012345",
+    clubId: 2,
+    clubName: "Club Tiếng Anh",
+    role: "Thủ quỹ",
+    joinDate: "2024-11-15",
+    status: "Hoạt động",
+    major: "Quản trị kinh doanh"
   }
 ];
 
@@ -216,7 +260,6 @@ export const clubCategories = [
 export const memberRoles = [
   "Chủ tịch",
   "Phó chủ tịch",
-  "Thư ký",
   "Thủ quỹ",
   "Thành viên"
 ];
@@ -239,9 +282,7 @@ export const mockJoinRequests = [
     studentId: "SE150100",
     major: "Kỹ thuật phần mềm",
     reason: "Em muốn học hỏi và phát triển kỹ năng lập trình",
-    startDate: "2024-12-01",
-    endDate: "2025-06-01",
-    status: "approved",
+    status: "rejected",
     requestDate: "2024-11-25",
     message: "Yêu cầu tham gia Club Lập trình"
   },
@@ -255,8 +296,6 @@ export const mockJoinRequests = [
     studentId: "SE150100",
     major: "Kỹ thuật phần mềm",
     reason: "Em muốn cải thiện khả năng giao tiếp tiếng Anh",
-    startDate: "2024-12-01",
-    endDate: "2025-06-01",
     status: "approved",
     requestDate: "2024-11-20",
     message: "Yêu cầu tham gia Club Tiếng Anh"
@@ -271,8 +310,6 @@ export const mockJoinRequests = [
     studentId: "SE150100",
     major: "Kỹ thuật phần mềm",
     reason: "Em yêu thích thể thao và muốn rèn luyện sức khỏe",
-    startDate: "2024-12-01",
-    endDate: "2025-06-01",
     status: "approved",
     requestDate: "2024-11-15",
     message: "Yêu cầu tham gia Club Thể thao"
@@ -287,9 +324,7 @@ export const mockJoinRequests = [
     studentId: "SE150100",
     major: "Kỹ thuật phần mềm",
     reason: "Em đam mê nhiếp ảnh và muốn học hỏi thêm",
-    startDate: "2024-12-01",
-    endDate: "2025-06-01",
-    status: "rejected",
+    status: "approved",
     requestDate: "2024-11-10",
     message: "Yêu cầu tham gia Club Nhiếp ảnh"
   },
@@ -325,22 +360,6 @@ export const mockJoinRequests = [
     requestDate: "2024-11-27",
     message: "Yêu cầu tham gia Club Tiếng Anh"
   },
-  {
-    id: 7,
-    clubId: 4,
-    clubName: "Club Nhiếp ảnh",
-    studentEmail: "student@gmail.com",
-    studentName: "Nguyễn Văn A",
-    phone: "0912345678",
-    studentId: "SE150100",
-    major: "Kỹ thuật phần mềm",
-    reason: "Em muốn học hỏi kỹ thuật chụp ảnh chuyên nghiệp",
-    startDate: "2024-12-01",
-    endDate: "2025-06-01",
-    status: "approved",
-    requestDate: "2024-11-28",
-    message: "Yêu cầu tham gia Club Nhiếp ảnh"
-  }
 ];
 
 // Demo data cho payments (thanh toán phí)
@@ -354,17 +373,6 @@ export const mockPayments = [
     amount: 30000,
     note: "Nộp phí tham gia Club Tiếng Anh",
     paymentDate: "2024-11-22",
-    status: "completed"
-  },
-  {
-    id: 2,
-    clubId: 3,
-    clubName: "Club Thể thao",
-    studentEmail: "student@gmail.com",
-    studentName: "Nguyễn Văn A",
-    amount: 100000,
-    note: "Nộp phí tham gia Club Thể thao",
-    paymentDate: "2024-11-18",
     status: "completed"
   }
 ];
@@ -467,6 +475,15 @@ export const initializeDemoData = () => {
   const existingUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
   const existingUserEmails = existingUsers.map(u => u.email);
   const demoUsers = [
+    {
+      email: "student@gmail.com",
+      password: "123456",
+      name: "Nguyễn Văn A",
+      role: "student",
+      phone: "0912345678",
+      studentId: "SE150100",
+      major: "Kỹ thuật phần mềm"
+    },
     {
       email: "student2@example.com",
       password: "123456",

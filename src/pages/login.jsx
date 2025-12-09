@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useToast } from '../components/Toast';
 
-const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
+const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
+  const { showToast } = useToast();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -10,6 +12,11 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordError, setForgotPasswordError] = useState('');
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
+  const [foundPassword, setFoundPassword] = useState('');
 
   // Mock data for testing
   const mockUsers = {
@@ -89,6 +96,17 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
           role: user.role
         }));
         
+        // Get role display name
+        const roleNames = {
+          'admin': 'Quản trị viên',
+          'student': 'Sinh viên',
+          'club_leader': 'Leader câu lạc bộ'
+        };
+        const roleDisplayName = roleNames[user.role] || user.role;
+        
+        // Show success notification with role
+        showToast(`Đăng nhập thành công! Chào mừng ${user.name} - ${roleDisplayName}`, 'success');
+        
         // Automatically navigate based on user role
         if (user.role === 'admin' || user.role === 'student' || user.role === 'club_leader') {
           if (onLoginSuccess) {
@@ -114,9 +132,38 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
       <div className="absolute top-[-50%] right-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(243,113,36,0.1)_0%,transparent_70%)] animate-spin-slow"></div>
       
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[460px] p-11 animate-slide-in relative z-10 border border-white/20">
+        {/* Home Button */}
+        {onNavigateToHome && (
+          <button
+            onClick={onNavigateToHome}
+            className="absolute top-4 left-4 text-gray-600 hover:text-fpt-blue transition-colors p-2 rounded-lg hover:bg-gray-100"
+            title="Về trang chủ"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </button>
+        )}
+        
         <div className="text-center mb-5">
-          <div className="text-6xl mb-4 animate-bounce">🎓</div>
-          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">ClubHub</h1>
+          <button
+            onClick={onNavigateToHome}
+            className="inline-block mb-4 hover:scale-110 transition-transform"
+          >
+            <div className="text-6xl mb-4 animate-bounce">🎓</div>
+          </button>
+          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">
+            {onNavigateToHome ? (
+              <button
+                onClick={onNavigateToHome}
+                className="hover:text-fpt-orange transition-colors"
+              >
+                ClubHub
+              </button>
+            ) : (
+              'ClubHub'
+            )}
+          </h1>
           <p className="text-gray-600 text-[15px] font-medium">Hệ thống quản lý Câu lạc bộ Sinh viên</p>
         </div>
 
@@ -187,7 +234,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
             <button
               type="button"
               className="text-fpt-blue no-underline font-semibold transition-all hover:text-fpt-orange hover:underline"
-              onClick={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                setShowForgotPassword(true);
+              }}
             >
               Quên mật khẩu?
             </button>
@@ -233,6 +283,161 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
           </p>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] p-5" onClick={() => {
+          setShowForgotPassword(false);
+          setForgotPasswordEmail('');
+          setForgotPasswordError('');
+          setForgotPasswordSuccess(false);
+          setFoundPassword('');
+        }}>
+          <div className="bg-white rounded-2xl w-full max-w-[500px] shadow-2xl animate-slide-in" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-6 flex justify-between items-center rounded-t-2xl">
+              <h2 className="text-2xl font-bold m-0">🔐 Quên mật khẩu</h2>
+              <button 
+                className="bg-transparent border-none text-white text-3xl cursor-pointer p-0 w-10 h-10 flex items-center justify-center rounded-full transition-colors hover:bg-white/20" 
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setForgotPasswordEmail('');
+                  setForgotPasswordError('');
+                  setForgotPasswordSuccess(false);
+                  setFoundPassword('');
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {!forgotPasswordSuccess ? (
+                <>
+                  <p className="text-gray-600 mb-6">Nhập email của bạn để lấy lại mật khẩu:</p>
+                  
+                  <div className="flex flex-col gap-2 mb-6">
+                    <label htmlFor="forgotEmail" className="text-sm font-semibold text-gray-800">Email</label>
+                    <input
+                      type="email"
+                      id="forgotEmail"
+                      value={forgotPasswordEmail}
+                      onChange={(e) => {
+                        setForgotPasswordEmail(e.target.value);
+                        setForgotPasswordError('');
+                      }}
+                      placeholder="Nhập email của bạn"
+                      className={`px-4 py-3.5 border-2 rounded-xl text-[15px] transition-all font-sans ${
+                        forgotPasswordError 
+                          ? 'border-red-500' 
+                          : 'border-gray-300 focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10'
+                      }`}
+                    />
+                    {forgotPasswordError && (
+                      <span className="text-red-500 text-xs flex items-center gap-1">
+                        <span>⚠️</span>
+                        {forgotPasswordError}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex gap-4 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowForgotPassword(false);
+                        setForgotPasswordEmail('');
+                        setForgotPasswordError('');
+                        setForgotPasswordSuccess(false);
+                        setFoundPassword('');
+                      }}
+                      className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gray-200 text-gray-600 hover:bg-gray-300"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!forgotPasswordEmail.trim()) {
+                          setForgotPasswordError('Vui lòng nhập email');
+                          return;
+                        }
+                        
+                        if (!/\S+@\S+\.\S+/.test(forgotPasswordEmail)) {
+                          setForgotPasswordError('Email không hợp lệ');
+                          return;
+                        }
+
+                        // Check mock users first
+                        let user = mockUsers[forgotPasswordEmail];
+                        
+                        // If not found in mock users, check registered users
+                        if (!user) {
+                          const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                          const registeredUser = registeredUsers.find(u => u.email === forgotPasswordEmail);
+                          if (registeredUser) {
+                            user = {
+                              password: registeredUser.password,
+                              name: registeredUser.name
+                            };
+                          }
+                        }
+                        
+                        if (user) {
+                          setFoundPassword(user.password);
+                          setForgotPasswordSuccess(true);
+                          setForgotPasswordError('');
+                        } else {
+                          setForgotPasswordError('Email này chưa được đăng ký trong hệ thống!');
+                        }
+                      }}
+                      className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
+                    >
+                      Tìm mật khẩu
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-center mb-6">
+                    <div className="text-6xl mb-4">✅</div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">Tìm thấy mật khẩu!</h3>
+                    <p className="text-gray-600">Mật khẩu của bạn là:</p>
+                  </div>
+                  
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-200 mb-6">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-2">Mật khẩu:</p>
+                      <p className="text-2xl font-bold text-fpt-blue font-mono">{foundPassword}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6">
+                    <p className="text-sm text-blue-800 m-0">
+                      <strong>Lưu ý:</strong> Vui lòng ghi nhớ mật khẩu này. Trong hệ thống thực tế, mật khẩu sẽ được gửi qua email.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowForgotPassword(false);
+                        setForgotPasswordEmail('');
+                        setForgotPasswordError('');
+                        setForgotPasswordSuccess(false);
+                        setFoundPassword('');
+                      }}
+                      className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
+                    >
+                      Đóng
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

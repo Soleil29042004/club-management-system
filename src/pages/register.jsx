@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useToast } from '../components/Toast';
 
-const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
+const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
   const { showToast } = useToast();
   const [formData, setFormData] = useState({
     fullName: '',
@@ -143,14 +143,43 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
       <div className="absolute top-[-50%] right-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(243,113,36,0.1)_0%,transparent_70%)] animate-spin-slow"></div>
       
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[460px] p-11 animate-slide-in relative z-10 border border-white/20 max-h-[90vh] overflow-y-auto">
+        {/* Home Button */}
+        {onNavigateToHome && (
+          <button
+            onClick={onNavigateToHome}
+            className="absolute top-4 left-4 text-gray-600 hover:text-fpt-blue transition-colors p-2 rounded-lg hover:bg-gray-100"
+            title="Về trang chủ"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </button>
+        )}
+        
         <div className="text-center mb-5">
           {/* 3D Graduation Cap Icon */}
           <div className="mb-4 flex justify-center">
-            <div className="text-6xl" style={{ filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))' }}>
-              🎓
-            </div>
+            <button
+              onClick={onNavigateToHome}
+              className="hover:scale-110 transition-transform"
+            >
+              <div className="text-6xl" style={{ filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))' }}>
+                🎓
+              </div>
+            </button>
           </div>
-          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">ClubHub</h1>
+          <h1 className="text-3xl text-fpt-blue mb-2.5 font-bold tracking-tight">
+            {onNavigateToHome ? (
+              <button
+                onClick={onNavigateToHome}
+                className="hover:text-fpt-orange transition-colors"
+              >
+                ClubHub
+              </button>
+            ) : (
+              'ClubHub'
+            )}
+          </h1>
           <p className="text-gray-600 text-[15px] font-medium">Đăng ký tài khoản mới</p>
         </div>
 

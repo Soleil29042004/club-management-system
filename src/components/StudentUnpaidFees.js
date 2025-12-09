@@ -1,6 +1,34 @@
 import React from 'react';
 
 const StudentUnpaidFees = ({ unpaidFees, onPayment }) => {
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN');
+  };
+
+  const calculateStartAndExpiryDate = (requestDate, membershipDuration) => {
+    if (!requestDate) {
+      const today = new Date();
+      const startDate = new Date(today);
+      const expiryDate = new Date(today);
+      expiryDate.setMonth(expiryDate.getMonth() + (membershipDuration || 6));
+      return {
+        startDate: startDate.toISOString().split('T')[0],
+        expiryDate: expiryDate.toISOString().split('T')[0]
+      };
+    }
+
+    const startDate = new Date(requestDate);
+    const expiryDate = new Date(startDate);
+    expiryDate.setMonth(expiryDate.getMonth() + (membershipDuration || 6));
+    
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      expiryDate: expiryDate.toISOString().split('T')[0]
+    };
+  };
+
   if (unpaidFees.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
@@ -13,7 +41,13 @@ const StudentUnpaidFees = ({ unpaidFees, onPayment }) => {
 
   return (
     <div className="space-y-6">
-      {unpaidFees.map((item) => (
+      {unpaidFees.map((item) => {
+        const { startDate, expiryDate } = calculateStartAndExpiryDate(
+          item.requestDate,
+          item.club.membershipDuration || 6
+        );
+        
+        return (
         <div key={item.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all">
           <div className="bg-gradient-to-r from-red-50 to-orange-50 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200">
             <div className="flex-1">
@@ -30,8 +64,12 @@ const StudentUnpaidFees = ({ unpaidFees, onPayment }) => {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="flex flex-col">
-                <span className="text-xs text-gray-500 font-medium mb-1">Ngày được chấp nhận:</span>
-                <span className="text-sm font-semibold text-gray-800">{item.requestDate}</span>
+                <span className="text-xs text-gray-500 font-medium mb-1">Ngày bắt đầu:</span>
+                <span className="text-sm font-semibold text-gray-800">{formatDate(startDate)}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 font-medium mb-1">Ngày hết hạn:</span>
+                <span className="text-sm font-semibold text-gray-800">{formatDate(expiryDate)}</span>
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-gray-500 font-medium mb-1">Chủ tịch:</span>
@@ -40,10 +78,6 @@ const StudentUnpaidFees = ({ unpaidFees, onPayment }) => {
               <div className="flex flex-col">
                 <span className="text-xs text-gray-500 font-medium mb-1">Địa điểm:</span>
                 <span className="text-sm font-semibold text-gray-800">{item.club.location}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-500 font-medium mb-1">Số thành viên:</span>
-                <span className="text-sm font-semibold text-gray-800">{item.club.memberCount}</span>
               </div>
             </div>
             <p className="text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-lg border-l-4 border-fpt-blue mt-4">
@@ -60,7 +94,8 @@ const StudentUnpaidFees = ({ unpaidFees, onPayment }) => {
             </button>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

@@ -8,6 +8,7 @@ import Profile from './components/Profile';
 import ClubRequestsManagement from './components/ClubRequestsManagement';
 import Login from './pages/login';
 import Register from './pages/register';
+import Home from './pages/home';
 import { ToastProvider } from './components/Toast';
 import { mockClubs, mockMembers, initializeDemoData } from './data/mockData';
 
@@ -16,6 +17,8 @@ function AppContent() {
   const [userRole, setUserRole] = useState(null);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [showRegister, setShowRegister] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showHome, setShowHome] = useState(true);
   const [clubs, setClubs] = useState(mockClubs);
   const [members, setMembers] = useState(mockMembers);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -44,6 +47,7 @@ function AppContent() {
       if (userData.role === 'admin' || userData.role === 'student' || userData.role === 'club_leader') {
         setIsAuthenticated(true);
         setUserRole(userData.role);
+        setShowHome(false);
       }
     }
   }, []);
@@ -51,12 +55,36 @@ function AppContent() {
   const handleLoginSuccess = (role) => {
     setIsAuthenticated(true);
     setUserRole(role);
+    setShowHome(false);
+    setShowLogin(false);
+    setShowRegister(false);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     setIsAuthenticated(false);
     setUserRole(null);
+    setShowHome(true);
+    setShowLogin(false);
+    setShowRegister(false);
+  };
+
+  const handleNavigateToLogin = () => {
+    setShowHome(false);
+    setShowLogin(true);
+    setShowRegister(false);
+  };
+
+  const handleNavigateToRegister = () => {
+    setShowHome(false);
+    setShowLogin(false);
+    setShowRegister(true);
+  };
+
+  const handleNavigateToHome = () => {
+    setShowHome(true);
+    setShowLogin(false);
+    setShowRegister(false);
   };
 
   const renderPage = () => {
@@ -76,20 +104,36 @@ function AppContent() {
     }
   };
 
-  // Show login/register page if not authenticated
+  // Show home/login/register page if not authenticated
   if (!isAuthenticated) {
     if (showRegister) {
       return (
         <Register 
           onRegisterSuccess={handleLoginSuccess}
-          onSwitchToLogin={() => setShowRegister(false)}
+          onSwitchToLogin={() => {
+            setShowRegister(false);
+            setShowLogin(true);
+          }}
+          onNavigateToHome={handleNavigateToHome}
+        />
+      );
+    }
+    if (showLogin) {
+      return (
+        <Login 
+          onLoginSuccess={handleLoginSuccess}
+          onSwitchToRegister={() => {
+            setShowLogin(false);
+            setShowRegister(true);
+          }}
+          onNavigateToHome={handleNavigateToHome}
         />
       );
     }
     return (
-      <Login 
-        onLoginSuccess={handleLoginSuccess}
-        onSwitchToRegister={() => setShowRegister(true)}
+      <Home 
+        onNavigateToLogin={handleNavigateToLogin}
+        onNavigateToRegister={handleNavigateToRegister}
       />
     );
   }
@@ -231,6 +275,8 @@ function AppContent() {
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
       case 'activities':
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
+      case 'fee':
+        return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
       case 'profile':
         return <Profile userRole={userRole} clubs={clubs} members={members} />;
       default:
@@ -324,6 +370,20 @@ function AppContent() {
             </button>
             <button
               className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                currentPage === 'fee' 
+                  ? 'bg-fpt-orange text-white shadow-lg' 
+                  : 'text-white/90 hover:bg-white/10 hover:text-white'
+              }`}
+              onClick={() => {
+                setCurrentPage('fee');
+                if (window.innerWidth < 1024) setSidebarOpen(false);
+              }}
+            >
+              <span className="text-xl flex-shrink-0">💰</span>
+              <span className="whitespace-nowrap">Phí & Thời hạn</span>
+            </button>
+            <button
+              className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 currentPage === 'profile' 
                   ? 'bg-fpt-orange text-white shadow-lg' 
                   : 'text-white/90 hover:bg-white/10 hover:text-white'
@@ -364,6 +424,7 @@ function AppContent() {
                   {currentPage === 'requests' && 'Duyệt yêu cầu'}
                   {currentPage === 'members' && 'Quản lý thành viên'}
                   {currentPage === 'activities' && 'Hoạt động'}
+                  {currentPage === 'fee' && 'Phí & Thời hạn'}
                   {currentPage === 'profile' && 'Hồ sơ cá nhân'}
                 </h2>
               </div>
