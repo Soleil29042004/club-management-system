@@ -6,6 +6,7 @@ import StudentDashboard from './components/StudentDashboard';
 import ClubLeaderDashboard from './components/ClubLeaderDashboard';
 import Profile from './components/Profile';
 import ClubRequestsManagement from './components/ClubRequestsManagement';
+import StudentMyClubRequests from './components/StudentMyClubRequests';
 import Login from './pages/login';
 import Register from './pages/register';
 import Home from './pages/home';
@@ -166,6 +167,8 @@ function AppContent() {
         return <StudentDashboard clubs={clubs} currentPage={currentPage} setClubs={setClubs} />;
       case 'unpaid-fees':
         return <StudentDashboard clubs={clubs} currentPage={currentPage} setClubs={setClubs} />;
+      case 'my-requests':
+        return <StudentMyClubRequests />;
       case 'profile':
         return <Profile userRole={userRole} clubs={clubs} members={members} />;
       default:
@@ -231,6 +234,20 @@ function AppContent() {
             </button>
             <button
               className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                currentPage === 'my-requests' 
+                  ? 'bg-fpt-orange text-white shadow-lg' 
+                  : 'text-white/90 hover:bg-white/10 hover:text-white'
+              }`}
+              onClick={() => {
+                setCurrentPage('my-requests');
+                if (window.innerWidth < 1024) setSidebarOpen(false);
+              }}
+            >
+              <span className="text-xl flex-shrink-0">📄</span>
+              <span className="whitespace-nowrap">Đơn đã gửi</span>
+            </button>
+            <button
+              className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 currentPage === 'profile' 
                   ? 'bg-fpt-orange text-white shadow-lg' 
                   : 'text-white/90 hover:bg-white/10 hover:text-white'
@@ -269,6 +286,7 @@ function AppContent() {
                 <h2 className="text-xl font-semibold text-gray-800 m-0">
                   {currentPage === 'clubs' && 'Danh sách Câu lạc bộ'}
                   {currentPage === 'unpaid-fees' && 'Phí chưa nộp'}
+                  {currentPage === 'my-requests' && 'Đơn mở Club đã gửi'}
                   {currentPage === 'profile' && 'Hồ sơ cá nhân'}
                 </h2>
               </div>

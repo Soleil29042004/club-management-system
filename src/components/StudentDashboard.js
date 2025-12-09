@@ -10,6 +10,7 @@ import { initializeDemoData } from '../data/mockData';
 
 const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   const { showToast } = useToast();
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
   const [joinRequests, setJoinRequests] = useState([]);
   const [payments, setPayments] = useState([]);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -122,16 +123,54 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     showToast('Nộp phí thành công!', 'success');
   };
 
-  const submitClubRequest = (clubData) => {
-    const newRequest = {
-      id: Date.now(),
-      ...clubData,
-      requestDate: new Date().toISOString().split('T')[0]
+  const submitClubRequest = async (clubData) => {
+    const token = localStorage.getItem('authToken');
+    const payload = {
+      proposedName: clubData.name,
+      category: clubData.category,
+      purpose: clubData.goals || clubData.description,
+      description: clubData.description,
+      location: clubData.location,
+      email: clubData.email,
+      defaultMembershipFee: clubData.participationFee || 0
     };
 
-    setClubRequests([...clubRequests, newRequest]);
-    setShowRegisterClubModal(false);
-    showToast('Đã gửi yêu cầu đăng ký mở câu lạc bộ thành công! Yêu cầu của bạn đang chờ được duyệt.', 'success');
+    const localRequest = {
+      id: Date.now(),
+      ...clubData,
+      status: clubData.status || 'pending',
+      requestDate: clubData.requestDate || new Date().toISOString().split('T')[0]
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/club-requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = data.message || data.error || 'Gửi yêu cầu thất bại. Vui lòng thử lại!';
+        throw new Error(message);
+      }
+
+      const storedRequest = {
+        ...localRequest,
+        id: data.id || localRequest.id,
+        apiId: data.id
+      };
+
+      setClubRequests(prev => [...prev, storedRequest]);
+      setShowRegisterClubModal(false);
+      showToast('Đã gửi yêu cầu đăng ký mở câu lạc bộ thành công! Yêu cầu của bạn đang chờ được duyệt.', 'success');
+    } catch (error) {
+      console.error('Submit club request error:', error);
+      showToast(error.message || 'Không thể gửi yêu cầu. Vui lòng thử lại sau.', 'error');
+    }
   };
 
   const getRequestStatus = (clubId) => {
