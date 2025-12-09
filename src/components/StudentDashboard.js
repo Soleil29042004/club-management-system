@@ -10,6 +10,7 @@ import { initializeDemoData } from '../data/mockData';
 
 const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   const { showToast } = useToast();
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
   const [joinRequests, setJoinRequests] = useState([]);
   const [payments, setPayments] = useState([]);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -18,6 +19,7 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   const [showRegisterClubModal, setShowRegisterClubModal] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
   const [clubRequests, setClubRequests] = useState([]);
+  const [loadingClubs, setLoadingClubs] = useState(false);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -28,16 +30,26 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     const savedPayments = localStorage.getItem('payments');
     const savedClubRequests = localStorage.getItem('clubRequests');
     
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
     if (savedRequests) {
       try {
-        setJoinRequests(JSON.parse(savedRequests));
+        const parsed = JSON.parse(savedRequests);
+        const filtered = currentUser?.email
+          ? parsed.filter((r) => r.studentEmail === currentUser.email)
+          : parsed;
+        setJoinRequests(filtered);
       } catch (e) {
         console.error('Error parsing joinRequests:', e);
       }
     }
     if (savedPayments) {
       try {
-        setPayments(JSON.parse(savedPayments));
+        const parsed = JSON.parse(savedPayments);
+        const filtered = currentUser?.email
+          ? parsed.filter((p) => p.studentEmail === currentUser.email)
+          : parsed;
+        setPayments(filtered);
       } catch (e) {
         console.error('Error parsing payments:', e);
       }
@@ -63,6 +75,46 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   useEffect(() => {
     localStorage.setItem('clubRequests', JSON.stringify(clubRequests));
   }, [clubRequests]);
+
+  // Fetch clubs from API (student view)
+  useEffect(() => {
+    const normalizeClub = (item) => ({
+      id: item.id || item.clubId || item.requestId || Date.now(),
+      name: item.name || item.clubName || item.proposedName || 'CLB chưa đặt tên',
+      description: item.description || item.purpose || 'Chưa có mô tả',
+      category: item.category || item.type || 'Khác',
+      president: item.president || item.chairman || item.leaderName || item.adminName || 'Chưa cập nhật',
+      memberCount: item.memberCount || item.membersCount || item.memberTotal || 0,
+      status: item.statusText || item.status || 'Hoạt động',
+      email: item.email || item.contactEmail || item.creatorEmail || '',
+      location: item.location || item.address || 'Chưa cập nhật',
+      participationFee: item.participationFee || item.defaultMembershipFee || item.fee || 0,
+      membershipDuration: item.membershipDuration || item.durationMonths || 6
+    });
+
+    const fetchClubs = async () => {
+      setLoadingClubs(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/clubs`, {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const message = data.message || data.error || 'Không thể tải danh sách CLB.';
+          throw new Error(message);
+        }
+        const list = Array.isArray(data?.result) ? data.result : Array.isArray(data) ? data : [];
+        setClubs(list.map(normalizeClub));
+      } catch (error) {
+        console.error('Fetch clubs error:', error);
+        showToast(error.message || 'Không thể tải danh sách CLB. Vui lòng thử lại.', 'error');
+      } finally {
+        setLoadingClubs(false);
+      }
+    };
+
+    fetchClubs();
+  }, [API_BASE_URL, setClubs, showToast]);
 
   const handleJoinRequest = (club) => {
     setSelectedClub(club);
@@ -122,16 +174,54 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     showToast('Nộp phí thành công!', 'success');
   };
 
-  const submitClubRequest = (clubData) => {
-    const newRequest = {
-      id: Date.now(),
-      ...clubData,
-      requestDate: new Date().toISOString().split('T')[0]
+  const submitClubRequest = async (clubData) => {
+    const token = localStorage.getItem('authToken');
+    const payload = {
+      proposedName: clubData.name,
+      category: clubData.category,
+      purpose: clubData.goals || clubData.description,
+      description: clubData.description,
+      location: clubData.location,
+      email: clubData.email,
+      defaultMembershipFee: clubData.participationFee || 0
     };
 
-    setClubRequests([...clubRequests, newRequest]);
-    setShowRegisterClubModal(false);
-    showToast('Đã gửi yêu cầu đăng ký mở câu lạc bộ thành công! Yêu cầu của bạn đang chờ được duyệt.', 'success');
+    const localRequest = {
+      id: Date.now(),
+      ...clubData,
+      status: clubData.status || 'pending',
+      requestDate: clubData.requestDate || new Date().toISOString().split('T')[0]
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/club-requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = data.message || data.error || 'Gửi yêu cầu thất bại. Vui lòng thử lại!';
+        throw new Error(message);
+      }
+
+      const storedRequest = {
+        ...localRequest,
+        id: data.id || localRequest.id,
+        apiId: data.id
+      };
+
+      setClubRequests(prev => [...prev, storedRequest]);
+      setShowRegisterClubModal(false);
+      showToast('Đã gửi yêu cầu đăng ký mở câu lạc bộ thành công! Yêu cầu của bạn đang chờ được duyệt.', 'success');
+    } catch (error) {
+      console.error('Submit club request error:', error);
+      showToast(error.message || 'Không thể gửi yêu cầu. Vui lòng thử lại sau.', 'error');
+    }
   };
 
   const getRequestStatus = (clubId) => {
@@ -197,15 +287,24 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
 
       {/* Clubs List Tab */}
       {currentPage === 'clubs' && (
-        <StudentClubList
-          clubs={clubs}
-          joinRequests={joinRequests}
-          payments={payments}
-          onJoinRequest={handleJoinRequest}
-          getRequestStatus={getRequestStatus}
-          hasPayment={hasPayment}
-          onViewDetails={handleViewDetails}
-        />
+        <>
+          {loadingClubs ? (
+            <div className="bg-white rounded-xl shadow-md p-10 text-center text-gray-600">
+              <div className="animate-spin inline-block w-12 h-12 border-4 border-fpt-blue/30 border-t-fpt-blue rounded-full mb-4"></div>
+              <p className="m-0 text-base">Đang tải danh sách câu lạc bộ...</p>
+            </div>
+          ) : (
+            <StudentClubList
+              clubs={clubs}
+              joinRequests={joinRequests}
+              payments={payments}
+              onJoinRequest={handleJoinRequest}
+              getRequestStatus={getRequestStatus}
+              hasPayment={hasPayment}
+              onViewDetails={handleViewDetails}
+            />
+          )}
+        </>
       )}
 
       {/* Unpaid Fees Tab */}

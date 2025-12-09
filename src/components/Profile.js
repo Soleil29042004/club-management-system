@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
 const Profile = ({ userRole, clubs, members }) => {
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
   const [user, setUser] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [fetchError, setFetchError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -20,23 +23,9 @@ const Profile = ({ userRole, clubs, members }) => {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    setUser(userData);
-
-    // Load detailed user info from registeredUsers
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    const detailedUser = registeredUsers.find(u => u.email === userData.email);
-    
-    if (detailedUser) {
-      setFormData({
-        name: detailedUser.name || userData.name || '',
-        email: detailedUser.email || userData.email || '',
-        phone: detailedUser.phone || '',
-        studentId: detailedUser.studentId || '',
-        major: detailedUser.major || ''
-      });
-    } else {
-      // If not in registeredUsers, use basic user data
+    const fallbackLocal = () => {
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      setUser(userData);
       setFormData({
         name: userData.name || '',
         email: userData.email || '',
@@ -44,7 +33,70 @@ const Profile = ({ userRole, clubs, members }) => {
         studentId: '',
         major: ''
       });
-    }
+      setLoadingProfile(false);
+    };
+
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        fallbackLocal();
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/my-info`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const message = data.message || data.error || 'Không thể tải thông tin cá nhân.';
+          throw new Error(message);
+        }
+
+        // Một số response có thể gói trong result/data, lấy lần lượt
+        const info = data.result || data.data || data;
+        const normalized = {
+          name: info.fullName ?? info.name ?? '',
+          email: info.email ?? '',
+          phone: info.phoneNumber ?? info.phone ?? '',
+          studentId: info.studentCode ?? info.studentId ?? '',
+          major: info.major ?? '',
+          role: info.roleName ?? info.role ?? info.userRole ?? ''
+        };
+
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        const mergedUser = {
+          ...userData,
+          name: normalized.name || userData.name,
+          email: normalized.email || userData.email,
+          role: normalized.role || userData.role
+        };
+
+        setUser(mergedUser);
+        setFormData({
+          name: normalized.name || mergedUser.name || '',
+          email: normalized.email || mergedUser.email || '',
+          phone: normalized.phone || 'Chưa cập nhật',
+          studentId: normalized.studentId || 'Chưa cập nhật',
+          major: normalized.major || 'Chưa cập nhật'
+        });
+
+        // Sync latest info to localStorage session
+        localStorage.setItem('user', JSON.stringify(mergedUser));
+      } catch (error) {
+        console.error('Fetch profile error:', error);
+        setFetchError(error.message || 'Không thể tải thông tin cá nhân.');
+        fallbackLocal();
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   const getMyClub = () => {
@@ -209,7 +261,7 @@ const Profile = ({ userRole, clubs, members }) => {
   const myClub = getMyClub();
   const myMemberships = getMyMemberships();
 
-  if (!user) {
+  if (loadingProfile || !user) {
     return (
       <div className="p-5 max-w-[1000px] mx-auto">
         <div className="text-center py-16 px-5 text-gray-600 text-lg">Đang tải thông tin...</div>
@@ -219,6 +271,11 @@ const Profile = ({ userRole, clubs, members }) => {
 
   return (
     <div className="p-5 max-w-[1000px] mx-auto">
+      {fetchError && (
+        <div className="bg-red-500 text-white px-5 py-4 rounded-lg mb-5 text-center font-medium animate-slide-in">
+          {fetchError}
+        </div>
+      )}
       <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light rounded-2xl p-10 flex flex-col md:flex-row items-center gap-8 mb-8 text-white shadow-lg">
         <div className="w-[100px] h-[100px] rounded-full bg-white/20 flex items-center justify-center text-5xl font-bold border-4 border-white/30 flex-shrink-0">
           {user.name ? user.name.charAt(0).toUpperCase() : 'U'}

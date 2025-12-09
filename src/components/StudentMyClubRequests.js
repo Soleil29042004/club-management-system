@@ -1,0 +1,141 @@
+import React, { useEffect, useState } from 'react';
+import { useToast } from './Toast';
+
+const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+
+const statusMap = {
+  DangCho: { text: 'Đang chờ', color: 'bg-amber-100 text-amber-700' },
+  DaDuyet: { text: 'Đã duyệt', color: 'bg-green-100 text-green-700' },
+  TuChoi: { text: 'Từ chối', color: 'bg-red-100 text-red-700' }
+};
+
+const StudentMyClubRequests = () => {
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [requests, setRequests] = useState([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchMyRequests = async () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Vui lòng đăng nhập để xem đơn đã gửi.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/club-requests/my-requests`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const message = data.message || data.error || 'Không thể tải danh sách đơn.';
+          throw new Error(message);
+        }
+
+        setRequests(data.result || []);
+      } catch (err) {
+        console.error('Fetch my club requests error:', err);
+        const message = err.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
+        setError(message);
+        showToast(message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMyRequests();
+  }, [showToast]);
+
+  const renderStatus = (status) => {
+    const info = statusMap[status] || { text: status || 'Không xác định', color: 'bg-gray-100 text-gray-700' };
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${info.color}`}>
+        {info.text}
+      </span>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-600">
+        <div className="animate-spin inline-block w-10 h-10 border-4 border-fpt-blue/30 border-t-fpt-blue rounded-full mb-4"></div>
+        <p className="m-0 text-base">Đang tải danh sách đơn đã gửi...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8 text-center text-red-600">
+        <p className="m-0 text-base">{error}</p>
+      </div>
+    );
+  }
+
+  if (!requests.length) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-10 text-center text-gray-600">
+        <div className="text-5xl mb-4">📭</div>
+        <p className="m-0 text-lg">Bạn chưa gửi yêu cầu mở câu lạc bộ nào.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-2xl shadow-lg border border-fpt-blue/10">
+        <h2 className="text-2xl font-bold text-fpt-blue m-0">Lịch sử đơn đã gửi</h2>
+        <p className="text-gray-600 mt-2 mb-0">Theo dõi trạng thái các yêu cầu mở câu lạc bộ của bạn</p>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Tên CLB</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Danh mục</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Ngày gửi</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Trạng thái</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Mục đích</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {requests.map((req) => (
+                <tr key={req.requestId} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="font-semibold text-gray-800">{req.proposedName}</div>
+                    <div className="text-sm text-gray-500">{req.email || req.creatorEmail}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                      {req.category}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {req.createdAt ? new Date(req.createdAt).toLocaleDateString('vi-VN') : '—'}
+                  </td>
+                  <td className="px-6 py-4">
+                    {renderStatus(req.status)}
+                  </td>
+                  <td className="px-6 py-4 text-gray-700 max-w-xs">
+                    <div className="line-clamp-2">{req.purpose || req.description}</div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StudentMyClubRequests;
+

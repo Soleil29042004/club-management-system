@@ -8,7 +8,7 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student', // Default role is student
+    role: 'student', // UI vẫn giữ, API sẽ bỏ qua
     studentId: '',
     phone: '',
     major: ''
@@ -18,6 +18,8 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -87,55 +89,60 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
     }
     
     setLoading(true);
+    setErrors(prev => ({ ...prev, submit: '' }));
     
-    // Simulate API call with setTimeout
-    setTimeout(() => {
-      // Check if email already exists
-      const existingUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      const emailExists = existingUsers.some(user => user.email === formData.email);
-      
-      if (emailExists) {
-        setErrors({
-          submit: 'Email này đã được đăng ký!'
-        });
-        setLoading(false);
+    try {
+      // Swagger: POST /users with studentCode, fullName, email, password, phoneNumber, major
+      const response = await fetch(`${API_BASE_URL}/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          studentCode: formData.studentId.trim(),
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim(),
+          password: formData.password,
+          phoneNumber: formData.phone.trim(),
+          major: formData.major.trim()
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data.message || data.error || 'Đăng ký thất bại. Vui lòng thử lại!';
+        setErrors({ submit: message });
         return;
       }
 
-      // Create new user
-      const newUser = {
-        email: formData.email,
-        password: formData.password,
-        name: formData.fullName,
-        role: formData.role,
-        studentId: formData.studentId,
-        phone: formData.phone,
-        major: formData.major,
-        registeredAt: new Date().toISOString()
+      const token = data.token || data.accessToken || data.access_token;
+      const name = data.fullName || data.name || formData.fullName.trim();
+      const role = data.role || data.userRole || formData.role || 'student';
+
+      const userData = {
+        email: formData.email.trim(),
+        name,
+        role,
+        ...(token ? { token } : {})
       };
 
-      // Save to localStorage
-      const updatedUsers = [...existingUsers, newUser];
-      localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
+      if (token) {
+        localStorage.setItem('authToken', token);
+      }
+      localStorage.setItem('user', JSON.stringify(userData));
 
-      // Also save to user session for auto login
-      localStorage.setItem('user', JSON.stringify({
-        email: formData.email,
-        name: formData.fullName,
-        role: formData.role
-      }));
-
-      setLoading(false);
-      
-      // Show success message and redirect
       showToast('Đăng ký thành công! Bạn sẽ được chuyển đến trang chủ.', 'success');
       
-      setTimeout(() => {
-        if (onRegisterSuccess) {
-          onRegisterSuccess(formData.role);
-        }
-      }, 500);
-    }, 1000);
+      if (onRegisterSuccess) {
+        onRegisterSuccess(role);
+      }
+    } catch (error) {
+      console.error('Register error:', error);
+      setErrors({ submit: 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

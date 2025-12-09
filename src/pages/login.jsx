@@ -18,7 +18,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
   const [foundPassword, setFoundPassword] = useState('');
 
-  // Mock data for testing
+  // Mock data for testing (still used for forgot password UI)
   const mockUsers = {
     'student@gmail.com': { password: '123456', role: 'student', name: 'Nguyễn Văn A' },
     'leader@gmail.com': { password: '123456', role: 'club_leader', name: 'Trần Thị B' }, // Club Tiếng Anh
@@ -26,6 +26,23 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
     'leader2@gmail.com': { password: '123456', role: 'club_leader', name: 'Lê Văn C' }, // Club Thể thao
     'leader3@gmail.com': { password: '123456', role: 'club_leader', name: 'Phạm Thị D' }, // Club Nhiếp ảnh
     'admin@gmail.com': { password: '123456', role: 'admin', name: 'Admin' }
+  };
+
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+
+  const extractToken = (data) => {
+    return (
+      data?.token ||
+      data?.accessToken ||
+      data?.access_token ||
+      data?.jwt ||
+      data?.jwtToken ||
+      data?.data?.token ||
+      data?.data?.accessToken ||
+      data?.result?.token || // response format: { code, message, result: { token, authenticated } }
+      data?.result?.accessToken ||
+      data?.result?.access_token
+    );
   };
 
   const handleChange = (e) => {
@@ -69,62 +86,65 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
     }
     
     setLoading(true);
+    setErrors(prev => ({ ...prev, submit: '' }));
     
-    // Simulate API call with setTimeout
-    setTimeout(() => {
-      // Check mock users first
-      let user = mockUsers[formData.email];
-      
-      // If not found in mock users, check registered users
-      if (!user) {
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-        const registeredUser = registeredUsers.find(u => u.email === formData.email);
-        if (registeredUser) {
-          user = {
-            password: registeredUser.password,
-            role: registeredUser.role,
-            name: registeredUser.name
-          };
-        }
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: formData.email.trim(),
+          password: formData.password
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data.message || data.error || 'Email hoặc mật khẩu không đúng!';
+        setErrors({ submit: message });
+        return;
       }
-      
-      if (user && user.password === formData.password) {
-        // Save to localStorage
-        localStorage.setItem('user', JSON.stringify({
-          email: formData.email,
-          name: user.name,
-          role: user.role
-        }));
-        
-        // Get role display name
-        const roleNames = {
-          'admin': 'Quản trị viên',
-          'student': 'Sinh viên',
-          'club_leader': 'Leader câu lạc bộ'
-        };
-        const roleDisplayName = roleNames[user.role] || user.role;
-        
-        // Show success notification with role
-        showToast(`Đăng nhập thành công! Chào mừng ${user.name} - ${roleDisplayName}`, 'success');
-        
-        // Automatically navigate based on user role
-        if (user.role === 'admin' || user.role === 'student' || user.role === 'club_leader') {
-          if (onLoginSuccess) {
-            onLoginSuccess(user.role);
-          }
-        } else {
-          setErrors({
-            submit: 'Vai trò này chưa được hỗ trợ!'
-          });
-        }
-      } else {
-        setErrors({
-          submit: 'Email hoặc mật khẩu không đúng!'
-        });
+
+      const token = extractToken(data);
+      if (!token) {
+        setErrors({ submit: 'Không nhận được token từ máy chủ. Vui lòng thử lại.' });
+        return;
       }
+
+      const role = data.role || data.userRole || data.user?.role || 'student';
+      const name = data.fullName || data.name || data.user?.fullName || data.user?.name || formData.email.split('@')[0];
+
+      const userData = {
+        email: formData.email.trim(),
+        name,
+        role,
+        token
+      };
+
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(userData));
       
+      const roleNames = {
+        'admin': 'Quản trị viên',
+        'student': 'Sinh viên',
+        'club_leader': 'Leader câu lạc bộ'
+      };
+      const roleDisplayName = roleNames[role] || role;
+      
+      showToast(`Đăng nhập thành công! Chào mừng ${name} - ${roleDisplayName}`, 'success');
+      
+      if (onLoginSuccess) {
+        onLoginSuccess(role);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrors({ submit: 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.' });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
