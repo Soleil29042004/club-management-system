@@ -27,7 +27,8 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     status: 'Hoạt động',
     email: '',
     location: '',
-    activityTime: ''
+    activityTime: '',
+    logo: ''
   });
 
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
@@ -100,28 +101,44 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     }
     lastFetchedClubId.current = targetClubId;
 
-    const controller = new AbortController();
-    const fetchClubDetail = async () => {
+    let triedWithoutAuth = false;
+
+    const fetchClubDetail = async (useAuth = true) => {
       setClubLoading(true);
       setClubError('');
       try {
-        console.log('[ClubLeaderDashboard] Fetch club detail', { targetClubId, tokenExists: !!token });
+        console.log('[ClubLeaderDashboard] Fetch club detail', {
+          targetClubId,
+          tokenExists: !!token,
+          useAuth
+        });
         const res = await fetch(`${API_BASE_URL}/clubs/${targetClubId}`, {
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
+            ...(useAuth && token ? { Authorization: `Bearer ${token}` } : {})
           },
-          signal: controller.signal
+          mode: 'cors'
         });
 
         const data = await res.json().catch(() => ({}));
 
-        console.log('[ClubLeaderDashboard] Club detail response', { status: res.status, data });
+        console.log('[ClubLeaderDashboard] Club detail response', {
+          status: res.status,
+          data,
+          useAuth
+        });
 
         if (!res.ok || !(data.code === 1000 || data.code === 0)) {
+          if (useAuth && token && (res.status === 401 || res.status === 403) && !triedWithoutAuth) {
+            triedWithoutAuth = true;
+            console.warn('[ClubLeaderDashboard] Retry without Authorization header');
+            await fetchClubDetail(false);
+            return;
+          }
+
           const message =
             data.message ||
-            (res.status === 401
+            (res.status === 401 || res.status === 403
               ? 'Phiên đăng nhập đã hết hạn hoặc không đủ quyền.'
               : 'Không thể tải thông tin câu lạc bộ.');
           setClubError(message);
@@ -144,8 +161,13 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
           });
         }
       } catch (err) {
-        if (err.name === 'AbortError') return;
         console.error('Fetch club detail error:', err);
+        if (token && !triedWithoutAuth) {
+          triedWithoutAuth = true;
+          console.warn('[ClubLeaderDashboard] Retry without Authorization header after error');
+          await fetchClubDetail(false);
+          return;
+        }
         setClubError('Không thể kết nối máy chủ.');
         showToast('Không thể kết nối máy chủ.', 'error');
         setMyClub(null);
@@ -155,8 +177,6 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     };
 
     fetchClubDetail();
-
-    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // chỉ fetch đúng 1 lần khi mount
 
@@ -258,17 +278,56 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       return;
     }
 
-    // Update club
-    setClubs(clubs.map(club =>
-      club.id === myClub.id
-        ? { ...formData, id: myClub.id }
-        : club
-    ));
+    const token = localStorage.getItem('authToken');
+    const payload = {
+      clubName: formData.name,
+      category: formData.category,
+      logo: formData.logo || null,
+      location: formData.location || '',
+      description: formData.description || '',
+      email: formData.email || '',
+      isActive: (formData.status || '').toLowerCase().includes('hoạt'),
+      establishedDate: formData.foundedDate || null,
+      founderId: myClub?.founderId || null,
+      founderStudentCode: myClub?.founderStudentCode || null,
+      activityTime: formData.activityTime || null
+    };
 
-    // Update myClub state
-    setMyClub({ ...formData, id: myClub.id });
-    setShowEditForm(false);
-    showToast('Cập nhật thông tin club thành công!', 'success');
+    const doUpdate = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/clubs/${myClub.id || myClub.clubId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !(data.code === 1000 || data.code === 0)) {
+          const message = data.message || 'Cập nhật câu lạc bộ thất bại.';
+          showToast(message, 'error');
+          return;
+        }
+
+        const mapped = mapApiClub(data.result || payload);
+        setMyClub(mapped);
+        setFormData(mapped);
+        setClubs(prev =>
+          prev.map(club =>
+            club.id === mapped.id || club.clubId === mapped.id ? mapped : club
+          )
+        );
+        setShowEditForm(false);
+        showToast('Cập nhật thông tin club thành công!', 'success');
+      } catch (err) {
+        console.error('Update club error:', err);
+        showToast('Không thể cập nhật câu lạc bộ.', 'error');
+      }
+    };
+
+    doUpdate();
   };
 
   const handleFormCancel = () => {
