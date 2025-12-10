@@ -165,10 +165,23 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
       let role = 'student';
       let name = formData.email.split('@')[0];
       
+      let clubIdFromToken = null;
+      let clubIdsFromToken = [];
       if (tokenPayload) {
         // Lấy role từ scope trong JWT token
         const scope = tokenPayload.scope || tokenPayload.role || tokenPayload.Roles;
         role = mapScopeToRole(scope);
+        clubIdsFromToken = Array.isArray(tokenPayload.clubIds || tokenPayload.clubIDs || tokenPayload.ClubIds || tokenPayload.ClubIDs)
+          ? (tokenPayload.clubIds || tokenPayload.clubIDs || tokenPayload.ClubIds || tokenPayload.ClubIDs)
+          : [];
+        clubIdFromToken =
+          tokenPayload.clubId ||
+          tokenPayload.clubID ||
+          tokenPayload.ClubId ||
+          tokenPayload.ClubID ||
+          tokenPayload.club?.clubId ||
+          clubIdsFromToken?.[0] ||
+          null;
         
         // Lấy name từ token hoặc response
         name = tokenPayload.sub?.split('@')[0] || 
@@ -183,11 +196,16 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
         name = data.fullName || data.name || data.user?.fullName || data.user?.name || formData.email.split('@')[0];
       }
 
+      const userId = tokenPayload?.sub || tokenPayload?.nameid || tokenPayload?.userId || tokenPayload?.UserId;
+
       const userData = {
         email: formData.email.trim(),
         name,
         role,
-        token
+        token,
+        ...(userId ? { userId } : {}),
+        ...(clubIdFromToken ? { clubId: clubIdFromToken } : {}),
+        ...(clubIdsFromToken && clubIdsFromToken.length ? { clubIds: clubIdsFromToken } : {})
       };
 
       localStorage.setItem('authToken', token);
