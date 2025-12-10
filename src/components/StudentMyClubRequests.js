@@ -1,37 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { useToast } from './Toast';
-import { clubCategoryLabels } from '../data/mockData';
-
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
 const statusMap = {
-  DangCho: { text: 'Đang chờ', color: 'bg-amber-100 text-amber-700' },
+  ChoDuyet: { text: 'Chờ duyệt', color: 'bg-amber-100 text-amber-700' },
   DaDuyet: { text: 'Đã duyệt', color: 'bg-green-100 text-green-700' },
-  TuChoi: { text: 'Từ chối', color: 'bg-red-100 text-red-700' }
+  TuChoi: { text: 'Từ chối', color: 'bg-red-100 text-red-700' },
+  DaRoiCLB: { text: 'Đã rời CLB', color: 'bg-gray-200 text-gray-700' }
 };
 
 const StudentMyClubRequests = () => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [requests, setRequests] = useState([]);
+  const [registrations, setRegistrations] = useState([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let isMounted = true; // Flag để tránh setState sau khi component unmount
     
-    const fetchMyRequests = async () => {
+    const fetchMyRegistrations = async () => {
       // Lấy token từ cả authToken và token
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
       if (!token) {
         if (isMounted) {
-          setError('Vui lòng đăng nhập để xem đơn đã gửi.');
+          setError('Vui lòng đăng nhập để xem đăng ký của bạn.');
           setLoading(false);
         }
         return;
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/club-requests/my-requests`, {
+        const response = await fetch(`${API_BASE_URL}/registers/my-registrations`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -52,9 +51,9 @@ const StudentMyClubRequests = () => {
           return;
         }
         
-        // Kiểm tra response code: API này trả về code 1000 khi thành công
+        // Kiểm tra response code
         if (!response.ok || !data || data.code !== 1000) {
-          const message = data?.message || data?.error || 'Không thể tải danh sách đơn.';
+          const message = data?.message || data?.error || 'Không thể tải danh sách đăng ký.';
           if (isMounted) {
             setError(message);
             setLoading(false);
@@ -62,53 +61,21 @@ const StudentMyClubRequests = () => {
           return;
         }
 
-        // Lấy danh sách requests từ result
-        const rawRequests = data.result || [];
-        
-        // Loại bỏ duplicate dựa trên requestId (đảm bảo không có requestId trùng)
-        const uniqueById = rawRequests.reduce((acc, req) => {
-          const requestId = req.requestId || req.id;
-          if (requestId && !acc.find(r => (r.requestId || r.id) === requestId)) {
-            acc.push(req);
-          }
-          return acc;
-        }, []);
-
-        // Group theo tên CLB và chỉ lấy đơn mới nhất của mỗi tên
-        // Nếu có nhiều đơn cùng tên, chỉ hiển thị đơn mới nhất
-        const groupedByName = uniqueById.reduce((acc, req) => {
-          const name = req.proposedName?.trim();
-          if (!name) return acc;
-          
-          const existing = acc.find(r => r.proposedName?.trim() === name);
-          if (!existing) {
-            acc.push(req);
-          } else {
-            // So sánh ngày tạo, giữ lại đơn mới hơn
-            const existingDate = existing.createdAt ? new Date(existing.createdAt).getTime() : 0;
-            const currentDate = req.createdAt ? new Date(req.createdAt).getTime() : 0;
-            if (currentDate > existingDate) {
-              // Thay thế bằng đơn mới hơn
-              const index = acc.indexOf(existing);
-              acc[index] = req;
-            }
-          }
-          return acc;
-        }, []);
-
-        // Sắp xếp theo ngày tạo (mới nhất trước)
-        groupedByName.sort((a, b) => {
+        // Lấy danh sách đăng ký
+        const raw = data.result || [];
+        // Sắp xếp mới nhất trước
+        raw.sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return dateB - dateA;
         });
 
         if (isMounted) {
-          setRequests(groupedByName);
+          setRegistrations(raw);
           setLoading(false);
         }
       } catch (err) {
-        console.error('Fetch my club requests error:', err);
+        console.error('Fetch my registrations error:', err);
         if (isMounted) {
           const message = err.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
           setError(message);
@@ -121,7 +88,7 @@ const StudentMyClubRequests = () => {
       }
     };
 
-    fetchMyRequests();
+    fetchMyRegistrations();
     
     // Cleanup function
     return () => {
@@ -156,11 +123,11 @@ const StudentMyClubRequests = () => {
     );
   }
 
-  if (!requests.length) {
+  if (!registrations.length) {
     return (
       <div className="bg-white rounded-xl shadow-md p-10 text-center text-gray-600">
         <div className="text-5xl mb-4">📭</div>
-        <p className="m-0 text-lg">Bạn chưa gửi yêu cầu mở câu lạc bộ nào.</p>
+        <p className="m-0 text-lg">Bạn chưa có đăng ký tham gia câu lạc bộ.</p>
       </div>
     );
   }
@@ -168,8 +135,8 @@ const StudentMyClubRequests = () => {
   return (
     <div className="space-y-5">
       <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-2xl shadow-lg border border-fpt-blue/10">
-        <h2 className="text-2xl font-bold text-fpt-blue m-0">Lịch sử đơn đã gửi</h2>
-        <p className="text-gray-600 mt-2 mb-0">Theo dõi trạng thái các yêu cầu mở câu lạc bộ của bạn</p>
+        <h2 className="text-2xl font-bold text-fpt-blue m-0">Đăng ký tham gia CLB</h2>
+        <p className="text-gray-600 mt-2 mb-0">Theo dõi trạng thái các đăng ký membership của bạn</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -177,33 +144,52 @@ const StudentMyClubRequests = () => {
           <table className="w-full">
             <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Tên CLB</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Danh mục</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Ngày gửi</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">CLB</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Gói</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Giá</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Trạng thái</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">Mục đích</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Ngày đăng ký</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Ngày tham gia</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold">Hiệu lực</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {requests.map((req) => (
-                <tr key={req.requestId} className="hover:bg-gray-50 transition-colors">
+              {registrations.map((reg) => (
+                <tr key={reg.subscriptionId} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-semibold text-gray-800">{req.proposedName}</div>
-                    <div className="text-sm text-gray-500">{req.email || req.creatorEmail}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                      {clubCategoryLabels[req.category] || req.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {req.createdAt ? new Date(req.createdAt).toLocaleDateString('vi-VN') : '—'}
+                    <div className="font-semibold text-gray-800">{reg.clubName || '-'}</div>
+                    <div className="text-xs text-gray-500">#{reg.subscriptionId}</div>
                   </td>
                   <td className="px-6 py-4">
-                    {renderStatus(req.status)}
+                    <div className="font-semibold text-gray-800">{reg.packageName || '-'}</div>
+                    <div className="text-xs text-gray-500">{reg.term || ''}</div>
                   </td>
-                  <td className="px-6 py-4 text-gray-700 max-w-xs">
-                    <div className="line-clamp-2">{req.purpose || req.description}</div>
+                  <td className="px-6 py-4 text-gray-700">
+                    {reg.price ? `${reg.price.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}
+                    <div className="text-xs text-gray-500">
+                      {reg.isPaid ? `Đã thanh toán (${reg.paymentMethod || 'N/A'})` : 'Chưa thanh toán'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {renderStatus(reg.status)}
+                    <div className="text-xs text-gray-500 mt-1">{reg.clubRole ? `Vai trò: ${reg.clubRole}` : ''}</div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-700">
+                    {reg.createdAt ? new Date(reg.createdAt).toLocaleString('vi-VN') : '—'}
+                  </td>
+                  <td className="px-6 py-4 text-gray-700">
+                    {reg.joinDate ? new Date(reg.joinDate).toLocaleString('vi-VN') : '—'}
+                    <div className="text-xs text-gray-500">
+                      {reg.paymentDate ? `Thanh toán: ${new Date(reg.paymentDate).toLocaleString('vi-VN')}` : ''}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-700">
+                    {reg.startDate && reg.endDate
+                      ? `${new Date(reg.startDate).toLocaleDateString('vi-VN')} → ${new Date(reg.endDate).toLocaleDateString('vi-VN')}`
+                      : '—'}
+                    {reg.approverName && (
+                      <div className="text-xs text-gray-500 mt-1">Duyệt: {reg.approverName}</div>
+                    )}
                   </td>
                 </tr>
               ))}
