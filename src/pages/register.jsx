@@ -116,27 +116,17 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
         return;
       }
 
-      const token = data.token || data.accessToken || data.access_token;
-      const name = data.fullName || data.name || formData.fullName.trim();
-      const role = data.role || data.userRole || formData.role || 'student';
-
-      const userData = {
-        email: formData.email.trim(),
-        name,
-        role,
-        ...(token ? { token } : {})
-      };
-
-      if (token) {
-        localStorage.setItem('authToken', token);
-      }
-      localStorage.setItem('user', JSON.stringify(userData));
-
+      // Không lưu token và user data để đảm bảo về trang home chưa đăng nhập
+      // User sẽ cần đăng nhập lại sau khi đăng ký thành công
+      
       showToast('Đăng ký thành công! Bạn sẽ được chuyển đến trang chủ.', 'success');
       
-      if (onRegisterSuccess) {
-        onRegisterSuccess(role);
-      }
+      // Chuyển về trang home sau khi đăng ký thành công
+      setTimeout(() => {
+        if (onNavigateToHome) {
+          onNavigateToHome();
+        }
+      }, 1000); // Delay 1 giây để user thấy thông báo thành công
     } catch (error) {
       console.error('Register error:', error);
       setErrors({ submit: 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.' });

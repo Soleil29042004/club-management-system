@@ -5,9 +5,42 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     phone: '',
     studentId: '',
     major: '',
-    reason: ''
+    reason: '',
+    packageId: '' // ID của gói membership được chọn
   });
   const [errors, setErrors] = useState({});
+  const [packages, setPackages] = useState([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
+
+  // Fetch packages khi club thay đổi
+  useEffect(() => {
+    if (!club || !club.id) return;
+
+    const fetchPackages = async () => {
+      setLoadingPackages(true);
+      try {
+        // Tạm thời sử dụng packages mặc định nếu không có API
+        // Có thể thay thế bằng API: GET /api/clubs/{clubId}/packages
+        const basePrice = club.participationFee || 20000;
+        const defaultPackages = [
+          { id: 1, name: 'Thành Viên Cơ Bản', term: '1 năm', price: basePrice },
+          { id: 2, name: 'Thành Viên Nâng Cao', term: '2 năm', price: basePrice * 1.5 }
+        ];
+        setPackages(defaultPackages);
+        // Set package mặc định là package đầu tiên
+        if (defaultPackages.length > 0) {
+          setFormData(prev => ({ ...prev, packageId: defaultPackages[0].id }));
+        }
+      } catch (error) {
+        console.error('Error fetching packages:', error);
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+
+    fetchPackages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [club?.id]); // Chỉ phụ thuộc vào club.id
 
   useEffect(() => {
     // Load user data from localStorage
@@ -17,20 +50,22 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     
     // Auto-fill form with user data
     if (detailedUser) {
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         phone: detailedUser.phone || '',
         studentId: detailedUser.studentId || '',
         major: detailedUser.major || '',
         reason: '' // Keep reason empty for user to fill
-      });
+      }));
     } else if (user.email) {
       // If user exists but not in registeredUsers, try to get from mock data or use defaults
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         phone: '',
         studentId: '',
         major: '',
         reason: ''
-      });
+      }));
     }
   }, [club]); // Re-run when club changes (modal opens)
 
@@ -67,6 +102,10 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
 
     if (!formData.reason.trim()) {
       newErrors.reason = 'Lý do gia nhập không được để trống';
+    }
+
+    if (!formData.packageId) {
+      newErrors.packageId = 'Vui lòng chọn gói thành viên';
     }
 
     setErrors(newErrors);
@@ -152,6 +191,44 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
                   {errors.major && <span className="text-red-500 text-xs mt-1">{errors.major}</span>}
                 </div>
               </div>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Chọn gói thành viên *</h3>
+              {loadingPackages ? (
+                <div className="text-center py-4 text-gray-500">Đang tải gói thành viên...</div>
+              ) : packages.length > 0 ? (
+                <div className="space-y-3">
+                  {packages.map((pkg) => (
+                    <label
+                      key={pkg.id}
+                      className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        formData.packageId === pkg.id
+                          ? 'border-fpt-blue bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="packageId"
+                        value={pkg.id}
+                        checked={formData.packageId === pkg.id}
+                        onChange={handleChange}
+                        className="mr-3"
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-800">{pkg.name}</div>
+                        <div className="text-sm text-gray-600">
+                          Thời hạn: {pkg.term} • Giá: {pkg.price?.toLocaleString('vi-VN') || '0'} VNĐ
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500">Không có gói thành viên nào</div>
+              )}
+              {errors.packageId && <span className="text-red-500 text-xs mt-1 block">{errors.packageId}</span>}
             </div>
 
             <div className="mb-6">

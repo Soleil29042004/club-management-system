@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SubscriptionDetailModal from './SubscriptionDetailModal';
 
 const Profile = ({ userRole, clubs, members }) => {
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
@@ -21,6 +22,7 @@ const Profile = ({ userRole, clubs, members }) => {
   const [activeTab, setActiveTab] = useState('info'); // 'info' or 'password'
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState(null);
 
   useEffect(() => {
     const fallbackLocal = () => {
@@ -604,6 +606,16 @@ const Profile = ({ userRole, clubs, members }) => {
                         <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Phí tham gia:</strong> {item.club.participationFee ? `${item.club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}</span>
                         <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Thời hạn:</strong> {item.club.membershipDuration || 6} tháng</span>
                       </div>
+                      {item.subscriptionId && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <button
+                            onClick={() => setSelectedSubscriptionId(item.subscriptionId)}
+                            className="px-4 py-2 bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all hover:-translate-y-0.5"
+                          >
+                            📋 Xem chi tiết đăng ký
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                   );
@@ -655,6 +667,14 @@ const Profile = ({ userRole, clubs, members }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Subscription Detail Modal */}
+      {selectedSubscriptionId && (
+        <SubscriptionDetailModal
+          subscriptionId={selectedSubscriptionId}
+          onClose={() => setSelectedSubscriptionId(null)}
+        />
       )}
     </div>
   );

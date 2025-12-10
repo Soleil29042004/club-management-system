@@ -121,27 +121,94 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     setShowJoinModal(true);
   };
 
-  const submitJoinRequest = (formData) => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const newRequest = {
-      id: Date.now(),
-      clubId: selectedClub.id,
-      clubName: selectedClub.name,
-      studentEmail: user.email,
-      studentName: user.name,
-      phone: formData.phone,
-      studentId: formData.studentId,
-      major: formData.major,
-      reason: formData.reason,
-      status: 'pending',
-      requestDate: new Date().toISOString().split('T')[0],
-      message: `Yêu cầu tham gia ${selectedClub.name}`
+  const submitJoinRequest = async (formData) => {
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Bạn cần đăng nhập trước khi đăng ký tham gia CLB.', 'error');
+      return;
+    }
+
+    if (!selectedClub || !selectedClub.id) {
+      showToast('Thông tin câu lạc bộ không hợp lệ.', 'error');
+      return;
+    }
+
+    if (!formData.packageId) {
+      showToast('Vui lòng chọn gói thành viên.', 'error');
+      return;
+    }
+
+    // Chuẩn bị payload theo đúng format API yêu cầu
+    // Theo API documentation: chỉ cần packageId trong body
+    const payload = {
+      packageId: parseInt(formData.packageId)
     };
 
-    setJoinRequests([...joinRequests, newRequest]);
-    setShowJoinModal(false);
-    setSelectedClub(null);
-    showToast('Đã gửi yêu cầu tham gia thành công!', 'success');
+    // API endpoint: POST /api/registers
+    // Theo tài liệu API, chỉ cần packageId trong body
+    // clubId có thể được lấy từ context hoặc truyền qua query parameter
+    // Thử với query parameter: /registers?clubId={clubId}
+    const url = `${API_BASE_URL}/registers${selectedClub.id ? `?clubId=${selectedClub.id}` : ''}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => null);
+
+      // Kiểm tra response code: API này trả về code 1000 khi thành công
+      if (!response.ok || !data || data.code !== 1000) {
+        const message = data?.message || 
+          (response.status === 401 
+            ? 'Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.' 
+            : `Đăng ký thất bại (mã ${data?.code || response.status}). Vui lòng thử lại.`);
+        console.error('registers POST error:', data || response.status);
+        showToast(message, 'error');
+        return;
+      }
+
+      // Map response từ API về format local để hiển thị
+      const apiResult = data.result;
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      const newRequest = {
+        id: apiResult.subscriptionId || Date.now(),
+        subscriptionId: apiResult.subscriptionId,
+        clubId: apiResult.clubId,
+        clubName: apiResult.clubName,
+        studentEmail: apiResult.studentEmail || user.email,
+        studentName: apiResult.studentName || user.name,
+        phone: formData.phone,
+        studentId: apiResult.studentCode || formData.studentId,
+        major: formData.major,
+        reason: formData.reason,
+        status: apiResult.status || 'ChoDuyet', // ChoDuyet, DaDuyet, TuChoi
+        requestDate: apiResult.createdAt ? apiResult.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+        message: `Yêu cầu tham gia ${apiResult.clubName}`,
+        packageId: apiResult.packageId,
+        packageName: apiResult.packageName,
+        price: apiResult.price,
+        term: apiResult.term
+      };
+
+      // Cập nhật state
+      setJoinRequests([...joinRequests, newRequest]);
+      setShowJoinModal(false);
+      setSelectedClub(null);
+      
+      // Hiển thị thông báo từ API hoặc thông báo mặc định
+      const successMessage = data.message || 'Đã gửi yêu cầu tham gia thành công! Vui lòng chờ Leader CLB duyệt.';
+      showToast(successMessage, 'success');
+    } catch (error) {
+      console.error('Submit join request exception:', error);
+      showToast('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.', 'error');
+    }
   };
 
   const handlePayment = (club) => {
@@ -175,22 +242,21 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   };
 
   const submitClubRequest = async (clubData) => {
-    const token = localStorage.getItem('authToken');
-    const payload = {
-      proposedName: clubData.name,
-      category: clubData.category,
-      purpose: clubData.goals || clubData.description,
-      description: clubData.description,
-      location: clubData.location,
-      email: clubData.email,
-      defaultMembershipFee: clubData.participationFee || 0
-    };
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Bạn cần đăng nhập trước khi gửi yêu cầu mở CLB.', 'error');
+      return;
+    }
 
-    const localRequest = {
-      id: Date.now(),
-      ...clubData,
-      status: clubData.status || 'pending',
-      requestDate: clubData.requestDate || new Date().toISOString().split('T')[0]
+    // Chuẩn bị payload theo đúng format API yêu cầu
+    const payload = {
+      proposedName: clubData.name.trim(),
+      category: clubData.category || 'HocThuat', // HocThuat, TheThao, NgheThuat, TinhNguyen, Khac
+      purpose: clubData.goals?.trim() || clubData.description?.trim() || '',
+      description: clubData.description?.trim() || '',
+      location: clubData.location?.trim() || '',
+      email: clubData.email?.trim() || '',
+      defaultMembershipFee: clubData.participationFee ? parseFloat(clubData.participationFee) : 0
     };
 
     try {
@@ -198,29 +264,51 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const message = data.message || data.error || 'Gửi yêu cầu thất bại. Vui lòng thử lại!';
-        throw new Error(message);
+      const data = await response.json().catch(() => null);
+
+      // Kiểm tra response code: API này trả về code 1000 khi thành công
+      if (!response.ok || !data || data.code !== 1000) {
+        const message = data?.message || 
+          (response.status === 401 
+            ? 'Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.' 
+            : `Gửi yêu cầu thất bại (mã ${data?.code || response.status}). Vui lòng thử lại.`);
+        console.error('club-requests POST error:', data || response.status);
+        showToast(message, 'error');
+        return;
       }
 
-      const storedRequest = {
-        ...localRequest,
-        id: data.id || localRequest.id,
-        apiId: data.id
+      // Map response từ API về format local
+      const apiResult = data.result;
+      const newRequest = {
+        id: apiResult.requestId || Date.now(),
+        name: apiResult.proposedName,
+        description: apiResult.purpose || apiResult.description || '',
+        category: apiResult.category,
+        location: payload.location,
+        email: payload.email,
+        participationFee: payload.defaultMembershipFee,
+        goals: apiResult.purpose,
+        status: apiResult.status || 'DangCho', // DangCho, DaDuyet, TuChoi
+        requestDate: apiResult.createdAt ? apiResult.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+        applicantEmail: apiResult.creatorName || payload.email,
+        requestId: apiResult.requestId,
+        creatorId: apiResult.creatorId,
+        creatorName: apiResult.creatorName,
+        creatorStudentCode: apiResult.creatorStudentCode
       };
 
-      setClubRequests(prev => [...prev, storedRequest]);
+      // Cập nhật state
+      setClubRequests(prev => [...prev, newRequest]);
       setShowRegisterClubModal(false);
       showToast('Đã gửi yêu cầu đăng ký mở câu lạc bộ thành công! Yêu cầu của bạn đang chờ được duyệt.', 'success');
     } catch (error) {
-      console.error('Submit club request error:', error);
-      showToast(error.message || 'Không thể gửi yêu cầu. Vui lòng thử lại sau.', 'error');
+      console.error('Submit club request exception:', error);
+      showToast('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.', 'error');
     }
   };
 

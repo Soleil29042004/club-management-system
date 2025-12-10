@@ -26,11 +26,8 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     activityTime: ''
   });
 
-  // Load data from localStorage on mount
+  // Load data từ localStorage (hoặc sau này từ API thật)
   useEffect(() => {
-    // Đảm bảo dữ liệu được khởi tạo trước khi load
-    initializeDemoData();
-    
     const savedRequests = localStorage.getItem('joinRequests');
     if (savedRequests) {
       try {

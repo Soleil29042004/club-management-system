@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { clubCategories } from '../data/mockData';
+import { clubCategories, clubCategoryLabels } from '../data/mockData';
 
 const RegisterClubModal = ({ onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    category: 'Công nghệ',
+    category: 'HocThuat', // default theo enum backend rút gọn
     email: '',
     location: '',
     participationFee: '',
@@ -131,7 +131,7 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
                 className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
               >
                 {clubCategories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat} value={cat}>{clubCategoryLabels[cat] || cat}</option>
                 ))}
               </select>
             </div>
