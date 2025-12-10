@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from './Toast';
 
 const JoinRequestModal = ({ club, onClose, onSubmit }) => {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     phone: '',
     studentId: '',
@@ -108,31 +110,41 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   };
 
   useEffect(() => {
-    // Load user data from localStorage
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    const detailedUser = registeredUsers.find(u => u.email === user.email);
-    
-    // Auto-fill form with user data
-    if (detailedUser) {
+    // Load user data from localStorage (profile info)
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const profile = JSON.parse(localStorage.getItem('profile') || '{}'); // optional storage
+      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]'); // legacy mock storage
+      const detailedUser = registeredUsers.find(u => u.email === user.email) || {};
+
+      const phone =
+        profile.phone ||
+        profile.phoneNumber ||
+        user.phone ||
+        user.phoneNumber ||
+        detailedUser.phone ||
+        '';
+      const studentId =
+        profile.studentId ||
+        profile.studentCode ||
+        user.studentId ||
+        user.studentCode ||
+        detailedUser.studentId ||
+        '';
+      const major = profile.major || user.major || detailedUser.major || '';
+
       setFormData(prev => ({
         ...prev,
-        phone: detailedUser.phone || '',
-        studentId: detailedUser.studentId || '',
-        major: detailedUser.major || '',
-        reason: '' // Keep reason empty for user to fill
-      }));
-    } else if (user.email) {
-      // If user exists but not in registeredUsers, try to get from mock data or use defaults
-      setFormData(prev => ({
-        ...prev,
-        phone: '',
-        studentId: '',
-        major: '',
+        phone,
+        studentId,
+        major,
         reason: ''
       }));
+    } catch (err) {
+      console.error('Auto-fill profile error:', err);
+      showToast('Không thể tải thông tin hồ sơ.', 'error');
     }
-  }, [club]); // Re-run when club changes (modal opens)
+  }, [club, showToast]); // Re-run when modal opens for a club
 
   if (!club) return null;
 
