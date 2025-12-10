@@ -1,10 +1,207 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-const JoinRequestsList = ({ requests, onApprove, onReject }) => {
+const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [apiRequests, setApiRequests] = useState([]);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [actionError, setActionError] = useState('');
+  const [paymentLoadingId, setPaymentLoadingId] = useState(null);
 
-  if (requests.length === 0) {
+  useEffect(() => {
+    if (!clubId) return;
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+
+    const fetchRegistrations = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await fetch(`https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          signal: controller.signal
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          const mapped = (data.result || []).map(item => ({
+            id: item.subscriptionId || item.id,
+            subscriptionId: item.subscriptionId || item.id,
+            studentName: item.studentName || '',
+            studentEmail: item.studentEmail || '',
+            studentId: item.studentCode || '',
+            phone: item.phone || '',
+            major: item.major || '',
+            requestDate: item.createdAt || item.joinDate || new Date().toISOString(),
+            status: (() => {
+              const st = (item.status || '').toLowerCase();
+              if (st === 'choduyet') return 'pending';
+              if (st === 'daduyet') return 'approved';
+              if (st === 'tuchoi') return 'rejected';
+              return st || 'pending';
+            })(),
+            reason: item.reason || '',
+            message: item.message || '',
+            packageName: item.packageName,
+            price: item.price,
+            term: item.term,
+            isPaid: item.isPaid,
+            paymentMethod: item.paymentMethod
+          }));
+          setApiRequests(mapped);
+        } else {
+          setApiRequests([]);
+          setError(data.message || 'Không thể tải danh sách đơn đăng ký.');
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Fetch registrations error:', err);
+          setError('Không thể tải danh sách đơn đăng ký.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRegistrations();
+    return () => controller.abort();
+  }, [clubId]);
+
+  const displayRequests = apiRequests.length ? apiRequests : requests;
+
+  const statusToDisplay = (statusRaw) => {
+    const st = (statusRaw || '').toLowerCase();
+    if (st === 'daduyet' || st === 'approved') return 'approved';
+    if (st === 'tuchoi' || st === 'rejected') return 'rejected';
+    return 'pending';
+  };
+
+  const updateStatus = async (request, statusValue) => {
+    const subscriptionId = request.subscriptionId || request.id;
+    if (!subscriptionId) return;
+    setActionLoadingId(subscriptionId);
+    setActionError('');
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+    try {
+      const res = await fetch('https://clubmanage.azurewebsites.net/api/registrations/approve', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          subscriptionId,
+          status: statusValue
+        }),
+        signal: controller.signal
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+        setActionError(data.message || 'Không thể cập nhật trạng thái.');
+        return;
+      }
+      const newStatus = statusToDisplay(statusValue);
+      setApiRequests(prev =>
+        prev.map(r =>
+          (r.subscriptionId || r.id) === subscriptionId ? { ...r, status: newStatus } : r
+        )
+      );
+      if (selectedRequest && (selectedRequest.subscriptionId || selectedRequest.id) === subscriptionId) {
+        setSelectedRequest(prev => ({ ...prev, status: newStatus }));
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Approve/Reject error:', err);
+        setActionError('Không thể cập nhật trạng thái.');
+      }
+    } finally {
+      setActionLoadingId(null);
+    }
+    return () => controller.abort();
+  };
+
+  const handleApproveClick = (req) => {
+    if (onApprove) onApprove(req.id);
+    updateStatus(req, 'DaDuyet');
+  };
+
+  const handleRejectClick = (req) => {
+    if (onReject) onReject(req.id);
+    updateStatus(req, 'TuChoi');
+  };
+
+  const handleConfirmPayment = async (request, method = 'Offline') => {
+    const subscriptionId = request.subscriptionId || request.id;
+    if (!subscriptionId) return;
+    setPaymentLoadingId(subscriptionId);
+    setActionError('');
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+    try {
+      const res = await fetch('https://clubmanage.azurewebsites.net/api/registrations/confirm-payment', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          subscriptionId,
+          paymentMethod: method
+        }),
+        signal: controller.signal
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+        setActionError(data.message || 'Không thể xác nhận thanh toán.');
+        return;
+      }
+      setApiRequests(prev =>
+        prev.map(r =>
+          (r.subscriptionId || r.id) === subscriptionId
+            ? { ...r, isPaid: true, paymentMethod: method }
+            : r
+        )
+      );
+      if (selectedRequest && (selectedRequest.subscriptionId || selectedRequest.id) === subscriptionId) {
+        setSelectedRequest(prev => ({ ...prev, isPaid: true, paymentMethod: method }));
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Confirm payment error:', err);
+        setActionError('Không thể xác nhận thanh toán.');
+      }
+    } finally {
+      setPaymentLoadingId(null);
+    }
+    return () => controller.abort();
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+        <div className="text-6xl mb-6">⏳</div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Đang tải danh sách yêu cầu...</h2>
+        <p className="text-gray-600">Vui lòng đợi trong giây lát.</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+        <div className="text-6xl mb-6">⚠️</div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Không thể tải danh sách</h2>
+        <p className="text-gray-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (displayRequests.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
         <div className="text-6xl mb-6">✅</div>
@@ -50,7 +247,7 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {requests.map((request) => (
+              {displayRequests.map((request) => (
                 <tr key={`${request.id}-${request.status}`} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-semibold text-gray-800">{request.studentName}</div>
@@ -78,18 +275,29 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
                       {request.status === 'pending' && (
                         <>
                           <button
-                            onClick={() => onApprove(request.id)}
-                            className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all whitespace-nowrap"
+                            onClick={() => handleApproveClick(request)}
+                            className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all whitespace-nowrap disabled:opacity-60"
+                            disabled={actionLoadingId === (request.subscriptionId || request.id)}
                           >
-                            ✅ Chấp nhận
+                            {actionLoadingId === (request.subscriptionId || request.id) ? 'Đang duyệt...' : '✅ Chấp nhận'}
                           </button>
                           <button
-                            onClick={() => onReject(request.id)}
-                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap"
+                            onClick={() => handleRejectClick(request)}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap disabled:opacity-60"
+                            disabled={actionLoadingId === (request.subscriptionId || request.id)}
                           >
-                            ❌ Từ chối
+                            {actionLoadingId === (request.subscriptionId || request.id) ? 'Đang cập nhật...' : '❌ Từ chối'}
                           </button>
                         </>
+                      )}
+                      {request.status === 'approved' && !request.isPaid && (
+                        <button
+                          onClick={() => handleConfirmPayment(request)}
+                          className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-all whitespace-nowrap disabled:opacity-60"
+                          disabled={paymentLoadingId === (request.subscriptionId || request.id)}
+                        >
+                          {paymentLoadingId === (request.subscriptionId || request.id) ? 'Đang xác nhận...' : '✓ Xác nhận đã thu phí'}
+                        </button>
                       )}
                     </div>
                   </td>
@@ -101,7 +309,7 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
       </div>
 
       {/* Detail Modal */}
-      {showDetailModal && selectedRequest && (
+              {showDetailModal && selectedRequest && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1000] p-5" onClick={() => setShowDetailModal(false)}>
           <div className="bg-white rounded-xl w-full max-w-[700px] max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-6 flex justify-between items-center rounded-t-xl sticky top-0 z-10">
@@ -164,21 +372,37 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
                 <div className="flex gap-4 justify-end mt-8 pt-5 border-t-2 border-gray-100">
                   <button
                     onClick={() => {
-                      onReject(selectedRequest.id);
+                      handleRejectClick(selectedRequest);
                       setShowDetailModal(false);
                     }}
-                    className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-red-500 text-white hover:bg-red-600 shadow-lg hover:-translate-y-1 hover:shadow-xl"
+                    className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-red-500 text-white hover:bg-red-600 shadow-lg hover:-translate-y-1 hover:shadow-xl disabled:opacity-60"
+                    disabled={actionLoadingId === (selectedRequest.subscriptionId || selectedRequest.id)}
                   >
-                    Từ chối
+                    {actionLoadingId === (selectedRequest.subscriptionId || selectedRequest.id) ? 'Đang cập nhật...' : 'Từ chối'}
                   </button>
                   <button
                     onClick={() => {
-                      onApprove(selectedRequest.id);
+                      handleApproveClick(selectedRequest);
                       setShowDetailModal(false);
                     }}
-                    className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
+                    className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:-translate-y-1 hover:shadow-xl disabled:opacity-60"
+                    disabled={actionLoadingId === (selectedRequest.subscriptionId || selectedRequest.id)}
                   >
-                    Chấp nhận
+                    {actionLoadingId === (selectedRequest.subscriptionId || selectedRequest.id) ? 'Đang duyệt...' : 'Chấp nhận'}
+                  </button>
+                </div>
+              )}
+              {selectedRequest.status === 'approved' && !selectedRequest.isPaid && (
+                <div className="flex gap-4 justify-end mt-6 pt-4 border-t-2 border-gray-100">
+                  <button
+                    onClick={() => {
+                      handleConfirmPayment(selectedRequest);
+                      setShowDetailModal(false);
+                    }}
+                    className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg hover:-translate-y-1 hover:shadow-xl disabled:opacity-60"
+                    disabled={paymentLoadingId === (selectedRequest.subscriptionId || selectedRequest.id)}
+                  >
+                    {paymentLoadingId === (selectedRequest.subscriptionId || selectedRequest.id) ? 'Đang xác nhận...' : 'Xác nhận đã thu phí'}
                   </button>
                 </div>
               )}
@@ -186,9 +410,13 @@ const JoinRequestsList = ({ requests, onApprove, onReject }) => {
           </div>
         </div>
       )}
+      {actionError && (
+        <div className="mt-4 text-center text-red-600 text-sm">{actionError}</div>
+      )}
     </>
   );
 };
 
 export default JoinRequestsList;
+
 

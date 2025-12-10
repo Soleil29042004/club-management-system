@@ -11,36 +11,101 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   const [errors, setErrors] = useState({});
   const [packages, setPackages] = useState([]);
   const [loadingPackages, setLoadingPackages] = useState(true);
+  const [packagesError, setPackagesError] = useState('');
+  const [clubDetail, setClubDetail] = useState(null);
+  const [clubDetailError, setClubDetailError] = useState('');
+  const [clubDetailLoading, setClubDetailLoading] = useState(false);
 
-  // Fetch packages khi club thay đổi
+  // Fetch club detail & packages khi club thay đổi
   useEffect(() => {
     if (!club || !club.id) return;
 
-    const fetchPackages = async () => {
-      setLoadingPackages(true);
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+
+    const fetchClubDetail = async () => {
+      setClubDetailLoading(true);
+      setClubDetailError('');
       try {
-        // Tạm thời sử dụng packages mặc định nếu không có API
-        // Có thể thay thế bằng API: GET /api/clubs/{clubId}/packages
-        const basePrice = club.participationFee || 20000;
-        const defaultPackages = [
-          { id: 1, name: 'Thành Viên Cơ Bản', term: '1 năm', price: basePrice },
-          { id: 2, name: 'Thành Viên Nâng Cao', term: '2 năm', price: basePrice * 1.5 }
-        ];
-        setPackages(defaultPackages);
-        // Set package mặc định là package đầu tiên
-        if (defaultPackages.length > 0) {
-          setFormData(prev => ({ ...prev, packageId: defaultPackages[0].id }));
+        const res = await fetch(`https://clubmanage.azurewebsites.net/api/clubs/${club.id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          signal: controller.signal
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          setClubDetail(data.result || null);
+        } else {
+          setClubDetail(null);
+          setClubDetailError(data.message || 'Không thể tải thông tin câu lạc bộ.');
         }
       } catch (error) {
-        console.error('Error fetching packages:', error);
+        if (error.name !== 'AbortError') {
+          console.error('Error fetching club detail:', error);
+          setClubDetailError('Không thể tải thông tin câu lạc bộ.');
+        }
+      } finally {
+        setClubDetailLoading(false);
+      }
+    };
+
+    const fetchPackages = async () => {
+      setLoadingPackages(true);
+      setPackagesError('');
+      try {
+        const res = await fetch(
+          `https://clubmanage.azurewebsites.net/api/packages/club/${club.id}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
+            signal: controller.signal
+          }
+        );
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          const mapped = (data.result || []).map(pkg => ({
+            id: pkg.packageId || pkg.id,
+            name: pkg.packageName || 'Gói thành viên',
+            term: pkg.term || '',
+            price: pkg.price || 0,
+            description: pkg.description || '',
+            isActive: pkg.isActive
+          }));
+          setPackages(mapped);
+          if (mapped.length > 0) {
+            const firstActive = mapped.find(p => p.isActive) || mapped[0];
+            setFormData(prev => ({ ...prev, packageId: firstActive.id }));
+          }
+        } else {
+          setPackages([]);
+          setPackagesError(data.message || 'Không thể tải gói thành viên.');
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Error fetching packages:', error);
+          setPackagesError('Không thể tải gói thành viên.');
+        }
       } finally {
         setLoadingPackages(false);
       }
     };
 
+    fetchClubDetail();
     fetchPackages();
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [club?.id]); // Chỉ phụ thuộc vào club.id
+
+  const formatDate = (value) => {
+    if (!value) return 'Chưa cập nhật';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return 'Chưa cập nhật';
+    return d.toLocaleDateString('vi-VN');
+  };
 
   useEffect(() => {
     // Load user data from localStorage
@@ -134,9 +199,23 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
         
         <div className="p-6">
           <div className="bg-blue-50 p-4 rounded-lg mb-6 border-l-4 border-fpt-blue">
-            <p className="m-0 mb-2 text-sm"><strong>Câu lạc bộ:</strong> {club.name}</p>
-            <p className="m-0 mb-2 text-sm"><strong>Danh mục:</strong> {club.category}</p>
-            <p className="m-0 text-sm"><strong>Chủ tịch:</strong> {club.president}</p>
+            {clubDetailLoading ? (
+              <p className="m-0 text-sm text-gray-600">Đang tải thông tin CLB...</p>
+            ) : clubDetail ? (
+              <>
+                <p className="m-0 mb-2 text-sm"><strong>Câu lạc bộ:</strong> {clubDetail.clubName || club.name}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Danh mục:</strong> {clubDetail.category || club.category}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Chủ tịch:</strong> {clubDetail.founderName || clubDetail.president || club.president || 'Chưa cập nhật'}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Số thành viên:</strong> {clubDetail.memberCount ?? club.memberCount ?? 'Chưa cập nhật'}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Địa điểm:</strong> {clubDetail.location || 'Chưa cập nhật'}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Email:</strong> {clubDetail.email || 'Chưa cập nhật'}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Ngày thành lập:</strong> {formatDate(clubDetail.establishedDate)}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Thời gian sinh hoạt:</strong> {clubDetail.activityTime || 'Chưa cập nhật'}</p>
+                <p className="m-0 text-sm"><strong>Mô tả:</strong> {clubDetail.description || 'Chưa cập nhật'}</p>
+              </>
+            ) : (
+              <p className="m-0 text-sm text-red-600">{clubDetailError || 'Không thể tải thông tin CLB'}</p>
+            )}
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -197,6 +276,8 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Chọn gói thành viên *</h3>
               {loadingPackages ? (
                 <div className="text-center py-4 text-gray-500">Đang tải gói thành viên...</div>
+              ) : packagesError ? (
+                <div className="text-center py-4 text-red-600 text-sm">{packagesError}</div>
               ) : packages.length > 0 ? (
                 <div className="space-y-3">
                   {packages.map((pkg) => (
@@ -219,8 +300,11 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
                       <div className="flex-1">
                         <div className="font-semibold text-gray-800">{pkg.name}</div>
                         <div className="text-sm text-gray-600">
-                          Thời hạn: {pkg.term} • Giá: {pkg.price?.toLocaleString('vi-VN') || '0'} VNĐ
+                          Thời hạn: {pkg.term || 'N/A'} • Giá: {pkg.price?.toLocaleString('vi-VN') || '0'} VNĐ
                         </div>
+                        {pkg.description ? (
+                          <div className="text-xs text-gray-500 mt-1">{pkg.description}</div>
+                        ) : null}
                       </div>
                     </label>
                   ))}

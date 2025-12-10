@@ -162,8 +162,8 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
 
       const data = await response.json().catch(() => null);
 
-      // Kiểm tra response code: API này trả về code 1000 khi thành công
-      if (!response.ok || !data || data.code !== 1000) {
+      // Kiểm tra response code: API có thể trả về 1000 hoặc 0 khi thành công
+      if (!response.ok || !data || (data.code !== 1000 && data.code !== 0)) {
         const message = data?.message || 
           (response.status === 401 
             ? 'Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.' 
