@@ -1,67 +1,163 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-const ClubFeeManagement = ({ club, onUpdate }) => {
-  const [formData, setFormData] = useState({
-    participationFee: club?.participationFee || 0,
-    membershipDuration: club?.membershipDuration || 6
+const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+
+const ClubFeeManagement = ({ club }) => {
+  const [packages, setPackages] = useState([]);
+  const [loadingPackages, setLoadingPackages] = useState(false);
+  const [packagesError, setPackagesError] = useState('');
+  const [detail, setDetail] = useState(null);
+  const [detailError, setDetailError] = useState('');
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editData, setEditData] = useState({
+    packageName: '',
+    price: 0,
+    description: ''
   });
-  const [errors, setErrors] = useState({});
+  const [editError, setEditError] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
 
-  const handleChange = (e) => {
+  useEffect(() => {
+    if (!club?.id && !club?.clubId) return;
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+    const targetClubId = club?.id || club?.clubId;
+
+    const fetchPackages = async () => {
+      setLoadingPackages(true);
+      setPackagesError('');
+      try {
+        const res = await fetch(`${API_BASE_URL}/packages/club/${targetClubId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          signal: controller.signal
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          setPackages(data.result || []);
+        } else {
+          setPackages([]);
+          setPackagesError(data.message || 'Không thể tải danh sách gói thành viên.');
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.error('Fetch packages error:', err);
+        setPackagesError('Không thể tải danh sách gói thành viên.');
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+
+    fetchPackages();
+    return () => controller.abort();
+  }, [club?.id, club?.clubId]);
+
+  const handleViewDetail = async (packageId) => {
+    if (!packageId) return;
+    setDetail(null);
+    setDetailError('');
+    setDetailLoading(true);
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+    try {
+      const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        signal: controller.signal
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && (data.code === 1000 || data.code === 0)) {
+        setDetail(data.result || null);
+      } else {
+        setDetailError(data.message || 'Không thể tải chi tiết gói.');
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Fetch package detail error:', err);
+        setDetailError('Không thể tải chi tiết gói.');
+      }
+    } finally {
+      setDetailLoading(false);
+    }
+    return () => controller.abort();
+  };
+
+  const openEdit = (pkg) => {
+    setEditData({
+      packageName: pkg?.packageName || '',
+      price: pkg?.price || 0,
+      description: pkg?.description || ''
+    });
+    setEditError('');
+    setEditOpen(true);
+  };
+
+  const handleEditChange = (e) => {
     const { name, value } = e.target;
-    const valueNum = name === 'membershipDuration' || name === 'participationFee' 
-      ? parseInt(value) || 0 
-      : value;
-    
-    setFormData(prev => ({
+    setEditData(prev => ({
       ...prev,
-      [name]: valueNum
+      [name]: name === 'price' ? Number(value) || 0 : value
     }));
-    
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (formData.participationFee < 0) {
-      newErrors.participationFee = 'Phí tham gia không được âm';
-    }
-
-    if (formData.membershipDuration < 1) {
-      newErrors.membershipDuration = 'Thời hạn phải ít nhất 1 tháng';
-    }
-
-    if (formData.membershipDuration > 60) {
-      newErrors.membershipDuration = 'Thời hạn không được vượt quá 60 tháng';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
+  const handleUpdatePackage = async (packageId) => {
+    if (!packageId) return;
+    if (!editData.packageName.trim()) {
+      setEditError('Tên gói không được để trống');
       return;
     }
-
-    onUpdate({
-      participationFee: formData.participationFee,
-      membershipDuration: formData.membershipDuration
-    });
-  };
-
-  const handleReset = () => {
-    setFormData({
-      participationFee: club?.participationFee || 0,
-      membershipDuration: club?.membershipDuration || 6
-    });
-    setErrors({});
+    setEditLoading(true);
+    setEditError('');
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+    try {
+      const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          packageName: editData.packageName.trim(),
+          price: editData.price || 0,
+          description: editData.description || ''
+        }),
+        signal: controller.signal
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && (data.code === 1000 || data.code === 0)) {
+        const updated = data.result || {};
+        setPackages(prev =>
+          prev.map(pkg =>
+            (pkg.packageId || pkg.id) === (updated.packageId || updated.id)
+              ? { ...pkg, ...updated }
+              : pkg
+          )
+        );
+        // also update detail if same package
+        setDetail(prev =>
+          prev && (prev.packageId === updated.packageId || prev.id === updated.id)
+            ? { ...prev, ...updated }
+            : prev
+        );
+        setEditOpen(false);
+      } else {
+        setEditError(data.message || 'Cập nhật gói không thành công.');
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Update package error:', err);
+        setEditError('Cập nhật gói không thành công.');
+      }
+    } finally {
+      setEditLoading(false);
+    }
+    return () => controller.abort();
   };
 
   if (!club) {
@@ -80,141 +176,171 @@ const ClubFeeManagement = ({ club, onUpdate }) => {
           <span>💰</span>
           <span>Quản lý Phí tham gia & Thời hạn</span>
         </h2>
-        <p className="text-white/90 text-base mt-2">Cập nhật phí tham gia và thời hạn thành viên cho câu lạc bộ</p>
+        <p className="text-white/90 text-base mt-2">Danh sách gói thành viên của câu lạc bộ</p>
       </div>
 
       <div className="p-8">
-        {/* Current Information */}
-        <div className="mb-8 bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span>ℹ️</span>
-            <span>Thông tin hiện tại</span>
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white p-4 rounded-lg border border-blue-100">
-              <span className="text-sm text-gray-600 font-medium block mb-2">Phí tham gia hiện tại:</span>
-              <span className="text-xl font-bold text-fpt-blue">
-                {club.participationFee 
-                  ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ`
-                  : 'Miễn phí'}
-              </span>
+        {/* Highlight first package */}
+        {packages.length > 0 && (
+          <div className="mb-6">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+              <div className="bg-fpt-blue text-white px-6 py-4 flex items-center justify-between">
+                <div className="text-lg font-semibold">
+                  {packages[0].packageName || 'Gói thành viên'}
+                </div>
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full ${packages[0].isActive ? 'bg-white/20' : 'bg-white/10'}`}>
+                  {packages[0].isActive ? 'Hoạt động' : 'Ngưng'}
+                </span>
+              </div>
+              <div className="px-6 py-5 space-y-3 text-gray-800">
+                <p className="m-0 text-sm leading-6 text-gray-700">
+                  {packages[0].description || 'Không có mô tả'}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Thời hạn:</span>
+                    <span>{packages[0].term || '-'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Giá:</span>
+                    <span>{packages[0].price ? `${packages[0].price.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Ngày tạo:</span>
+                    <span>{packages[0].createdAt ? new Date(packages[0].createdAt).toLocaleDateString('vi-VN') : '-'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">CLB:</span>
+                    <span>{packages[0].clubName || club?.name || '-'}</span>
+                  </div>
+                </div>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleViewDetail(packages[0].packageId || packages[0].id)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white text-sm font-semibold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-70"
+                    disabled={detailLoading}
+                  >
+                    {detailLoading ? 'Đang tải...' : 'Chi tiết gói'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEdit(packages[0])}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-800 text-sm font-semibold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all ml-3"
+                  >
+                    Cập nhật gói
+                  </button>
+                  {detailError && (
+                    <p className="text-red-600 text-sm mt-2">{detailError}</p>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-blue-100">
-              <span className="text-sm text-gray-600 font-medium block mb-2">Thời hạn hiện tại:</span>
-              <span className="text-xl font-bold text-fpt-blue">
-                {club.membershipDuration || 6} tháng
-              </span>
+          </div>
+        )}
+
+      </div>
+
+      {/* Detail modal */}
+      {detail && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white px-6 py-4 flex items-center justify-between">
+              <h3 className="m-0 text-xl font-semibold">
+                {detail.packageName || 'Chi tiết gói thành viên'}
+              </h3>
+              <button
+                className="text-white text-xl bg-transparent border-none cursor-pointer px-2 py-1"
+                onClick={() => setDetail(null)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6 space-y-3 text-gray-800">
+              <p className="text-sm text-gray-600">{detail.description || 'Không có mô tả'}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div><strong>CLB:</strong> {detail.clubName || '-'}</div>
+                <div><strong>Thời hạn:</strong> {detail.term || '-'}</div>
+                <div><strong>Giá:</strong> {detail.price ? `${detail.price.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}</div>
+                <div><strong>Trạng thái:</strong> {detail.isActive ? 'Đang kích hoạt' : 'Ngưng'}</div>
+                <div><strong>Ngày tạo:</strong> {detail.createdAt ? new Date(detail.createdAt).toLocaleDateString('vi-VN') : '-'}</div>
+              </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Edit Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <span>✏️</span>
-                <span>Chỉnh sửa thông tin</span>
-              </h3>
+      {/* Edit modal */}
+      {editOpen && packages[0] && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white px-6 py-4 flex items-center justify-between">
+              <h3 className="m-0 text-xl font-semibold">Cập nhật gói</h3>
+              <button
+                className="text-white text-xl bg-transparent border-none cursor-pointer px-2 py-1"
+                onClick={() => setEditOpen(false)}
+              >
+                ×
+              </button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                <label htmlFor="participationFee" className="mb-2 font-semibold text-gray-800 text-sm">
-                  Phí tham gia (VNĐ) *
-                </label>
+            <div className="p-6 space-y-4 text-gray-800">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">Tên gói *</label>
+                <input
+                  type="text"
+                  name="packageName"
+                  value={editData.packageName}
+                  onChange={handleEditChange}
+                  className="px-4 py-3 border-2 rounded-lg text-sm focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 border-gray-200"
+                  placeholder="Nhập tên gói"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">Giá (VNĐ)</label>
                 <input
                   type="number"
-                  id="participationFee"
-                  name="participationFee"
-                  value={formData.participationFee}
-                  onChange={handleChange}
+                  name="price"
+                  value={editData.price}
+                  onChange={handleEditChange}
                   min="0"
-                  step="1000"
-                  placeholder="Nhập phí tham gia (0 = Miễn phí)"
-                  className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
-                    errors.participationFee ? 'border-red-500' : 'border-gray-200'
-                  }`}
+                  className="px-4 py-3 border-2 rounded-lg text-sm focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 border-gray-200"
+                  placeholder="Nhập giá (0 = Miễn phí)"
                 />
-                {errors.participationFee && (
-                  <span className="text-red-500 text-xs mt-1">{errors.participationFee}</span>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Nhập 0 nếu club miễn phí tham gia
-                </p>
               </div>
-
-              <div className="flex flex-col">
-                <label htmlFor="membershipDuration" className="mb-2 font-semibold text-gray-800 text-sm">
-                  Thời hạn thành viên (tháng) *
-                </label>
-                <input
-                  type="number"
-                  id="membershipDuration"
-                  name="membershipDuration"
-                  value={formData.membershipDuration}
-                  onChange={handleChange}
-                  min="1"
-                  max="60"
-                  placeholder="Nhập số tháng (1-60)"
-                  className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
-                    errors.membershipDuration ? 'border-red-500' : 'border-gray-200'
-                  }`}
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">Mô tả</label>
+                <textarea
+                  name="description"
+                  value={editData.description}
+                  onChange={handleEditChange}
+                  rows="3"
+                  className="px-4 py-3 border-2 rounded-lg text-sm focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 border-gray-200"
+                  placeholder="Nhập mô tả gói"
                 />
-                {errors.membershipDuration && (
-                  <span className="text-red-500 text-xs mt-1">{errors.membershipDuration}</span>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Thời hạn từ 1 đến 60 tháng
-                </p>
               </div>
-            </div>
-
-            {/* Preview */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
-              <h4 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <span>👁️</span>
-                <span>Xem trước</span>
-              </h4>
-              <div className="bg-white p-4 rounded-lg border border-green-100">
-                <p className="text-gray-700 m-0">
-                  <strong>Phí tham gia:</strong>{' '}
-                  <span className="text-fpt-blue font-semibold">
-                    {formData.participationFee 
-                      ? `${formData.participationFee.toLocaleString('vi-VN')} VNĐ`
-                      : 'Miễn phí'}
-                  </span>
-                  {' / '}
-                  <strong>Thời hạn:</strong>{' '}
-                  <span className="text-fpt-blue font-semibold">
-                    {formData.membershipDuration} tháng
-                  </span>
-                </p>
-                <p className="text-sm text-gray-600 mt-2 m-0">
-                  Đây là cách thông tin sẽ hiển thị cho sinh viên trong danh sách club
-                </p>
+              {editError && <p className="text-red-600 text-sm">{editError}</p>}
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 text-sm font-semibold hover:bg-gray-200 transition-all"
+                  disabled={editLoading}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleUpdatePackage(packages[0].packageId || packages[0].id)}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white text-sm font-semibold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-70"
+                  disabled={editLoading}
+                >
+                  {editLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                </button>
               </div>
             </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4 justify-end pt-6 mt-8 border-t-2 border-gray-200">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gray-200 text-gray-600 hover:bg-gray-300"
-            >
-              🔄 Đặt lại
-            </button>
-            <button
-              type="submit"
-              className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
-            >
-              💾 Lưu thay đổi
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

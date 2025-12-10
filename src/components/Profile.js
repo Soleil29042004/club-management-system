@@ -20,6 +20,7 @@ const Profile = ({ userRole, clubs, members }) => {
     newPassword: '',
     confirmPassword: ''
   });
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('info'); // 'info' or 'password'
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
@@ -292,35 +293,65 @@ const Profile = ({ userRole, clubs, members }) => {
     }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!validatePasswordForm()) {
       return;
     }
 
-    // Check current password
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    const currentUser = registeredUsers.find(u => u.email === user.email);
-    
-    if (!currentUser || currentUser.password !== passwordData.currentPassword) {
-      setErrors({ currentPassword: 'Mật khẩu hiện tại không đúng' });
+    setFetchError('');
+    setSuccessMessage('');
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setFetchError('Bạn cần đăng nhập lại để đổi mật khẩu.');
       return;
     }
 
-    // Update password
-    const updatedUsers = registeredUsers.map(u => 
-      u.email === user.email 
-        ? { ...u, password: passwordData.newPassword }
-        : u
-    );
-    localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
+    setPasswordLoading(true);
 
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
-    setSuccessMessage('Đổi mật khẩu thành công!');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      const payload = {
+        oldPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      };
+
+      const response = await fetch(`${API_BASE_URL}/users/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !(data.code === 1000 || data.code === 0)) {
+        const message = data.message || data.error || 'Đổi mật khẩu không thành công.';
+        // Nếu server báo sai mật khẩu cũ, highlight field tương ứng
+        if (message.toLowerCase().includes('cũ') || message.toLowerCase().includes('hiện tại')) {
+          setErrors({ currentPassword: message });
+        } else {
+          setErrors({});
+        }
+        setFetchError(message);
+        return;
+      }
+
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setErrors({});
+      setSuccessMessage(data.message || 'Đổi mật khẩu thành công!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Change password error:', error);
+      setFetchError('Không thể đổi mật khẩu. Vui lòng thử lại sau.');
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   const myClub = getMyClub();
@@ -648,10 +679,11 @@ const Profile = ({ userRole, clubs, members }) => {
 
               <div className="flex gap-2.5 justify-end mt-2.5 pt-5 border-t-2 border-gray-100">
                 <button 
-                  className="px-6 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white hover:-translate-y-0.5 hover:shadow-lg" 
+                  className="px-6 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed" 
                   onClick={handleChangePassword}
+                  disabled={passwordLoading}
                 >
-                  Đổi mật khẩu
+                  {passwordLoading ? 'Đang đổi mật khẩu...' : 'Đổi mật khẩu'}
                 </button>
               </div>
             </div>

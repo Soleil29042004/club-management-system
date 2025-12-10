@@ -16,7 +16,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordError, setForgotPasswordError] = useState('');
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
-  const [foundPassword, setFoundPassword] = useState('');
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
 
   // Mock data for testing (still used for forgot password UI)
   const mockUsers = {
@@ -395,7 +396,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
           setForgotPasswordEmail('');
           setForgotPasswordError('');
           setForgotPasswordSuccess(false);
-          setFoundPassword('');
+          setForgotPasswordMessage('');
+          setForgotPasswordLoading(false);
         }}>
           <div className="bg-white rounded-2xl w-full max-w-[500px] shadow-2xl animate-slide-in" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-6 flex justify-between items-center rounded-t-2xl">
@@ -407,7 +409,6 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                   setForgotPasswordEmail('');
                   setForgotPasswordError('');
                   setForgotPasswordSuccess(false);
-                  setFoundPassword('');
                 }}
               >
                 ×
@@ -417,7 +418,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
             <div className="p-6">
               {!forgotPasswordSuccess ? (
                 <>
-                  <p className="text-gray-600 mb-6">Nhập email của bạn để lấy lại mật khẩu:</p>
+                  <p className="text-gray-600 mb-6">Nhập email đã đăng ký. Hệ thống sẽ gửi mật khẩu mới vào email của bạn.</p>
                   
                   <div className="flex flex-col gap-2 mb-6">
                     <label htmlFor="forgotEmail" className="text-sm font-semibold text-gray-800">Email</label>
@@ -452,7 +453,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                         setForgotPasswordEmail('');
                         setForgotPasswordError('');
                         setForgotPasswordSuccess(false);
-                        setFoundPassword('');
+                        setForgotPasswordMessage('');
+                        setForgotPasswordLoading(false);
                       }}
                       className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gray-200 text-gray-600 hover:bg-gray-300"
                     >
@@ -460,7 +462,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         if (!forgotPasswordEmail.trim()) {
                           setForgotPasswordError('Vui lòng nhập email');
                           return;
@@ -471,32 +473,37 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                           return;
                         }
 
-                        // Check mock users first
-                        let user = mockUsers[forgotPasswordEmail];
-                        
-                        // If not found in mock users, check registered users
-                        if (!user) {
-                          const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-                          const registeredUser = registeredUsers.find(u => u.email === forgotPasswordEmail);
-                          if (registeredUser) {
-                            user = {
-                              password: registeredUser.password,
-                              name: registeredUser.name
-                            };
+                        setForgotPasswordLoading(true);
+                        setForgotPasswordError('');
+                        setForgotPasswordMessage('');
+
+                        try {
+                          const res = await fetch(`${API_BASE_URL}/users/forgot-password`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: forgotPasswordEmail.trim() })
+                          });
+                          const data = await res.json().catch(() => ({}));
+
+                          if (res.ok && (data.code === 1000 || data.code === 0)) {
+                            setForgotPasswordSuccess(true);
+                            setForgotPasswordMessage(
+                              data.message || 'Đã gửi mật khẩu mới tới email của bạn. Vui lòng kiểm tra hộp thư.'
+                            );
+                          } else {
+                            setForgotPasswordError(data.message || 'Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại.');
                           }
-                        }
-                        
-                        if (user) {
-                          setFoundPassword(user.password);
-                          setForgotPasswordSuccess(true);
-                          setForgotPasswordError('');
-                        } else {
-                          setForgotPasswordError('Email này chưa được đăng ký trong hệ thống!');
+                        } catch (err) {
+                          console.error('Forgot password error:', err);
+                          setForgotPasswordError('Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại sau.');
+                        } finally {
+                          setForgotPasswordLoading(false);
                         }
                       }}
-                      className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
+                      className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
+                      disabled={forgotPasswordLoading}
                     >
-                      Tìm mật khẩu
+                      {forgotPasswordLoading ? 'Đang gửi...' : 'Gửi yêu cầu'}
                     </button>
                   </div>
                 </>
@@ -504,23 +511,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                 <>
                   <div className="text-center mb-6">
                     <div className="text-6xl mb-4">✅</div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">Tìm thấy mật khẩu!</h3>
-                    <p className="text-gray-600">Mật khẩu của bạn là:</p>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">Đã gửi yêu cầu</h3>
+                    <p className="text-gray-600">{forgotPasswordMessage || 'Vui lòng kiểm tra email để nhận mật khẩu mới.'}</p>
                   </div>
                   
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-200 mb-6">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600 mb-2">Mật khẩu:</p>
-                      <p className="text-2xl font-bold text-fpt-blue font-mono">{foundPassword}</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6">
-                    <p className="text-sm text-blue-800 m-0">
-                      <strong>Lưu ý:</strong> Vui lòng ghi nhớ mật khẩu này. Trong hệ thống thực tế, mật khẩu sẽ được gửi qua email.
-                    </p>
-                  </div>
-
                   <div className="flex justify-end">
                     <button
                       type="button"
@@ -529,7 +523,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                         setForgotPasswordEmail('');
                         setForgotPasswordError('');
                         setForgotPasswordSuccess(false);
-                        setFoundPassword('');
+                        setForgotPasswordMessage('');
+                        setForgotPasswordLoading(false);
                       }}
                       className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
                     >
