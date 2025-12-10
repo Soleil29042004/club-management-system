@@ -115,6 +115,16 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember }) => {
             <tbody className="divide-y divide-gray-200">
               {members.map((member) => {
                 const membershipInfo = getMembershipInfo(member);
+                const normalizeRole = (role) => {
+                  const r = (role || '').toLowerCase();
+                  if (r === 'chutich' || r === 'chủ tịch' || r === 'chu tich') return 'Chủ tịch';
+                  if (r === 'phochutich' || r === 'phó chủ tịch' || r === 'pho chu tich') return 'Phó Chủ tịch';
+                  if (r === 'thuky' || r === 'thư ký' || r === 'thu ky') return 'Thư ký';
+                  if (r === 'thuquy' || r === 'thủ quỹ' || r === 'thu quy') return 'Thủ quỹ';
+                  if (r === 'thanhvien' || r === 'thành viên' || r === 'thanh vien') return 'Thành viên';
+                  return role || 'Thành viên';
+                };
+                const roleValue = normalizeRole(member.role || member.clubRole || member.roleCode);
                 return (
                   <tr 
                     key={member.id} 
@@ -145,7 +155,7 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember }) => {
                     </td>
                     <td className="px-6 py-4">
                       <select
-                        value={member.role}
+                        value={roleValue}
                         onChange={(e) => onUpdateRole(member.id, e.target.value)}
                         className="px-3 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-sans focus:outline-none focus:border-fpt-blue focus:ring-2 focus:ring-fpt-blue/20 bg-white"
                       >

@@ -246,16 +246,23 @@ export const getNextMemberId = (members) => {
   return members.length > 0 ? Math.max(...members.map(m => m.id)) + 1 : 1;
 };
 
+// Danh mục theo API: HocThuat, TheThao, NgheThuat, TinhNguyen, Khac
 export const clubCategories = [
-  "Công nghệ",
-  "Ngoại ngữ",
-  "Thể thao",
-  "Nghệ thuật",
-  "Khoa học",
-  "Văn hóa",
-  "Xã hội",
-  "Khác"
+  "HocThuat",   // Học thuật (IT, English, Science...)
+  "TheThao",    // Thể thao (Soccer, Badminton...)
+  "NgheThuat",  // Nghệ thuật (Music, Dance, Art...)
+  "TinhNguyen", // Tình nguyện (Volunteer, Social work...)
+  "Khac"        // Khác (Other)
 ];
+
+// Mapping để hiển thị tên đẹp cho user
+export const clubCategoryLabels = {
+  "HocThuat": "Học thuật",
+  "TheThao": "Thể thao",
+  "NgheThuat": "Nghệ thuật",
+  "TinhNguyen": "Tình nguyện",
+  "Khac": "Khác"
+};
 
 export const memberRoles = [
   "Chủ tịch",

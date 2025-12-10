@@ -5,9 +5,107 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     phone: '',
     studentId: '',
     major: '',
-    reason: ''
+    reason: '',
+    packageId: '' // ID của gói membership được chọn
   });
   const [errors, setErrors] = useState({});
+  const [packages, setPackages] = useState([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
+  const [packagesError, setPackagesError] = useState('');
+  const [clubDetail, setClubDetail] = useState(null);
+  const [clubDetailError, setClubDetailError] = useState('');
+  const [clubDetailLoading, setClubDetailLoading] = useState(false);
+
+  // Fetch club detail & packages khi club thay đổi
+  useEffect(() => {
+    if (!club || !club.id) return;
+
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+
+    const fetchClubDetail = async () => {
+      setClubDetailLoading(true);
+      setClubDetailError('');
+      try {
+        const res = await fetch(`https://clubmanage.azurewebsites.net/api/clubs/${club.id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          signal: controller.signal
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          setClubDetail(data.result || null);
+        } else {
+          setClubDetail(null);
+          setClubDetailError(data.message || 'Không thể tải thông tin câu lạc bộ.');
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Error fetching club detail:', error);
+          setClubDetailError('Không thể tải thông tin câu lạc bộ.');
+        }
+      } finally {
+        setClubDetailLoading(false);
+      }
+    };
+
+    const fetchPackages = async () => {
+      setLoadingPackages(true);
+      setPackagesError('');
+      try {
+        const res = await fetch(
+          `https://clubmanage.azurewebsites.net/api/packages/club/${club.id}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
+            signal: controller.signal
+          }
+        );
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          const mapped = (data.result || []).map(pkg => ({
+            id: pkg.packageId || pkg.id,
+            name: pkg.packageName || 'Gói thành viên',
+            term: pkg.term || '',
+            price: pkg.price || 0,
+            description: pkg.description || '',
+            isActive: pkg.isActive
+          }));
+          setPackages(mapped);
+          if (mapped.length > 0) {
+            const firstActive = mapped.find(p => p.isActive) || mapped[0];
+            setFormData(prev => ({ ...prev, packageId: firstActive.id }));
+          }
+        } else {
+          setPackages([]);
+          setPackagesError(data.message || 'Không thể tải gói thành viên.');
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Error fetching packages:', error);
+          setPackagesError('Không thể tải gói thành viên.');
+        }
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+
+    fetchClubDetail();
+    fetchPackages();
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [club?.id]); // Chỉ phụ thuộc vào club.id
+
+  const formatDate = (value) => {
+    if (!value) return 'Chưa cập nhật';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return 'Chưa cập nhật';
+    return d.toLocaleDateString('vi-VN');
+  };
 
   useEffect(() => {
     // Load user data from localStorage
@@ -17,20 +115,22 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     
     // Auto-fill form with user data
     if (detailedUser) {
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         phone: detailedUser.phone || '',
         studentId: detailedUser.studentId || '',
         major: detailedUser.major || '',
         reason: '' // Keep reason empty for user to fill
-      });
+      }));
     } else if (user.email) {
       // If user exists but not in registeredUsers, try to get from mock data or use defaults
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         phone: '',
         studentId: '',
         major: '',
         reason: ''
-      });
+      }));
     }
   }, [club]); // Re-run when club changes (modal opens)
 
@@ -69,6 +169,10 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
       newErrors.reason = 'Lý do gia nhập không được để trống';
     }
 
+    if (!formData.packageId) {
+      newErrors.packageId = 'Vui lòng chọn gói thành viên';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -95,9 +199,23 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
         
         <div className="p-6">
           <div className="bg-blue-50 p-4 rounded-lg mb-6 border-l-4 border-fpt-blue">
-            <p className="m-0 mb-2 text-sm"><strong>Câu lạc bộ:</strong> {club.name}</p>
-            <p className="m-0 mb-2 text-sm"><strong>Danh mục:</strong> {club.category}</p>
-            <p className="m-0 text-sm"><strong>Chủ tịch:</strong> {club.president}</p>
+            {clubDetailLoading ? (
+              <p className="m-0 text-sm text-gray-600">Đang tải thông tin CLB...</p>
+            ) : clubDetail ? (
+              <>
+                <p className="m-0 mb-2 text-sm"><strong>Câu lạc bộ:</strong> {clubDetail.clubName || club.name}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Danh mục:</strong> {clubDetail.category || club.category}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Chủ tịch:</strong> {clubDetail.founderName || clubDetail.president || club.president || 'Chưa cập nhật'}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Số thành viên:</strong> {clubDetail.memberCount ?? club.memberCount ?? 'Chưa cập nhật'}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Địa điểm:</strong> {clubDetail.location || 'Chưa cập nhật'}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Email:</strong> {clubDetail.email || 'Chưa cập nhật'}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Ngày thành lập:</strong> {formatDate(clubDetail.establishedDate)}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Thời gian sinh hoạt:</strong> {clubDetail.activityTime || 'Chưa cập nhật'}</p>
+                <p className="m-0 text-sm"><strong>Mô tả:</strong> {clubDetail.description || 'Chưa cập nhật'}</p>
+              </>
+            ) : (
+              <p className="m-0 text-sm text-red-600">{clubDetailError || 'Không thể tải thông tin CLB'}</p>
+            )}
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -152,6 +270,49 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
                   {errors.major && <span className="text-red-500 text-xs mt-1">{errors.major}</span>}
                 </div>
               </div>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Chọn gói thành viên *</h3>
+              {loadingPackages ? (
+                <div className="text-center py-4 text-gray-500">Đang tải gói thành viên...</div>
+              ) : packagesError ? (
+                <div className="text-center py-4 text-red-600 text-sm">{packagesError}</div>
+              ) : packages.length > 0 ? (
+                <div className="space-y-3">
+                  {packages.map((pkg) => (
+                    <label
+                      key={pkg.id}
+                      className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        formData.packageId === pkg.id
+                          ? 'border-fpt-blue bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="packageId"
+                        value={pkg.id}
+                        checked={formData.packageId === pkg.id}
+                        onChange={handleChange}
+                        className="mr-3"
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-800">{pkg.name}</div>
+                        <div className="text-sm text-gray-600">
+                          Thời hạn: {pkg.term || 'N/A'} • Giá: {pkg.price?.toLocaleString('vi-VN') || '0'} VNĐ
+                        </div>
+                        {pkg.description ? (
+                          <div className="text-xs text-gray-500 mt-1">{pkg.description}</div>
+                        ) : null}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500">Không có gói thành viên nào</div>
+              )}
+              {errors.packageId && <span className="text-red-500 text-xs mt-1 block">{errors.packageId}</span>}
             </div>
 
             <div className="mb-6">

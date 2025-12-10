@@ -16,9 +16,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordError, setForgotPasswordError] = useState('');
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
-  const [foundPassword, setFoundPassword] = useState('');
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
 
-  // Mock data for testing
+  // Mock data for testing (still used for forgot password UI)
   const mockUsers = {
     'student@gmail.com': { password: '123456', role: 'student', name: 'Nguyễn Văn A' },
     'leader@gmail.com': { password: '123456', role: 'club_leader', name: 'Trần Thị B' }, // Club Tiếng Anh
@@ -26,6 +27,69 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
     'leader2@gmail.com': { password: '123456', role: 'club_leader', name: 'Lê Văn C' }, // Club Thể thao
     'leader3@gmail.com': { password: '123456', role: 'club_leader', name: 'Phạm Thị D' }, // Club Nhiếp ảnh
     'admin@gmail.com': { password: '123456', role: 'admin', name: 'Admin' }
+  };
+
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+
+  const extractToken = (data) => {
+    return (
+      data?.token ||
+      data?.accessToken ||
+      data?.access_token ||
+      data?.jwt ||
+      data?.jwtToken ||
+      data?.data?.token ||
+      data?.data?.accessToken ||
+      data?.result?.token || // response format: { code, message, result: { token, authenticated } }
+      data?.result?.accessToken ||
+      data?.result?.access_token
+    );
+  };
+
+  // Parse JWT token để lấy role từ scope
+  const parseJWTToken = (token) => {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return null;
+      }
+      
+      // Decode payload (phần thứ 2)
+      const payload = parts[1];
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      
+      const decoded = JSON.parse(jsonPayload);
+      return decoded;
+    } catch (error) {
+      console.error('Error parsing JWT token:', error);
+      return null;
+    }
+  };
+
+  // Map scope từ JWT thành role cho app
+  const mapScopeToRole = (scope) => {
+    if (!scope) return 'student';
+    
+    const scopeLower = scope.toLowerCase();
+    
+    // QuanTriVien -> admin
+    if (scopeLower === 'quantrivien' || scopeLower === 'admin') {
+      return 'admin';
+    }
+    
+    // SinhVien -> student
+    if (scopeLower === 'sinhvien' || scopeLower === 'student') {
+      return 'student';
+    }
+    
+    // Các scope khác -> club_leader
+    return 'club_leader';
   };
 
   const handleChange = (e) => {
@@ -69,62 +133,103 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
     }
     
     setLoading(true);
+    setErrors(prev => ({ ...prev, submit: '' }));
     
-    // Simulate API call with setTimeout
-    setTimeout(() => {
-      // Check mock users first
-      let user = mockUsers[formData.email];
-      
-      // If not found in mock users, check registered users
-      if (!user) {
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-        const registeredUser = registeredUsers.find(u => u.email === formData.email);
-        if (registeredUser) {
-          user = {
-            password: registeredUser.password,
-            role: registeredUser.role,
-            name: registeredUser.name
-          };
-        }
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: formData.email.trim(),
+          password: formData.password
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = data.message || data.error || 'Email hoặc mật khẩu không đúng!';
+        setErrors({ submit: message });
+        return;
       }
+
+      const token = extractToken(data);
+      if (!token) {
+        setErrors({ submit: 'Không nhận được token từ máy chủ. Vui lòng thử lại.' });
+        return;
+      }
+
+      // Parse JWT token để lấy thông tin user
+      const tokenPayload = parseJWTToken(token);
+      let role = 'student';
+      let name = formData.email.split('@')[0];
       
-      if (user && user.password === formData.password) {
-        // Save to localStorage
-        localStorage.setItem('user', JSON.stringify({
-          email: formData.email,
-          name: user.name,
-          role: user.role
-        }));
+      let clubIdFromToken = null;
+      let clubIdsFromToken = [];
+      if (tokenPayload) {
+        // Lấy role từ scope trong JWT token
+        const scope = tokenPayload.scope || tokenPayload.role || tokenPayload.Roles;
+        role = mapScopeToRole(scope);
+        clubIdsFromToken = Array.isArray(tokenPayload.clubIds || tokenPayload.clubIDs || tokenPayload.ClubIds || tokenPayload.ClubIDs)
+          ? (tokenPayload.clubIds || tokenPayload.clubIDs || tokenPayload.ClubIds || tokenPayload.ClubIDs)
+          : [];
+        clubIdFromToken =
+          tokenPayload.clubId ||
+          tokenPayload.clubID ||
+          tokenPayload.ClubId ||
+          tokenPayload.ClubID ||
+          tokenPayload.club?.clubId ||
+          clubIdsFromToken?.[0] ||
+          null;
         
-        // Get role display name
-        const roleNames = {
-          'admin': 'Quản trị viên',
-          'student': 'Sinh viên',
-          'club_leader': 'Leader câu lạc bộ'
-        };
-        const roleDisplayName = roleNames[user.role] || user.role;
-        
-        // Show success notification with role
-        showToast(`Đăng nhập thành công! Chào mừng ${user.name} - ${roleDisplayName}`, 'success');
-        
-        // Automatically navigate based on user role
-        if (user.role === 'admin' || user.role === 'student' || user.role === 'club_leader') {
-          if (onLoginSuccess) {
-            onLoginSuccess(user.role);
-          }
-        } else {
-          setErrors({
-            submit: 'Vai trò này chưa được hỗ trợ!'
-          });
-        }
+        // Lấy name từ token hoặc response
+        name = tokenPayload.sub?.split('@')[0] || 
+               data.fullName || 
+               data.name || 
+               data.user?.fullName || 
+               data.user?.name || 
+               formData.email.split('@')[0];
       } else {
-        setErrors({
-          submit: 'Email hoặc mật khẩu không đúng!'
-        });
+        // Fallback: thử lấy từ response body
+        role = data.role || data.userRole || data.user?.role || 'student';
+        name = data.fullName || data.name || data.user?.fullName || data.user?.name || formData.email.split('@')[0];
       }
+
+      const userId = tokenPayload?.sub || tokenPayload?.nameid || tokenPayload?.userId || tokenPayload?.UserId;
+
+      const userData = {
+        email: formData.email.trim(),
+        name,
+        role,
+        token,
+        ...(userId ? { userId } : {}),
+        ...(clubIdFromToken ? { clubId: clubIdFromToken } : {}),
+        ...(clubIdsFromToken && clubIdsFromToken.length ? { clubIds: clubIdsFromToken } : {})
+      };
+
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(userData));
       
+      const roleNames = {
+        'admin': 'Quản trị viên',
+        'student': 'Sinh viên',
+        'club_leader': 'Leader câu lạc bộ'
+      };
+      const roleDisplayName = roleNames[role] || role;
+      
+      showToast(`Đăng nhập thành công! Chào mừng ${name} - ${roleDisplayName}`, 'success');
+      
+      if (onLoginSuccess) {
+        onLoginSuccess(role);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrors({ submit: 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.' });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -291,7 +396,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
           setForgotPasswordEmail('');
           setForgotPasswordError('');
           setForgotPasswordSuccess(false);
-          setFoundPassword('');
+          setForgotPasswordMessage('');
+          setForgotPasswordLoading(false);
         }}>
           <div className="bg-white rounded-2xl w-full max-w-[500px] shadow-2xl animate-slide-in" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-6 flex justify-between items-center rounded-t-2xl">
@@ -303,7 +409,6 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                   setForgotPasswordEmail('');
                   setForgotPasswordError('');
                   setForgotPasswordSuccess(false);
-                  setFoundPassword('');
                 }}
               >
                 ×
@@ -313,7 +418,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
             <div className="p-6">
               {!forgotPasswordSuccess ? (
                 <>
-                  <p className="text-gray-600 mb-6">Nhập email của bạn để lấy lại mật khẩu:</p>
+                  <p className="text-gray-600 mb-6">Nhập email đã đăng ký. Hệ thống sẽ gửi mật khẩu mới vào email của bạn.</p>
                   
                   <div className="flex flex-col gap-2 mb-6">
                     <label htmlFor="forgotEmail" className="text-sm font-semibold text-gray-800">Email</label>
@@ -348,7 +453,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                         setForgotPasswordEmail('');
                         setForgotPasswordError('');
                         setForgotPasswordSuccess(false);
-                        setFoundPassword('');
+                        setForgotPasswordMessage('');
+                        setForgotPasswordLoading(false);
                       }}
                       className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gray-200 text-gray-600 hover:bg-gray-300"
                     >
@@ -356,7 +462,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         if (!forgotPasswordEmail.trim()) {
                           setForgotPasswordError('Vui lòng nhập email');
                           return;
@@ -367,32 +473,37 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                           return;
                         }
 
-                        // Check mock users first
-                        let user = mockUsers[forgotPasswordEmail];
-                        
-                        // If not found in mock users, check registered users
-                        if (!user) {
-                          const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-                          const registeredUser = registeredUsers.find(u => u.email === forgotPasswordEmail);
-                          if (registeredUser) {
-                            user = {
-                              password: registeredUser.password,
-                              name: registeredUser.name
-                            };
+                        setForgotPasswordLoading(true);
+                        setForgotPasswordError('');
+                        setForgotPasswordMessage('');
+
+                        try {
+                          const res = await fetch(`${API_BASE_URL}/users/forgot-password`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: forgotPasswordEmail.trim() })
+                          });
+                          const data = await res.json().catch(() => ({}));
+
+                          if (res.ok && (data.code === 1000 || data.code === 0)) {
+                            setForgotPasswordSuccess(true);
+                            setForgotPasswordMessage(
+                              data.message || 'Đã gửi mật khẩu mới tới email của bạn. Vui lòng kiểm tra hộp thư.'
+                            );
+                          } else {
+                            setForgotPasswordError(data.message || 'Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại.');
                           }
-                        }
-                        
-                        if (user) {
-                          setFoundPassword(user.password);
-                          setForgotPasswordSuccess(true);
-                          setForgotPasswordError('');
-                        } else {
-                          setForgotPasswordError('Email này chưa được đăng ký trong hệ thống!');
+                        } catch (err) {
+                          console.error('Forgot password error:', err);
+                          setForgotPasswordError('Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại sau.');
+                        } finally {
+                          setForgotPasswordLoading(false);
                         }
                       }}
-                      className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
+                      className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
+                      disabled={forgotPasswordLoading}
                     >
-                      Tìm mật khẩu
+                      {forgotPasswordLoading ? 'Đang gửi...' : 'Gửi yêu cầu'}
                     </button>
                   </div>
                 </>
@@ -400,23 +511,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                 <>
                   <div className="text-center mb-6">
                     <div className="text-6xl mb-4">✅</div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">Tìm thấy mật khẩu!</h3>
-                    <p className="text-gray-600">Mật khẩu của bạn là:</p>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">Đã gửi yêu cầu</h3>
+                    <p className="text-gray-600">{forgotPasswordMessage || 'Vui lòng kiểm tra email để nhận mật khẩu mới.'}</p>
                   </div>
                   
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-200 mb-6">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600 mb-2">Mật khẩu:</p>
-                      <p className="text-2xl font-bold text-fpt-blue font-mono">{foundPassword}</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6">
-                    <p className="text-sm text-blue-800 m-0">
-                      <strong>Lưu ý:</strong> Vui lòng ghi nhớ mật khẩu này. Trong hệ thống thực tế, mật khẩu sẽ được gửi qua email.
-                    </p>
-                  </div>
-
                   <div className="flex justify-end">
                     <button
                       type="button"
@@ -425,7 +523,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                         setForgotPasswordEmail('');
                         setForgotPasswordError('');
                         setForgotPasswordSuccess(false);
-                        setFoundPassword('');
+                        setForgotPasswordMessage('');
+                        setForgotPasswordLoading(false);
                       }}
                       className="px-6 py-3 border-none rounded-xl text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
                     >

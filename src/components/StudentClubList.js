@@ -13,13 +13,15 @@ const StudentClubList = ({
   const [filterCategory, setFilterCategory] = useState('all');
 
   const filteredClubs = clubs.filter(club => {
-    const matchesSearch = club.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         club.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (club.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (club.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'all' || club.category === filterCategory;
-    return matchesSearch && matchesCategory && club.status === 'Hoạt động';
+    const activeStatuses = ['Hoạt động', 'HoatDong', 'DangHoatDong', 'Active', 'ACTIVE', undefined, null, ''];
+    const isActive = activeStatuses.includes(club.status);
+    return matchesSearch && matchesCategory && isActive;
   });
 
-  const categories = [...new Set(clubs.map(club => club.category))];
+  const categories = [...new Set(clubs.map(club => club.category || 'Khác'))];
 
   return (
     <div>

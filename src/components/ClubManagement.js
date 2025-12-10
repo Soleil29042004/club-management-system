@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ClubList from './ClubList';
 import ClubForm from './ClubForm';
-import { getNextClubId } from '../data/mockData';
+import { getNextClubId, clubCategoryLabels } from '../data/mockData';
+
+const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
 const ClubManagement = ({ clubs, setClubs }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingClub, setEditingClub] = useState(null);
   const [viewingClub, setViewingClub] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
 
   const handleAdd = () => {
     setEditingClub(null);
@@ -55,6 +61,98 @@ const ClubManagement = ({ clubs, setClubs }) => {
     setViewingClub(null);
   };
 
+  // Map API data to component format
+  const mapApiDataToClub = (apiClub) => {
+    return {
+      id: apiClub.clubId,
+      name: apiClub.clubName,
+      description: apiClub.description || '',
+      category: clubCategoryLabels[apiClub.category] || apiClub.category,
+      categoryCode: apiClub.category, // Keep original category code
+      foundedDate: apiClub.establishedDate,
+      president: apiClub.founderName || '',
+      memberCount: 0, // API doesn't provide member count, will need to fetch separately
+      status: apiClub.isActive ? 'Hoạt động' : 'Ngừng hoạt động',
+      email: apiClub.email || '',
+      location: apiClub.location || '',
+      logo: apiClub.logo,
+      founderId: apiClub.founderId,
+      founderStudentCode: apiClub.founderStudentCode
+    };
+  };
+
+  // Fetch clubs from API
+  const fetchClubs = async (category = null) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      if (!token) {
+        setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        setLoading(false);
+        return;
+      }
+
+      // Build URL with optional category filter
+      let url = `${API_BASE_URL}/clubs`;
+      const params = new URLSearchParams();
+      if (category && category !== 'all') {
+        params.append('category', category);
+      }
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.status === 401) {
+        setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        setLoading(false);
+        return;
+      }
+
+      if (!response.ok || !data || (data.code !== 0 && data.code !== 1000)) {
+        const errorMessage = data?.message || `Không thể tải danh sách câu lạc bộ (mã ${response.status}).`;
+        setError(errorMessage);
+        setLoading(false);
+        return;
+      }
+
+      // Map API data to component format
+      const mappedClubs = (data.result || []).map(mapApiDataToClub);
+      setClubs(mappedClubs);
+    } catch (error) {
+      console.error('Fetch clubs error:', error);
+      setError('Đã xảy ra lỗi khi tải danh sách câu lạc bộ. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch clubs when component mounts or filter changes
+  useEffect(() => {
+    fetchClubs(filterCategory);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterCategory]);
+
+  // Handle search and filter changes
+  const handleSearchChange = (term) => {
+    setSearchTerm(term);
+  };
+
+  const handleCategoryChange = (category) => {
+    setFilterCategory(category);
+  };
+
   return (
     <div className="max-w-[1400px] mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 p-8 md:p-9 bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-lg mb-9 border border-fpt-blue/10">
@@ -71,11 +169,22 @@ const ClubManagement = ({ clubs, setClubs }) => {
         </button>
       </div>
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+          {error}
+        </div>
+      )}
+
       <ClubList
         clubs={clubs}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onView={handleView}
+        loading={loading}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        filterCategory={filterCategory}
+        onCategoryChange={handleCategoryChange}
       />
 
       {showForm && (

@@ -6,21 +6,23 @@ import StudentDashboard from './components/StudentDashboard';
 import ClubLeaderDashboard from './components/ClubLeaderDashboard';
 import Profile from './components/Profile';
 import ClubRequestsManagement from './components/ClubRequestsManagement';
+import StudentMyClubRequests from './components/StudentMyClubRequests';
 import Login from './pages/login';
 import Register from './pages/register';
 import Home from './pages/home';
-import { ToastProvider } from './components/Toast';
+import { ToastProvider, useToast } from './components/Toast';
 import { mockClubs, mockMembers, initializeDemoData } from './data/mockData';
 
 function AppContent() {
+  const { showToast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [showRegister, setShowRegister] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showHome, setShowHome] = useState(true);
-  const [clubs, setClubs] = useState(mockClubs);
-  const [members, setMembers] = useState(mockMembers);
+  const [clubs, setClubs] = useState([]);
+  const [members, setMembers] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Reset currentPage when user role changes
@@ -39,16 +41,102 @@ function AppContent() {
     initializeDemoData();
   }, []);
 
+  // Parse JWT token to extract payload
+  const parseJWTToken = (token) => {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('Error parsing JWT token (App):', error);
+      return null;
+    }
+  };
+
+  // Map scope to app role
+  const mapScopeToRole = (scopeRaw) => {
+    if (!scopeRaw) return 'student';
+    const scope = String(scopeRaw).toLowerCase();
+    if (scope === 'quantrivien' || scope === 'admin') return 'admin';
+    if (scope === 'sinhvien' || scope === 'student') return 'student';
+    return 'club_leader';
+  };
+
   // Check if user is already logged in on component mount
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      const userData = JSON.parse(user);
-      if (userData.role === 'admin' || userData.role === 'student' || userData.role === 'club_leader') {
-        setIsAuthenticated(true);
-        setUserRole(userData.role);
-        setShowHome(false);
+    const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('authToken');
+
+    let roleFromStorage = null;
+    let userIdFromToken = null;
+    let scopeFromToken = null;
+    let clubIdFromToken = null;
+    let clubIdsFromToken = [];
+
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        roleFromStorage = userData.role;
+        if (userData.clubId) {
+          clubIdFromToken = userData.clubId;
+        }
+        if (Array.isArray(userData.clubIds)) {
+          clubIdsFromToken = userData.clubIds;
+          clubIdFromToken = clubIdFromToken || userData.clubIds[0];
+        }
+      } catch (e) {
+        console.warn('Cannot parse stored user', e);
       }
+    }
+
+    if (!roleFromStorage && token) {
+      const payload = parseJWTToken(token);
+      if (payload) {
+        scopeFromToken = payload.scope || payload.role || payload.Roles;
+        userIdFromToken = payload.sub || payload.nameid || payload.userId || payload.UserId;
+        const tokenClubIds = Array.isArray(payload.clubIds || payload.clubIDs || payload.ClubIds || payload.ClubIDs)
+          ? (payload.clubIds || payload.clubIDs || payload.ClubIds || payload.ClubIDs)
+          : [];
+        clubIdsFromToken = clubIdsFromToken.length ? clubIdsFromToken : tokenClubIds;
+        clubIdFromToken =
+          payload.clubId ||
+          payload.clubID ||
+          payload.ClubId ||
+          payload.ClubID ||
+          payload.club?.clubId ||
+          clubIdFromToken ||
+          clubIdsFromToken?.[0] ||
+          null;
+        roleFromStorage = mapScopeToRole(scopeFromToken);
+      }
+    }
+
+    if (roleFromStorage === 'admin' || roleFromStorage === 'student' || roleFromStorage === 'club_leader') {
+      setIsAuthenticated(true);
+      setUserRole(roleFromStorage);
+      setShowHome(false);
+
+      // If stored user missing role, hydrate it for later renders
+      if (!storedUser && token) {
+        const hydrated = {
+          role: roleFromStorage,
+          token,
+          ...(userIdFromToken ? { userId: userIdFromToken } : {}),
+          ...(clubIdFromToken ? { clubId: clubIdFromToken } : {}),
+          ...(clubIdsFromToken && clubIdsFromToken.length ? { clubIds: clubIdsFromToken } : {})
+        };
+        localStorage.setItem('user', JSON.stringify(hydrated));
+      }
+    } else {
+      setIsAuthenticated(false);
+      setUserRole(null);
     }
   }, []);
 
@@ -60,13 +148,106 @@ function AppContent() {
     setShowRegister(false);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+
+  const mapApiClub = (apiClub) => ({
+    id: apiClub?.clubId,
+    clubId: apiClub?.clubId,
+    name: apiClub?.clubName || '',
+    description: apiClub?.description || '',
+    category: apiClub?.category || '',
+    foundedDate: apiClub?.establishedDate || '',
+    president: apiClub?.founderName || apiClub?.presidentName || '',
+    memberCount: apiClub?.memberCount || apiClub?.members?.length || 0,
+    status: apiClub?.isActive ? 'Hoạt động' : 'Tạm dừng',
+    email: apiClub?.email || '',
+    location: apiClub?.location || '',
+    logo: apiClub?.logo || null,
+    activityTime: apiClub?.activityTime || '',
+    founderId: apiClub?.founderId,
+    founderStudentCode: apiClub?.founderStudentCode,
+    raw: apiClub
+  });
+
+  // Fetch clubs từ API khi đã đăng nhập
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+
+    const fetchClubs = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/clubs`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          signal: controller.signal
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          const mapped = (data.result || []).map(mapApiClub);
+          setClubs(mapped);
+        } else {
+          console.warn('Fetch clubs failed', data);
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.error('Fetch clubs error:', err);
+      }
+    };
+
+    fetchClubs();
+    return () => controller.abort();
+  }, [isAuthenticated]);
+
+  const handleLogout = async () => {
+    // Xóa tất cả dữ liệu liên quan đến authentication và session trong localStorage
+    const keysToRemove = [
+      'authToken',
+      'token',
+      'user',
+      'role',
+      'joinRequests',
+      'payments',
+      'clubRequests',
+      'registeredUsers' // Có thể giữ lại nếu muốn, nhưng xóa để clean hoàn toàn
+    ];
+
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+
+    // Reset state ngay lập tức
     setIsAuthenticated(false);
     setUserRole(null);
     setShowHome(true);
     setShowLogin(false);
     setShowRegister(false);
+    
+    // Reset clubs và members về empty array
+    setClubs([]);
+    setMembers([]);
+    
+    // Gọi API logout một cách không blocking (không chờ kết quả)
+    // Nếu API không tồn tại hoặc lỗi, không ảnh hưởng đến việc logout
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      // Gọi API logout nhưng không await, để không block việc logout
+      fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }).catch(error => {
+        // Bỏ qua lỗi API, không hiển thị cho user
+        console.log('Logout API call failed (optional):', error);
+      });
+    }
+    
+    showToast('Đã đăng xuất thành công', 'success');
   };
 
   const handleNavigateToLogin = () => {
@@ -145,6 +326,8 @@ function AppContent() {
         return <StudentDashboard clubs={clubs} currentPage={currentPage} setClubs={setClubs} />;
       case 'unpaid-fees':
         return <StudentDashboard clubs={clubs} currentPage={currentPage} setClubs={setClubs} />;
+      case 'my-requests':
+        return <StudentMyClubRequests />;
       case 'profile':
         return <Profile userRole={userRole} clubs={clubs} members={members} />;
       default:
@@ -210,6 +393,20 @@ function AppContent() {
             </button>
             <button
               className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
+                currentPage === 'my-requests' 
+                  ? 'bg-fpt-orange text-white shadow-lg' 
+                  : 'text-white/90 hover:bg-white/10 hover:text-white'
+              }`}
+              onClick={() => {
+                setCurrentPage('my-requests');
+                if (window.innerWidth < 1024) setSidebarOpen(false);
+              }}
+            >
+              <span className="text-xl flex-shrink-0">📄</span>
+              <span className="whitespace-nowrap">Đơn đã gửi</span>
+            </button>
+            <button
+              className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 currentPage === 'profile' 
                   ? 'bg-fpt-orange text-white shadow-lg' 
                   : 'text-white/90 hover:bg-white/10 hover:text-white'
@@ -248,6 +445,7 @@ function AppContent() {
                 <h2 className="text-xl font-semibold text-gray-800 m-0">
                   {currentPage === 'clubs' && 'Danh sách Câu lạc bộ'}
                   {currentPage === 'unpaid-fees' && 'Phí chưa nộp'}
+                  {currentPage === 'my-requests' && 'Đơn mở Club đã gửi'}
                   {currentPage === 'profile' && 'Hồ sơ cá nhân'}
                 </h2>
               </div>

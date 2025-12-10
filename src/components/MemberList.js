@@ -85,14 +85,14 @@ const MemberList = ({ members, clubs, onEdit, onDelete }) => {
         {filteredMembers.length === 0 ? (
           <div className="text-center py-16 px-5 text-gray-500 text-lg">
             <p className="text-6xl mb-4">👥</p>
-            <p>Không tìm thấy thành viên nào</p>
+            <p>Không tìm thấy người dùng nào</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Tên thành viên</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold">Tên người dùng</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Mã sinh viên</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Số điện thoại</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Câu lạc bộ</th>
@@ -159,7 +159,7 @@ const MemberList = ({ members, clubs, onEdit, onDelete }) => {
 
       <div className="bg-white rounded-b-xl px-5 py-4 shadow-md -mt-1">
         <p className="m-0 text-gray-600 text-sm">
-          Tổng số: <strong className="text-fpt-blue">{filteredMembers.length}</strong> thành viên
+          Tổng số: <strong className="text-fpt-blue">{filteredMembers.length}</strong> người dùng
         </p>
       </div>
     </div>

@@ -1,50 +1,110 @@
 import React, { useState, useEffect } from 'react';
+import SubscriptionDetailModal from './SubscriptionDetailModal';
 
 const Profile = ({ userRole, clubs, members }) => {
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
   const [user, setUser] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [fetchError, setFetchError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     studentId: '',
-    major: ''
+    major: '',
+    avatar: ''
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('info'); // 'info' or 'password'
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState(null);
 
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    setUser(userData);
-
-    // Load detailed user info from registeredUsers
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    const detailedUser = registeredUsers.find(u => u.email === userData.email);
-    
-    if (detailedUser) {
-      setFormData({
-        name: detailedUser.name || userData.name || '',
-        email: detailedUser.email || userData.email || '',
-        phone: detailedUser.phone || '',
-        studentId: detailedUser.studentId || '',
-        major: detailedUser.major || ''
-      });
-    } else {
-      // If not in registeredUsers, use basic user data
+    const fallbackLocal = () => {
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      setUser(userData);
       setFormData({
         name: userData.name || '',
         email: userData.email || '',
         phone: '',
         studentId: '',
-        major: ''
+        major: '',
+        avatar: userData.avatar || ''
       });
-    }
+      setLoadingProfile(false);
+    };
+
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        fallbackLocal();
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/my-info`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const message = data.message || data.error || 'Không thể tải thông tin cá nhân.';
+          throw new Error(message);
+        }
+
+        // Một số response có thể gói trong result/data, lấy lần lượt
+        const info = data.result || data.data || data;
+        const normalized = {
+          name: info.fullName ?? info.name ?? '',
+          email: info.email ?? '',
+          phone: info.phoneNumber ?? info.phone ?? '',
+          studentId: info.studentCode ?? info.studentId ?? '',
+          major: info.major ?? '',
+          role: info.roleName ?? info.role ?? info.userRole ?? '',
+          avatar: info.avatarUrl ?? info.avatar ?? ''
+        };
+
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        const mergedUser = {
+          ...userData,
+          name: normalized.name || userData.name,
+          email: normalized.email || userData.email,
+          role: normalized.role || userData.role,
+          avatar: normalized.avatar || userData.avatar
+        };
+
+        setUser(mergedUser);
+        setFormData({
+          name: normalized.name || mergedUser.name || '',
+          email: normalized.email || mergedUser.email || '',
+          phone: normalized.phone || 'Chưa cập nhật',
+          studentId: normalized.studentId || 'Chưa cập nhật',
+          major: normalized.major || 'Chưa cập nhật',
+          avatar: normalized.avatar || mergedUser.avatar || ''
+        });
+
+        // Sync latest info to localStorage session
+        localStorage.setItem('user', JSON.stringify(mergedUser));
+      } catch (error) {
+        console.error('Fetch profile error:', error);
+        setFetchError(error.message || 'Không thể tải thông tin cá nhân.');
+        fallbackLocal();
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   const getMyClub = () => {
@@ -147,69 +207,158 @@ const Profile = ({ userRole, clubs, members }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSaveInfo = () => {
+  const handleSaveInfo = async () => {
     if (!validateInfoForm()) {
       return;
     }
 
-    // Update registeredUsers
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    const updatedUsers = registeredUsers.map(u => 
-      u.email === user.email 
-        ? { ...u, ...formData }
-        : u
-    );
-    localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
+    setFetchError('');
+    setSuccessMessage('');
 
-    // Update user session
-    const updatedUser = {
-      ...user,
-      name: formData.name,
-      email: formData.email
-    };
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setFetchError('Bạn cần đăng nhập lại để cập nhật thông tin.');
+      return;
+    }
 
-    setIsEditing(false);
-    setSuccessMessage('Cập nhật thông tin thành công!');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      const payload = {
+        fullName: formData.name.trim(),
+        phoneNumber: formData.phone.trim(),
+        major: formData.major.trim(),
+        avatarUrl: formData.avatar.trim()
+      };
+
+      const response = await fetch(`${API_BASE_URL}/users/my-info`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = data.message || data.error || 'Cập nhật thông tin không thành công.';
+        throw new Error(message);
+      }
+
+      const info = data.result || data.data || data;
+      const normalized = {
+        name: info.fullName ?? info.name ?? formData.name,
+        email: info.email ?? formData.email,
+        phone: info.phoneNumber ?? info.phone ?? formData.phone,
+        studentId: info.studentCode ?? info.studentId ?? formData.studentId,
+        major: info.major ?? formData.major,
+        role: info.roleName ?? info.role ?? info.userRole ?? user.role,
+        avatar: info.avatarUrl ?? info.avatar ?? formData.avatar
+      };
+
+      // Update registeredUsers cache so the rest of the app sees the latest info
+      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+      const updatedUsers = registeredUsers.map(u =>
+        u.email === user.email
+          ? { ...u, ...normalized }
+          : u
+      );
+      localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
+
+      // Update user session
+      const updatedUser = {
+        ...user,
+        name: normalized.name,
+        email: normalized.email,
+        role: normalized.role,
+        avatar: normalized.avatar
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+
+      setFormData({
+        name: normalized.name || '',
+        email: normalized.email || '',
+        phone: normalized.phone || '',
+        studentId: normalized.studentId || '',
+        major: normalized.major || '',
+        avatar: normalized.avatar || ''
+      });
+
+      setIsEditing(false);
+      setSuccessMessage('Cập nhật thông tin thành công!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Update profile error:', error);
+      setFetchError(error.message || 'Cập nhật thông tin không thành công.');
+    }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!validatePasswordForm()) {
       return;
     }
 
-    // Check current password
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    const currentUser = registeredUsers.find(u => u.email === user.email);
-    
-    if (!currentUser || currentUser.password !== passwordData.currentPassword) {
-      setErrors({ currentPassword: 'Mật khẩu hiện tại không đúng' });
+    setFetchError('');
+    setSuccessMessage('');
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setFetchError('Bạn cần đăng nhập lại để đổi mật khẩu.');
       return;
     }
 
-    // Update password
-    const updatedUsers = registeredUsers.map(u => 
-      u.email === user.email 
-        ? { ...u, password: passwordData.newPassword }
-        : u
-    );
-    localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
+    setPasswordLoading(true);
 
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
-    setSuccessMessage('Đổi mật khẩu thành công!');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      const payload = {
+        oldPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      };
+
+      const response = await fetch(`${API_BASE_URL}/users/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !(data.code === 1000 || data.code === 0)) {
+        const message = data.message || data.error || 'Đổi mật khẩu không thành công.';
+        // Nếu server báo sai mật khẩu cũ, highlight field tương ứng
+        if (message.toLowerCase().includes('cũ') || message.toLowerCase().includes('hiện tại')) {
+          setErrors({ currentPassword: message });
+        } else {
+          setErrors({});
+        }
+        setFetchError(message);
+        return;
+      }
+
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setErrors({});
+      setSuccessMessage(data.message || 'Đổi mật khẩu thành công!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Change password error:', error);
+      setFetchError('Không thể đổi mật khẩu. Vui lòng thử lại sau.');
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   const myClub = getMyClub();
   const myMemberships = getMyMemberships();
+  const avatarUrl = (formData.avatar || '').trim() || (user?.avatar || '').trim();
 
-  if (!user) {
+  if (loadingProfile || !user) {
     return (
       <div className="p-5 max-w-[1000px] mx-auto">
         <div className="text-center py-16 px-5 text-gray-600 text-lg">Đang tải thông tin...</div>
@@ -219,9 +368,23 @@ const Profile = ({ userRole, clubs, members }) => {
 
   return (
     <div className="p-5 max-w-[1000px] mx-auto">
+      {fetchError && (
+        <div className="bg-red-500 text-white px-5 py-4 rounded-lg mb-5 text-center font-medium animate-slide-in">
+          {fetchError}
+        </div>
+      )}
       <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light rounded-2xl p-10 flex flex-col md:flex-row items-center gap-8 mb-8 text-white shadow-lg">
-        <div className="w-[100px] h-[100px] rounded-full bg-white/20 flex items-center justify-center text-5xl font-bold border-4 border-white/30 flex-shrink-0">
-          {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+        <div className="w-[100px] h-[100px] rounded-full bg-white/20 flex items-center justify-center text-5xl font-bold border-4 border-white/30 flex-shrink-0 overflow-hidden">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="w-full h-full object-cover"
+              onError={(e) => { e.currentTarget.src = ''; }}
+            />
+          ) : (
+            <span>{user.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>
+          )}
         </div>
         <div className="flex-1 text-center md:text-left">
           <h1 className="m-0 mb-2.5 text-3xl font-bold">{user.name}</h1>
@@ -317,6 +480,23 @@ const Profile = ({ userRole, clubs, members }) => {
                   <span className="text-sm text-gray-500 font-medium">Số điện thoại:</span>
                   <span className="text-base text-gray-800 font-semibold">{formData.phone || 'Chưa cập nhật'}</span>
                 </div>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
+                  <span className="text-sm text-gray-500 font-medium">Ảnh đại diện:</span>
+                  <span className="text-base text-gray-800 font-semibold">
+                    {avatarUrl ? (
+                      <a
+                        href={avatarUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-fpt-blue hover:underline"
+                      >
+                        Xem ảnh
+                      </a>
+                    ) : (
+                      'Chưa cập nhật'
+                    )}
+                  </span>
+                </div>
                 {userRole === 'student' && (
                   <>
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
@@ -378,6 +558,19 @@ const Profile = ({ userRole, clubs, members }) => {
                     }`}
                   />
                   {errors.phone && <span className="text-red-500 text-xs flex items-center gap-1">⚠️ {errors.phone}</span>}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-800">Avatar URL</label>
+                  <input
+                    type="url"
+                    name="avatar"
+                    value={formData.avatar}
+                    onChange={handleFormChange}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="px-3 py-3 border-2 rounded-lg text-sm font-sans transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 border-gray-200"
+                  />
+                  <span className="text-xs text-gray-500">Dán link ảnh (JPG, PNG, ...)</span>
                 </div>
 
                 {userRole === 'student' && (
@@ -486,10 +679,11 @@ const Profile = ({ userRole, clubs, members }) => {
 
               <div className="flex gap-2.5 justify-end mt-2.5 pt-5 border-t-2 border-gray-100">
                 <button 
-                  className="px-6 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white hover:-translate-y-0.5 hover:shadow-lg" 
+                  className="px-6 py-3 border-none rounded-lg text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed" 
                   onClick={handleChangePassword}
+                  disabled={passwordLoading}
                 >
-                  Đổi mật khẩu
+                  {passwordLoading ? 'Đang đổi mật khẩu...' : 'Đổi mật khẩu'}
                 </button>
               </div>
             </div>
@@ -547,6 +741,16 @@ const Profile = ({ userRole, clubs, members }) => {
                         <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Phí tham gia:</strong> {item.club.participationFee ? `${item.club.participationFee.toLocaleString('vi-VN')} VNĐ` : 'Miễn phí'}</span>
                         <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Thời hạn:</strong> {item.club.membershipDuration || 6} tháng</span>
                       </div>
+                      {item.subscriptionId && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <button
+                            onClick={() => setSelectedSubscriptionId(item.subscriptionId)}
+                            className="px-4 py-2 bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all hover:-translate-y-0.5"
+                          >
+                            📋 Xem chi tiết đăng ký
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                   );
@@ -598,6 +802,14 @@ const Profile = ({ userRole, clubs, members }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Subscription Detail Modal */}
+      {selectedSubscriptionId && (
+        <SubscriptionDetailModal
+          subscriptionId={selectedSubscriptionId}
+          onClose={() => setSelectedSubscriptionId(null)}
+        />
       )}
     </div>
   );
