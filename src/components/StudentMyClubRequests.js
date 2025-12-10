@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useToast } from './Toast';
+import { clubCategoryLabels } from '../data/mockData';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
@@ -16,41 +17,118 @@ const StudentMyClubRequests = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    let isMounted = true; // Flag để tránh setState sau khi component unmount
+    
     const fetchMyRequests = async () => {
-      const token = localStorage.getItem('authToken');
+      // Lấy token từ cả authToken và token
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
       if (!token) {
-        setError('Vui lòng đăng nhập để xem đơn đã gửi.');
-        setLoading(false);
+        if (isMounted) {
+          setError('Vui lòng đăng nhập để xem đơn đã gửi.');
+          setLoading(false);
+        }
         return;
       }
 
       try {
         const response = await fetch(`${API_BASE_URL}/club-requests/my-requests`, {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+            'Authorization': `Bearer ${token}`
           }
         });
 
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          const message = data.message || data.error || 'Không thể tải danh sách đơn.';
-          throw new Error(message);
+        const data = await response.json().catch(() => null);
+        
+        // Xử lý lỗi 401 Unauthorized
+        if (response.status === 401) {
+          if (isMounted) {
+            setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+            setLoading(false);
+            // Chỉ hiển thị toast một lần
+            showToast('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
+          }
+          return;
+        }
+        
+        // Kiểm tra response code: API này trả về code 1000 khi thành công
+        if (!response.ok || !data || data.code !== 1000) {
+          const message = data?.message || data?.error || 'Không thể tải danh sách đơn.';
+          if (isMounted) {
+            setError(message);
+            setLoading(false);
+          }
+          return;
         }
 
-        setRequests(data.result || []);
+        // Lấy danh sách requests từ result
+        const rawRequests = data.result || [];
+        
+        // Loại bỏ duplicate dựa trên requestId (đảm bảo không có requestId trùng)
+        const uniqueById = rawRequests.reduce((acc, req) => {
+          const requestId = req.requestId || req.id;
+          if (requestId && !acc.find(r => (r.requestId || r.id) === requestId)) {
+            acc.push(req);
+          }
+          return acc;
+        }, []);
+
+        // Group theo tên CLB và chỉ lấy đơn mới nhất của mỗi tên
+        // Nếu có nhiều đơn cùng tên, chỉ hiển thị đơn mới nhất
+        const groupedByName = uniqueById.reduce((acc, req) => {
+          const name = req.proposedName?.trim();
+          if (!name) return acc;
+          
+          const existing = acc.find(r => r.proposedName?.trim() === name);
+          if (!existing) {
+            acc.push(req);
+          } else {
+            // So sánh ngày tạo, giữ lại đơn mới hơn
+            const existingDate = existing.createdAt ? new Date(existing.createdAt).getTime() : 0;
+            const currentDate = req.createdAt ? new Date(req.createdAt).getTime() : 0;
+            if (currentDate > existingDate) {
+              // Thay thế bằng đơn mới hơn
+              const index = acc.indexOf(existing);
+              acc[index] = req;
+            }
+          }
+          return acc;
+        }, []);
+
+        // Sắp xếp theo ngày tạo (mới nhất trước)
+        groupedByName.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
+
+        if (isMounted) {
+          setRequests(groupedByName);
+          setLoading(false);
+        }
       } catch (err) {
         console.error('Fetch my club requests error:', err);
-        const message = err.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
-        setError(message);
-        showToast(message, 'error');
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          const message = err.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
+          setError(message);
+          setLoading(false);
+          // Chỉ hiển thị toast nếu không phải lỗi 401 (đã xử lý ở trên)
+          if (!message.includes('hết hạn')) {
+            showToast(message, 'error');
+          }
+        }
       }
     };
 
     fetchMyRequests();
-  }, [showToast]);
+    
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Chỉ chạy một lần khi component mount, không phụ thuộc vào showToast
 
   const renderStatus = (status) => {
     const info = statusMap[status] || { text: status || 'Không xác định', color: 'bg-gray-100 text-gray-700' };
@@ -115,7 +193,7 @@ const StudentMyClubRequests = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                      {req.category}
+                      {clubCategoryLabels[req.category] || req.category}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-gray-600">

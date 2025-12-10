@@ -65,30 +65,51 @@ function AppContent() {
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
   const handleLogout = async () => {
-    const storedUser = localStorage.getItem('user');
-    const userData = storedUser ? JSON.parse(storedUser) : {};
-    const token = localStorage.getItem('authToken') || userData.token;
+    // Xóa tất cả dữ liệu liên quan đến authentication và session trong localStorage
+    const keysToRemove = [
+      'authToken',
+      'token',
+      'user',
+      'role',
+      'joinRequests',
+      'payments',
+      'clubRequests',
+      'registeredUsers' // Có thể giữ lại nếu muốn, nhưng xóa để clean hoàn toàn
+    ];
 
-    if (token) {
-      try {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token })
-        });
-      } catch (error) {
-        console.error('Logout error:', error);
-      }
-    }
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
 
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+    // Reset state ngay lập tức
     setIsAuthenticated(false);
     setUserRole(null);
     setShowHome(true);
     setShowLogin(false);
     setShowRegister(false);
-    showToast('Đã đăng xuất', 'success');
+    
+    // Reset clubs và members về empty array
+    setClubs([]);
+    setMembers([]);
+    
+    // Gọi API logout một cách không blocking (không chờ kết quả)
+    // Nếu API không tồn tại hoặc lỗi, không ảnh hưởng đến việc logout
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      // Gọi API logout nhưng không await, để không block việc logout
+      fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }).catch(error => {
+        // Bỏ qua lỗi API, không hiển thị cho user
+        console.log('Logout API call failed (optional):', error);
+      });
+    }
+    
+    showToast('Đã đăng xuất thành công', 'success');
   };
 
   const handleNavigateToLogin = () => {

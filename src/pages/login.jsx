@@ -45,6 +45,52 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
     );
   };
 
+  // Parse JWT token để lấy role từ scope
+  const parseJWTToken = (token) => {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return null;
+      }
+      
+      // Decode payload (phần thứ 2)
+      const payload = parts[1];
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      
+      const decoded = JSON.parse(jsonPayload);
+      return decoded;
+    } catch (error) {
+      console.error('Error parsing JWT token:', error);
+      return null;
+    }
+  };
+
+  // Map scope từ JWT thành role cho app
+  const mapScopeToRole = (scope) => {
+    if (!scope) return 'student';
+    
+    const scopeLower = scope.toLowerCase();
+    
+    // QuanTriVien -> admin
+    if (scopeLower === 'quantrivien' || scopeLower === 'admin') {
+      return 'admin';
+    }
+    
+    // SinhVien -> student
+    if (scopeLower === 'sinhvien' || scopeLower === 'student') {
+      return 'student';
+    }
+    
+    // Các scope khác -> club_leader
+    return 'club_leader';
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -114,8 +160,28 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
         return;
       }
 
-      const role = data.role || data.userRole || data.user?.role || 'student';
-      const name = data.fullName || data.name || data.user?.fullName || data.user?.name || formData.email.split('@')[0];
+      // Parse JWT token để lấy thông tin user
+      const tokenPayload = parseJWTToken(token);
+      let role = 'student';
+      let name = formData.email.split('@')[0];
+      
+      if (tokenPayload) {
+        // Lấy role từ scope trong JWT token
+        const scope = tokenPayload.scope || tokenPayload.role || tokenPayload.Roles;
+        role = mapScopeToRole(scope);
+        
+        // Lấy name từ token hoặc response
+        name = tokenPayload.sub?.split('@')[0] || 
+               data.fullName || 
+               data.name || 
+               data.user?.fullName || 
+               data.user?.name || 
+               formData.email.split('@')[0];
+      } else {
+        // Fallback: thử lấy từ response body
+        role = data.role || data.userRole || data.user?.role || 'student';
+        name = data.fullName || data.name || data.user?.fullName || data.user?.name || formData.email.split('@')[0];
+      }
 
       const userData = {
         email: formData.email.trim(),
