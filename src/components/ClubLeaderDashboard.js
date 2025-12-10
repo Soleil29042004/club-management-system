@@ -12,6 +12,8 @@ import { clubCategoryLabels } from '../data/mockData';
 const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage }) => {
   const { showToast } = useToast();
   const [joinRequests, setJoinRequests] = useState([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState('');
   const [myClub, setMyClub] = useState(null);
   const [clubLoading, setClubLoading] = useState(false);
   const [clubError, setClubError] = useState('');
@@ -50,6 +52,37 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     founderId: apiClub?.founderId,
     founderStudentCode: apiClub?.founderStudentCode,
     raw: apiClub
+  });
+
+  const normalizeRole = (role) => {
+    const r = (role || '').toLowerCase();
+    if (r === 'chutich' || r === 'chủ tịch' || r === 'chu tich') return 'Chủ tịch';
+    if (r === 'phochutich' || r === 'phó chủ tịch' || r === 'pho chu tich') return 'Phó Chủ tịch';
+    if (r === 'thuky' || r === 'thư ký' || r === 'thu ky') return 'Thư ký';
+    if (r === 'thuquy' || r === 'thủ quỹ' || r === 'thu quy') return 'Thủ quỹ';
+    if (r === 'thanhvien' || r === 'thành viên' || r === 'thanh vien') return 'Thành viên';
+    return role || 'Thành viên';
+  };
+
+  const mapApiMember = (m, clubId) => ({
+    id: m?.userId || m?.id,
+    userId: m?.userId || m?.id,
+    fullName: m?.fullName || m?.studentName || '',
+    name: m?.fullName || m?.studentName || '',
+    email: m?.email || m?.studentEmail || '',
+    studentId: m?.studentCode || '',
+    phone: m?.phoneNumber || m?.phone || '',
+    major: m?.major || '',
+    role: normalizeRole(m?.clubRole || m?.role),
+    roleCode: m?.clubRole || m?.role,
+    status: m?.status || 'Hoạt động',
+    joinDate: m?.joinedAt || m?.joinDate,
+    expiryDate: m?.endDate || m?.expiryDate,
+    packageName: m?.packageName || '',
+    term: m?.term || '',
+    isPaid: m?.isPaid,
+    paymentMethod: m?.paymentMethod,
+    clubId
   });
 
   // Load data từ localStorage (join requests mock) - giữ lại cho tới khi có API chính thức
@@ -184,6 +217,55 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   useEffect(() => {
     localStorage.setItem('joinRequests', JSON.stringify(joinRequests));
   }, [joinRequests]);
+
+  // Fetch members of the current club
+  useEffect(() => {
+    const targetClubId = myClub?.id || myClub?.clubId;
+    if (!targetClubId) return;
+
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+
+    const fetchMembers = async () => {
+      setMembersLoading(true);
+      setMembersError('');
+      try {
+        const res = await fetch(`${API_BASE_URL}/clubs/${targetClubId}/members`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          signal: controller.signal
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          const mapped = (data.result || []).map(m => mapApiMember(m, targetClubId));
+          setMembers(mapped);
+          setMyClub(prev => (prev ? { ...prev, memberCount: mapped.length } : prev));
+          setClubs(prev =>
+            prev.map(c =>
+              c.id === targetClubId || c.clubId === targetClubId ? { ...c, memberCount: mapped.length } : c
+            )
+          );
+        } else {
+          setMembers([]);
+          setMembersError(data.message || 'Không thể tải danh sách thành viên.');
+          showToast(data.message || 'Không thể tải danh sách thành viên.', 'error');
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Fetch members error:', err);
+          setMembersError('Không thể tải danh sách thành viên.');
+          showToast('Không thể tải danh sách thành viên.', 'error');
+        }
+      } finally {
+        setMembersLoading(false);
+      }
+    };
+
+    fetchMembers();
+    return () => controller.abort();
+  }, [myClub?.id, myClub?.clubId, API_BASE_URL, setClubs, setMembers, showToast]);
 
   // Get all requests for this leader's club (pending, approved, rejected)
   // Sắp xếp: pending trước, sau đó approved, cuối cùng rejected
@@ -467,6 +549,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       {currentPage === 'requests' && (
         <JoinRequestsList
           requests={allRequests}
+          clubId={myClub?.id || myClub?.clubId}
           onApprove={handleApprove}
           onReject={handleReject}
         />
