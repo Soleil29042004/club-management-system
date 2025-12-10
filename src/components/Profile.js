@@ -29,14 +29,19 @@ const Profile = ({ userRole, clubs, members }) => {
   useEffect(() => {
     const fallbackLocal = () => {
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      setUser(userData);
+      const profileData = JSON.parse(localStorage.getItem('profile') || '{}');
+      const merged = {
+        ...userData,
+        ...profileData
+      };
+      setUser(merged);
       setFormData({
-        name: userData.name || '',
-        email: userData.email || '',
-        phone: '',
-        studentId: '',
-        major: '',
-        avatar: userData.avatar || ''
+        name: merged.name || '',
+        email: merged.email || '',
+        phone: merged.phone || '',
+        studentId: merged.studentId || '',
+        major: merged.major || '',
+        avatar: merged.avatar || ''
       });
       setLoadingProfile(false);
     };
@@ -83,18 +88,28 @@ const Profile = ({ userRole, clubs, members }) => {
           avatar: normalized.avatar || userData.avatar
         };
 
-        setUser(mergedUser);
-        setFormData({
+        const profileForStorage = {
           name: normalized.name || mergedUser.name || '',
           email: normalized.email || mergedUser.email || '',
-          phone: normalized.phone || 'Chưa cập nhật',
-          studentId: normalized.studentId || 'Chưa cập nhật',
-          major: normalized.major || 'Chưa cập nhật',
+          phone: normalized.phone || '',
+          studentId: normalized.studentId || '',
+          major: normalized.major || '',
           avatar: normalized.avatar || mergedUser.avatar || ''
+        };
+
+        setUser(mergedUser);
+        setFormData({
+          name: profileForStorage.name || 'Chưa cập nhật',
+          email: profileForStorage.email || 'Chưa cập nhật',
+          phone: profileForStorage.phone || 'Chưa cập nhật',
+          studentId: profileForStorage.studentId || 'Chưa cập nhật',
+          major: profileForStorage.major || 'Chưa cập nhật',
+          avatar: profileForStorage.avatar || ''
         });
 
-        // Sync latest info to localStorage session
+        // Sync latest info to localStorage session for other components to reuse
         localStorage.setItem('user', JSON.stringify(mergedUser));
+        localStorage.setItem('profile', JSON.stringify(profileForStorage));
       } catch (error) {
         console.error('Fetch profile error:', error);
         setFetchError(error.message || 'Không thể tải thông tin cá nhân.');
