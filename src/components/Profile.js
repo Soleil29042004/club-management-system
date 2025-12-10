@@ -12,7 +12,8 @@ const Profile = ({ userRole, clubs, members }) => {
     email: '',
     phone: '',
     studentId: '',
-    major: ''
+    major: '',
+    avatar: ''
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -33,7 +34,8 @@ const Profile = ({ userRole, clubs, members }) => {
         email: userData.email || '',
         phone: '',
         studentId: '',
-        major: ''
+        major: '',
+        avatar: userData.avatar || ''
       });
       setLoadingProfile(false);
     };
@@ -67,7 +69,8 @@ const Profile = ({ userRole, clubs, members }) => {
           phone: info.phoneNumber ?? info.phone ?? '',
           studentId: info.studentCode ?? info.studentId ?? '',
           major: info.major ?? '',
-          role: info.roleName ?? info.role ?? info.userRole ?? ''
+          role: info.roleName ?? info.role ?? info.userRole ?? '',
+          avatar: info.avatarUrl ?? info.avatar ?? ''
         };
 
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
@@ -75,7 +78,8 @@ const Profile = ({ userRole, clubs, members }) => {
           ...userData,
           name: normalized.name || userData.name,
           email: normalized.email || userData.email,
-          role: normalized.role || userData.role
+          role: normalized.role || userData.role,
+          avatar: normalized.avatar || userData.avatar
         };
 
         setUser(mergedUser);
@@ -84,7 +88,8 @@ const Profile = ({ userRole, clubs, members }) => {
           email: normalized.email || mergedUser.email || '',
           phone: normalized.phone || 'Chưa cập nhật',
           studentId: normalized.studentId || 'Chưa cập nhật',
-          major: normalized.major || 'Chưa cập nhật'
+          major: normalized.major || 'Chưa cập nhật',
+          avatar: normalized.avatar || mergedUser.avatar || ''
         });
 
         // Sync latest info to localStorage session
@@ -201,32 +206,90 @@ const Profile = ({ userRole, clubs, members }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSaveInfo = () => {
+  const handleSaveInfo = async () => {
     if (!validateInfoForm()) {
       return;
     }
 
-    // Update registeredUsers
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    const updatedUsers = registeredUsers.map(u => 
-      u.email === user.email 
-        ? { ...u, ...formData }
-        : u
-    );
-    localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
+    setFetchError('');
+    setSuccessMessage('');
 
-    // Update user session
-    const updatedUser = {
-      ...user,
-      name: formData.name,
-      email: formData.email
-    };
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setFetchError('Bạn cần đăng nhập lại để cập nhật thông tin.');
+      return;
+    }
 
-    setIsEditing(false);
-    setSuccessMessage('Cập nhật thông tin thành công!');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      const payload = {
+        fullName: formData.name.trim(),
+        phoneNumber: formData.phone.trim(),
+        major: formData.major.trim(),
+        avatarUrl: formData.avatar.trim()
+      };
+
+      const response = await fetch(`${API_BASE_URL}/users/my-info`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = data.message || data.error || 'Cập nhật thông tin không thành công.';
+        throw new Error(message);
+      }
+
+      const info = data.result || data.data || data;
+      const normalized = {
+        name: info.fullName ?? info.name ?? formData.name,
+        email: info.email ?? formData.email,
+        phone: info.phoneNumber ?? info.phone ?? formData.phone,
+        studentId: info.studentCode ?? info.studentId ?? formData.studentId,
+        major: info.major ?? formData.major,
+        role: info.roleName ?? info.role ?? info.userRole ?? user.role,
+        avatar: info.avatarUrl ?? info.avatar ?? formData.avatar
+      };
+
+      // Update registeredUsers cache so the rest of the app sees the latest info
+      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+      const updatedUsers = registeredUsers.map(u =>
+        u.email === user.email
+          ? { ...u, ...normalized }
+          : u
+      );
+      localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
+
+      // Update user session
+      const updatedUser = {
+        ...user,
+        name: normalized.name,
+        email: normalized.email,
+        role: normalized.role,
+        avatar: normalized.avatar
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+
+      setFormData({
+        name: normalized.name || '',
+        email: normalized.email || '',
+        phone: normalized.phone || '',
+        studentId: normalized.studentId || '',
+        major: normalized.major || '',
+        avatar: normalized.avatar || ''
+      });
+
+      setIsEditing(false);
+      setSuccessMessage('Cập nhật thông tin thành công!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Update profile error:', error);
+      setFetchError(error.message || 'Cập nhật thông tin không thành công.');
+    }
   };
 
   const handleChangePassword = () => {
@@ -262,6 +325,7 @@ const Profile = ({ userRole, clubs, members }) => {
 
   const myClub = getMyClub();
   const myMemberships = getMyMemberships();
+  const avatarUrl = (formData.avatar || '').trim() || (user?.avatar || '').trim();
 
   if (loadingProfile || !user) {
     return (
@@ -279,8 +343,17 @@ const Profile = ({ userRole, clubs, members }) => {
         </div>
       )}
       <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light rounded-2xl p-10 flex flex-col md:flex-row items-center gap-8 mb-8 text-white shadow-lg">
-        <div className="w-[100px] h-[100px] rounded-full bg-white/20 flex items-center justify-center text-5xl font-bold border-4 border-white/30 flex-shrink-0">
-          {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+        <div className="w-[100px] h-[100px] rounded-full bg-white/20 flex items-center justify-center text-5xl font-bold border-4 border-white/30 flex-shrink-0 overflow-hidden">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="w-full h-full object-cover"
+              onError={(e) => { e.currentTarget.src = ''; }}
+            />
+          ) : (
+            <span>{user.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>
+          )}
         </div>
         <div className="flex-1 text-center md:text-left">
           <h1 className="m-0 mb-2.5 text-3xl font-bold">{user.name}</h1>
@@ -376,6 +449,23 @@ const Profile = ({ userRole, clubs, members }) => {
                   <span className="text-sm text-gray-500 font-medium">Số điện thoại:</span>
                   <span className="text-base text-gray-800 font-semibold">{formData.phone || 'Chưa cập nhật'}</span>
                 </div>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
+                  <span className="text-sm text-gray-500 font-medium">Ảnh đại diện:</span>
+                  <span className="text-base text-gray-800 font-semibold">
+                    {avatarUrl ? (
+                      <a
+                        href={avatarUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-fpt-blue hover:underline"
+                      >
+                        Xem ảnh
+                      </a>
+                    ) : (
+                      'Chưa cập nhật'
+                    )}
+                  </span>
+                </div>
                 {userRole === 'student' && (
                   <>
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 p-4 bg-gray-50 rounded-lg border-l-4 border-fpt-blue">
@@ -437,6 +527,19 @@ const Profile = ({ userRole, clubs, members }) => {
                     }`}
                   />
                   {errors.phone && <span className="text-red-500 text-xs flex items-center gap-1">⚠️ {errors.phone}</span>}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-gray-800">Avatar URL</label>
+                  <input
+                    type="url"
+                    name="avatar"
+                    value={formData.avatar}
+                    onChange={handleFormChange}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="px-3 py-3 border-2 rounded-lg text-sm font-sans transition-all focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 border-gray-200"
+                  />
+                  <span className="text-xs text-gray-500">Dán link ảnh (JPG, PNG, ...)</span>
                 </div>
 
                 {userRole === 'student' && (
