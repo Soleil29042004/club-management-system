@@ -14,6 +14,7 @@ const StudentMyClubRequests = () => {
   const [loading, setLoading] = useState(true);
   const [registrations, setRegistrations] = useState([]);
   const [error, setError] = useState('');
+  const [payingId, setPayingId] = useState(null);
 
   useEffect(() => {
     let isMounted = true; // Flag để tránh setState sau khi component unmount
@@ -106,6 +107,59 @@ const StudentMyClubRequests = () => {
     );
   };
 
+  const handlePayment = async (reg) => {
+    const subscriptionId = reg.subscriptionId;
+    if (!subscriptionId) {
+      showToast('Không tìm thấy mã đăng ký để thanh toán.', 'error');
+      return;
+    }
+
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Vui lòng đăng nhập để thanh toán.', 'error');
+      return;
+    }
+
+    setPayingId(subscriptionId);
+    try {
+      const res = await fetch(`${API_BASE_URL}/registrations/confirm-payment`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          subscriptionId,
+          paymentMethod: 'Online'
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+        throw new Error(data?.message || 'Không thể thanh toán. Vui lòng thử lại.');
+      }
+
+      setRegistrations((prev) =>
+        prev.map((item) =>
+          item.subscriptionId === subscriptionId
+            ? {
+                ...item,
+                isPaid: true,
+                paymentMethod: data.result?.paymentMethod || 'Online',
+                paymentDate: data.result?.paymentDate || new Date().toISOString()
+              }
+            : item
+        )
+      );
+      showToast('Thanh toán thành công!', 'success');
+    } catch (err) {
+      console.error('Payment error:', err);
+      showToast(err.message || 'Không thể thanh toán. Vui lòng thử lại.', 'error');
+    } finally {
+      setPayingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-600">
@@ -151,6 +205,7 @@ const StudentMyClubRequests = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold">Ngày đăng ký</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Ngày tham gia</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold">Hiệu lực</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -189,6 +244,19 @@ const StudentMyClubRequests = () => {
                       : '—'}
                     {reg.approverName && (
                       <div className="text-xs text-gray-500 mt-1">Duyệt: {reg.approverName}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {(reg.status === 'DaDuyet' || reg.status === 'approved') && !reg.isPaid ? (
+                      <button
+                        onClick={() => handlePayment(reg)}
+                        disabled={payingId === reg.subscriptionId}
+                        className="px-5 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg text-sm font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {payingId === reg.subscriptionId ? 'Đang thanh toán...' : '💳 Thanh toán'}
+                      </button>
+                    ) : (
+                      <span className="text-sm text-gray-500">—</span>
                     )}
                   </td>
                 </tr>
