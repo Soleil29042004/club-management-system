@@ -17,6 +17,9 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   const [myClub, setMyClub] = useState(null);
   const [clubLoading, setClubLoading] = useState(false);
   const [clubError, setClubError] = useState('');
+  const [clubStats, setClubStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState('');
   const lastFetchedClubId = useRef(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -267,6 +270,53 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     return () => controller.abort();
   }, [myClub?.id, myClub?.clubId, API_BASE_URL, setClubs, setMembers, showToast]);
 
+  // Fetch club internal stats: members, revenue, unpaid list
+  useEffect(() => {
+    const targetClubId = myClub?.id || myClub?.clubId;
+    if (!targetClubId) return;
+
+    const controller = new AbortController();
+    const token = localStorage.getItem('authToken');
+
+    const fetchStats = async () => {
+      setStatsLoading(true);
+      setStatsError('');
+      try {
+        const res = await fetch(`${API_BASE_URL}/clubs/${targetClubId}/stats`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          signal: controller.signal
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          const result = data.result || {};
+          setClubStats(result);
+          if (result.totalMembers !== undefined) {
+            setMyClub(prev => (prev ? { ...prev, memberCount: result.totalMembers } : prev));
+          }
+        } else {
+          const message = data?.message || 'Không thể tải thống kê CLB.';
+          setStatsError(message);
+          showToast(message, 'error');
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Fetch club stats error:', err);
+          setStatsError('Không thể tải thống kê CLB.');
+          showToast('Không thể tải thống kê CLB.', 'error');
+        }
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchStats();
+    return () => controller.abort();
+  }, [API_BASE_URL, myClub?.id, myClub?.clubId, showToast]);
+
   // Get all requests for this leader's club (pending, approved, rejected)
   // Sắp xếp: pending trước, sau đó approved, cuối cùng rejected
   const getAllRequests = useCallback((requestsList = joinRequests) => {
@@ -482,7 +532,12 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
   // Sử dụng useMemo để đảm bảo được tính toán lại khi dependencies thay đổi
   const allRequests = useMemo(() => getAllRequests(joinRequests), [getAllRequests, joinRequests]);
-  const pendingRequestsCount = useMemo(() => getPendingRequestsCount(), [getPendingRequestsCount]);
+  const pendingRequestsCount = useMemo(() => {
+    if (clubStats?.pendingRegistrations !== undefined) {
+      return clubStats.pendingRegistrations;
+    }
+    return getPendingRequestsCount();
+  }, [clubStats?.pendingRegistrations, getPendingRequestsCount]);
   const clubMembers = useMemo(() => getClubMembers(), [getClubMembers]);
 
   if (clubLoading) {
@@ -525,24 +580,93 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
         </p>
       </div>
 
-      <LeaderStats
-        memberCount={myClub.memberCount}
-        pendingRequestsCount={pendingRequestsCount}
-        category={myClub.category}
-        location={myClub.location}
-      />
-
       {/* Manage Club Tab */}
       {currentPage === 'manage' && (
-        <ClubInfo
-          club={myClub}
-          onEdit={handleEdit}
-          showEditForm={showEditForm}
-          formData={formData}
-          onFormChange={handleFormChange}
-          onFormSubmit={handleFormSubmit}
-          onFormCancel={handleFormCancel}
-        />
+        <>
+          <LeaderStats
+            memberCount={clubStats?.totalMembers ?? myClub.memberCount}
+            pendingRequestsCount={pendingRequestsCount}
+            category={myClub.category}
+            location={myClub.location}
+            totalRevenue={clubStats?.totalRevenue}
+            unpaidCount={clubStats?.unpaidCount}
+          />
+
+          <ClubInfo
+            club={myClub}
+            onEdit={handleEdit}
+            showEditForm={showEditForm}
+            formData={formData}
+            onFormChange={handleFormChange}
+            onFormSubmit={handleFormSubmit}
+            onFormCancel={handleFormCancel}
+          />
+
+          <div className="mt-6 mb-8 space-y-3">
+            {statsError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3">
+                {statsError}
+              </div>
+            )}
+            {statsLoading ? (
+              <div className="bg-white rounded-xl shadow-md p-6 flex items-center gap-3 text-gray-600">
+                <div className="w-6 h-6 border-4 border-fpt-blue/30 border-t-fpt-blue rounded-full animate-spin" />
+                <span>Đang tải thống kê CLB...</span>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-800 m-0">Danh sách chưa đóng phí</h3>
+                    <p className="text-gray-500 m-0 text-sm">
+                      Thành viên đã được duyệt nhưng chưa hoàn tất thanh toán
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700">
+                    {clubStats?.unpaidCount ?? 0} người
+                  </span>
+                </div>
+                {!clubStats?.unpaidMembers || clubStats.unpaidMembers.length === 0 ? (
+                  <div className="text-gray-600 text-sm">Không có thành viên chưa đóng phí.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-100 text-gray-700">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Mã đăng ký</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">MSSV</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Họ tên</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Gói</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Giá</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Ngày tham gia</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {clubStats.unpaidMembers.map((u) => (
+                          <tr key={u.subscriptionId || `${u.studentCode}-${u.fullName}`} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">{u.subscriptionId || '—'}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">{u.studentCode || '—'}</td>
+                            <td className="px-4 py-3">{u.fullName || '—'}</td>
+                            <td className="px-4 py-3">{u.packageName || '—'}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {u.packagePrice !== undefined && u.packagePrice !== null
+                                ? `${u.packagePrice.toLocaleString('vi-VN')} VNĐ`
+                                : '—'}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {u.joinDate ? new Date(u.joinDate).toLocaleDateString('vi-VN') : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+        </>
       )}
 
       {/* Join Requests Tab */}
