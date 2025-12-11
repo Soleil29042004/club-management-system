@@ -180,7 +180,7 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
       category: item.category || item.type || 'Khác',
       president: item.founderName || item.president || item.chairman || item.leaderName || item.adminName || 'Chưa cập nhật',
       founderName: item.founderName || item.president || item.chairman || item.leaderName || item.adminName || 'Chưa cập nhật',
-      memberCount: item.memberCount || item.membersCount || item.memberTotal || 0,
+      memberCount: item.memberCount || item.totalMembers || item.membersCount || item.memberTotal || 0,
       status: item.statusText || item.status || (item.isActive !== false ? 'Hoạt động' : 'Tạm dừng'),
       email: item.email || item.contactEmail || item.creatorEmail || '',
       location: item.location || item.address || 'Chưa cập nhật',
