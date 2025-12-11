@@ -142,13 +142,16 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
                 {displayClub.clubName || displayClub.name}
               </h3>
             </div>
-            <span className={`px-4 py-2 rounded-full text-xs font-semibold uppercase ${
-              displayClub.isActive !== false 
-                ? 'bg-green-500 text-white' 
-                : 'bg-red-500 text-white'
-            }`}>
-              {displayClub.isActive !== false ? 'Hoạt động' : 'Tạm dừng'}
-            </span>
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <span className="opacity-70">Trạng thái:</span>
+              <span className={`px-4 py-2 rounded-full text-xs font-semibold uppercase ${
+                displayClub.isActive !== false 
+                  ? 'bg-green-500 text-white' 
+                  : 'bg-red-500 text-white'
+              }`}>
+                {displayClub.isActive !== false ? 'Hoạt động' : 'Tạm dừng'}
+              </span>
+            </div>
           </div>
 
           <div className="mb-6">

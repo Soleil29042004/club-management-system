@@ -62,11 +62,14 @@ const StudentClubList = ({
             
             return (
               <div key={club.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all">
-                <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-5 flex justify-between items-center">
+                <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-5 flex justify-between items-center gap-3">
                   <h3 className="m-0 text-xl font-semibold flex-1">{club.name}</h3>
-                  <span className="px-3 py-1.5 rounded-full text-xs font-semibold uppercase bg-green-500 text-white">
-                    {club.status}
-                  </span>
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <span className="opacity-80">Trạng thái:</span>
+                    <span className="px-3 py-1.5 rounded-full text-xs font-semibold uppercase bg-green-500 text-white">
+                      {club.status}
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="p-5">
