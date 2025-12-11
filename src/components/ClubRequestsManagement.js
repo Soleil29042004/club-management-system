@@ -31,6 +31,12 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all'); // all, DangCho, ChapThuan, TuChoi
   const [loading, setLoading] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // 'approve' or 'reject'
+  const [confirmReason, setConfirmReason] = useState('');
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [selectedReason, setSelectedReason] = useState('');
+  const [selectedReasonType, setSelectedReasonType] = useState(''); // 'approve' or 'reject'
 
   // Fetch club requests from API
   useEffect(() => {
@@ -178,17 +184,22 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
     }
   };
 
-  const handleApprove = async (request) => {
-    // Cho phép nhập lý do duyệt
-    const reason = window.prompt(
-      `Bạn có chắc chắn muốn duyệt yêu cầu đăng ký mở câu lạc bộ "${request.name}"?\n\nKhi duyệt, hệ thống sẽ tự động tạo câu lạc bộ mới.\n\nVui lòng nhập lý do duyệt (tùy chọn):`,
-      ''
-    );
+  const openApproveModal = (request) => {
+    setSelectedRequest(request);
+    setConfirmAction('approve');
+    setConfirmReason('');
+    setShowConfirmModal(true);
+  };
 
-    if (reason === null) {
-      // User đã cancel
-      return;
-    }
+  const openRejectModal = (request) => {
+    setSelectedRequest(request);
+    setConfirmAction('reject');
+    setConfirmReason('');
+    setShowConfirmModal(true);
+  };
+
+  const handleApprove = async (request, reason = '') => {
+    // reason được truyền từ modal confirm
 
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (!token) {
@@ -208,7 +219,7 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
       // Chuẩn bị payload - adminNote là required field, gửi empty string nếu không có
       const payload = {
         status: 'ChapThuan',
-        adminNote: reason?.trim() || ''
+        adminNote: (reason || '').trim() || ''
       };
 
       console.log('Approving request:', {
@@ -276,17 +287,8 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
     }
   };
 
-  const handleReject = async (request) => {
-    // Cho phép nhập lý do từ chối
-    const reason = window.prompt(
-      `Bạn có chắc chắn muốn từ chối yêu cầu đăng ký mở câu lạc bộ "${request.name}"?\n\nVui lòng nhập lý do từ chối (tùy chọn):`,
-      ''
-    );
-
-    if (reason === null) {
-      // User đã cancel
-      return;
-    }
+  const handleReject = async (request, reason = '') => {
+    // reason được truyền từ modal confirm
 
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (!token) {
@@ -306,7 +308,7 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
       // Chuẩn bị payload - adminNote là required field, gửi empty string nếu không có
       const payload = {
         status: 'TuChoi',
-        adminNote: reason?.trim() || ''
+        adminNote: (reason || '').trim() || ''
       };
 
       console.log('Rejecting request:', {
@@ -485,6 +487,7 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
                   <th className="px-6 py-4 text-left text-sm font-semibold">Danh mục</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold">Ngày yêu cầu</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold">Trạng thái</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold">Lý do</th>
                   <th className="px-6 py-4 text-center text-sm font-semibold">Thao tác</th>
                 </tr>
               </thead>
@@ -516,6 +519,29 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
                       {getStatusBadge(request.status)}
                     </td>
                     <td className="px-6 py-4">
+                      {request.adminNote ? (
+                        <button
+                          onClick={() => {
+                            setSelectedReason(request.adminNote);
+                            setSelectedReasonType(
+                              request.status === 'approved' || request.apiStatus === 'ChapThuan'
+                                ? 'approve'
+                                : request.status === 'rejected' || request.apiStatus === 'TuChoi'
+                                ? 'reject'
+                                : ''
+                            );
+                            setShowReasonModal(true);
+                          }}
+                          className="text-sm text-fpt-blue hover:text-fpt-blue-light hover:underline cursor-pointer text-left max-w-[200px] line-clamp-2"
+                          title="Click để xem chi tiết"
+                        >
+                          {request.adminNote}
+                        </button>
+                      ) : (
+                        <span className="text-sm text-gray-400 italic">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="flex items-center justify-start gap-2">
                         <button
                           onClick={() => handleViewDetails(request)}
@@ -526,13 +552,13 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
                         {(request.status === 'pending' || request.apiStatus === 'DangCho') && (
                           <>
                             <button
-                              onClick={() => handleApprove(request)}
+                              onClick={() => openApproveModal(request)}
                               className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all"
                             >
                               ✅ Duyệt
                             </button>
                             <button
-                              onClick={() => handleReject(request)}
+                              onClick={() => openRejectModal(request)}
                               className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all"
                             >
                               ❌ Từ chối
@@ -548,6 +574,173 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
           </div>
         )}
       </div>
+
+      {/* Reason View Modal */}
+      {showReasonModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1001] p-5" onClick={() => {
+          setShowReasonModal(false);
+          setSelectedReason('');
+          setSelectedReasonType('');
+        }}>
+          <div className="bg-white rounded-xl w-full max-w-[500px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className={`p-6 flex justify-between items-center rounded-t-xl ${
+              selectedReasonType === 'approve'
+                ? 'bg-gradient-to-r from-green-500 to-green-600'
+                : selectedReasonType === 'reject'
+                ? 'bg-gradient-to-r from-red-500 to-red-600'
+                : 'bg-gradient-to-r from-fpt-blue to-fpt-blue-light'
+            } text-white`}>
+              <h2 className="m-0 text-xl font-semibold">
+                {selectedReasonType === 'approve'
+                  ? '✅ Lý do duyệt'
+                  : selectedReasonType === 'reject'
+                  ? '❌ Lý do từ chối'
+                  : '📝 Lý do'}
+              </h2>
+              <button
+                className="bg-transparent border-none text-white text-3xl cursor-pointer p-0 w-10 h-10 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                onClick={() => {
+                  setShowReasonModal(false);
+                  setSelectedReason('');
+                  setSelectedReasonType('');
+                }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-6">
+                <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                  {selectedReason || 'Không có lý do'}
+                </p>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    setShowReasonModal(false);
+                    setSelectedReason('');
+                    setSelectedReasonType('');
+                  }}
+                  className="px-6 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gray-200 text-gray-700 hover:bg-gray-300"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Action Modal */}
+      {showConfirmModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[1001] p-5" onClick={() => {
+          setShowConfirmModal(false);
+          setConfirmAction(null);
+          setConfirmReason('');
+        }}>
+          <div className="bg-white rounded-xl w-full max-w-[500px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className={`p-6 flex justify-between items-center rounded-t-xl ${
+              confirmAction === 'approve' 
+                ? 'bg-gradient-to-r from-green-500 to-green-600' 
+                : 'bg-gradient-to-r from-red-500 to-red-600'
+            } text-white`}>
+              <h2 className="m-0 text-xl font-semibold">
+                {confirmAction === 'approve' ? '✅ Duyệt yêu cầu' : '❌ Từ chối yêu cầu'}
+              </h2>
+              <button
+                className="bg-transparent border-none text-white text-3xl cursor-pointer p-0 w-10 h-10 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setConfirmAction(null);
+                  setConfirmReason('');
+                }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-gray-800 text-base mb-2">
+                  {confirmAction === 'approve' ? (
+                    <>
+                      Bạn có chắc chắn muốn duyệt yêu cầu đăng ký mở câu lạc bộ <strong>"{selectedRequest.name}"</strong>?
+                    </>
+                  ) : (
+                    <>
+                      Bạn có chắc chắn muốn từ chối yêu cầu đăng ký mở câu lạc bộ <strong>"{selectedRequest.name}"</strong>?
+                    </>
+                  )}
+                </p>
+                {confirmAction === 'approve' && (
+                  <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
+                    Khi duyệt, hệ thống sẽ tự động tạo câu lạc bộ mới.
+                  </p>
+                )}
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  {confirmAction === 'approve' ? 'Lý do duyệt:' : 'Lý do từ chối:'}
+                  <span className="text-gray-500 font-normal ml-1">(tùy chọn)</span>
+                </label>
+                <textarea
+                  value={confirmReason}
+                  onChange={(e) => setConfirmReason(e.target.value)}
+                  placeholder={confirmAction === 'approve' 
+                    ? 'Ví dụ: Yêu cầu hợp lệ, đáp ứng đủ điều kiện thành lập CLB...' 
+                    : 'Ví dụ: Chưa đáp ứng đủ điều kiện, thiếu thông tin...'}
+                  rows="4"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-sm transition-all font-sans resize-y focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Bạn có thể để trống hoặc nhập lý do để ghi chú cho yêu cầu này.
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setConfirmAction(null);
+                    setConfirmReason('');
+                  }}
+                  className="px-6 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gray-200 text-gray-700 hover:bg-gray-300"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={async () => {
+                    const action = confirmAction;
+                    const reason = confirmReason;
+                    const request = selectedRequest;
+                    
+                    setShowConfirmModal(false);
+                    setConfirmAction(null);
+                    setConfirmReason('');
+                    setSelectedRequest(null);
+                    
+                    if (action === 'approve') {
+                      await handleApprove(request, reason);
+                    } else if (action === 'reject') {
+                      await handleReject(request, reason);
+                    }
+                  }}
+                  className={`px-6 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all text-white shadow-lg hover:-translate-y-1 hover:shadow-xl ${
+                    confirmAction === 'approve'
+                      ? 'bg-gradient-to-r from-green-500 to-green-600'
+                      : 'bg-gradient-to-r from-red-500 to-red-600'
+                  }`}
+                >
+                  {confirmAction === 'approve' ? 'Xác nhận duyệt' : 'Xác nhận từ chối'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {showDetailModal && selectedRequest && (
@@ -630,9 +823,21 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
                 </div>
 
                 {selectedRequest.adminNote && (
-                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                    <label className="font-semibold text-gray-700 block mb-2">Ghi chú của Admin:</label>
-                    <p className="text-gray-800 m-0">{selectedRequest.adminNote}</p>
+                  <div className={`border-l-4 p-4 rounded ${
+                    selectedRequest.status === 'approved' || selectedRequest.apiStatus === 'ChapThuan'
+                      ? 'bg-green-50 border-green-500'
+                      : selectedRequest.status === 'rejected' || selectedRequest.apiStatus === 'TuChoi'
+                      ? 'bg-red-50 border-red-500'
+                      : 'bg-blue-50 border-blue-500'
+                  }`}>
+                    <label className="font-semibold text-gray-700 block mb-2">
+                      {selectedRequest.status === 'approved' || selectedRequest.apiStatus === 'ChapThuan'
+                        ? '✅ Lý do duyệt:'
+                        : selectedRequest.status === 'rejected' || selectedRequest.apiStatus === 'TuChoi'
+                        ? '❌ Lý do từ chối:'
+                        : '📝 Ghi chú của Admin:'}
+                    </label>
+                    <p className="text-gray-800 m-0 whitespace-pre-wrap">{selectedRequest.adminNote}</p>
                   </div>
                 )}
 
@@ -661,13 +866,19 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
               {selectedRequest.status === 'pending' && (
                 <div className="flex gap-4 justify-end mt-8 pt-5 border-t-2 border-gray-100">
                   <button
-                    onClick={() => handleReject(selectedRequest)}
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      openRejectModal(selectedRequest);
+                    }}
                     className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-red-500 text-white hover:bg-red-600 shadow-lg hover:-translate-y-1 hover:shadow-xl"
                   >
                     Từ chối
                   </button>
                   <button
-                    onClick={() => handleApprove(selectedRequest)}
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      openApproveModal(selectedRequest);
+                    }}
                     className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:-translate-y-1 hover:shadow-xl"
                   >
                     Duyệt yêu cầu

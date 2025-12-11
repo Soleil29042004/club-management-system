@@ -59,8 +59,33 @@ const SubscriptionDetailModal = ({ subscriptionId, onClose }) => {
           return;
         }
 
+        // Map response để đảm bảo có đầy đủ các field
+        const result = data.result || {};
         if (isMounted) {
-          setSubscription(data.result);
+          setSubscription({
+            subscriptionId: result.subscriptionId,
+            userId: result.userId,
+            studentCode: result.studentCode,
+            studentName: result.studentName,
+            studentEmail: result.studentEmail,
+            clubId: result.clubId,
+            clubName: result.clubName,
+            clubLogo: result.clubLogo,
+            packageId: result.packageId,
+            packageName: result.packageName,
+            term: result.term,
+            price: result.price,
+            status: result.status,
+            isPaid: result.isPaid || false,
+            paymentMethod: result.paymentMethod,
+            clubRole: result.clubRole || 'ThanhVien',
+            approverName: result.approverName,
+            createdAt: result.createdAt,
+            paymentDate: result.paymentDate,
+            startDate: result.startDate,
+            endDate: result.endDate,
+            joinDate: result.joinDate
+          });
           setLoading(false);
         }
       } catch (err) {
@@ -157,14 +182,42 @@ const SubscriptionDetailModal = ({ subscriptionId, onClose }) => {
         </div>
 
         <div className="p-8">
+          {/* Thông tin đăng ký */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Thông tin đăng ký</h3>
+            <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-fpt-blue">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="m-0 mb-1 text-sm text-gray-600">Mã đăng ký:</p>
+                  <p className="m-0 font-semibold text-gray-800">#{subscription.subscriptionId}</p>
+                </div>
+                <div>
+                  <p className="m-0 mb-1 text-sm text-gray-600">Ngày đăng ký:</p>
+                  <p className="m-0 font-semibold text-gray-800">{formatDate(subscription.createdAt)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Thông tin CLB */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Thông tin Câu lạc bộ</h3>
             <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-fpt-blue">
-              <p className="m-0 mb-2"><strong>Tên CLB:</strong> {subscription.clubName}</p>
-              <p className="m-0 mb-2"><strong>Mã CLB:</strong> {subscription.clubId}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="m-0 mb-1 text-sm text-gray-600">Tên CLB:</p>
+                  <p className="m-0 font-semibold text-gray-800">{subscription.clubName || '—'}</p>
+                </div>
+                <div>
+                  <p className="m-0 mb-1 text-sm text-gray-600">Mã CLB:</p>
+                  <p className="m-0 font-semibold text-gray-800">{subscription.clubId || '—'}</p>
+                </div>
+              </div>
               {subscription.clubLogo && (
-                <img src={subscription.clubLogo} alt={subscription.clubName} className="mt-2 max-w-[100px] rounded" />
+                <div className="mt-4">
+                  <p className="m-0 mb-2 text-sm text-gray-600">Logo CLB:</p>
+                  <img src={subscription.clubLogo} alt={subscription.clubName} className="max-w-[150px] rounded-lg shadow-md" />
+                </div>
               )}
             </div>
           </div>
@@ -198,18 +251,22 @@ const SubscriptionDetailModal = ({ subscriptionId, onClose }) => {
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Gói thành viên</h3>
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <p className="m-0 mb-1 text-sm text-gray-600">Mã gói:</p>
+                  <p className="m-0 font-semibold text-gray-800">#{subscription.packageId || '—'}</p>
+                </div>
                 <div>
                   <p className="m-0 mb-1 text-sm text-gray-600">Tên gói:</p>
-                  <p className="m-0 font-semibold text-gray-800">{subscription.packageName}</p>
+                  <p className="m-0 font-semibold text-gray-800">{subscription.packageName || '—'}</p>
                 </div>
                 <div>
                   <p className="m-0 mb-1 text-sm text-gray-600">Thời hạn:</p>
-                  <p className="m-0 font-semibold text-gray-800">{subscription.term}</p>
+                  <p className="m-0 font-semibold text-gray-800">{subscription.term || '—'}</p>
                 </div>
                 <div>
                   <p className="m-0 mb-1 text-sm text-gray-600">Giá:</p>
-                  <p className="m-0 font-semibold text-fpt-blue">{subscription.price?.toLocaleString('vi-VN') || '0'} VNĐ</p>
+                  <p className="m-0 font-semibold text-fpt-blue">{subscription.price ? subscription.price.toLocaleString('vi-VN') : '0'} VNĐ</p>
                 </div>
               </div>
             </div>

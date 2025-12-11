@@ -56,8 +56,9 @@ const StudentClubList = ({
           </div>
         ) : (
           filteredClubs.map(club => {
-            const requestStatus = getRequestStatus(club.id);
-            const paid = hasPayment(club.id);
+            // Try both club.id and club.clubId to find request status
+            const requestStatus = getRequestStatus(club.clubId || club.id);
+            const paid = hasPayment(club.clubId || club.id);
             
             return (
               <div key={club.id} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all">
@@ -90,9 +91,9 @@ const StudentClubList = ({
                     <div className="flex justify-between py-2">
                       <span className="text-gray-500 font-medium">Phí tham gia:</span>
                       <span className="text-gray-800 font-semibold">
-                        {club.participationFee 
-                          ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ / ${club.membershipDuration || 6} tháng`
-                          : `Miễn phí / ${club.membershipDuration || 6} tháng`}
+                        {club.participationFee && club.participationFee > 0
+                          ? `${club.participationFee.toLocaleString('vi-VN')} VNĐ${club.packageTerm ? ` / ${club.packageTerm}` : (club.membershipDuration ? ` / ${club.membershipDuration} tháng` : '')}`
+                          : `Miễn phí${club.packageTerm ? ` / ${club.packageTerm}` : (club.membershipDuration ? ` / ${club.membershipDuration} tháng` : ' / 6 tháng')}`}
                       </span>
                     </div>
                   </div>

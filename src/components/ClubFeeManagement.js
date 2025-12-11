@@ -12,9 +12,11 @@ const ClubFeeManagement = ({ club }) => {
   const [editOpen, setEditOpen] = useState(false);
   const [editData, setEditData] = useState({
     packageName: '',
+    term: '',
     price: 0,
     description: ''
   });
+  const [editPackageId, setEditPackageId] = useState(null);
   const [editError, setEditError] = useState('');
   const [editLoading, setEditLoading] = useState(false);
 
@@ -87,14 +89,81 @@ const ClubFeeManagement = ({ club }) => {
     return () => controller.abort();
   };
 
-  const openEdit = (pkg) => {
-    setEditData({
-      packageName: pkg?.packageName || '',
-      price: pkg?.price || 0,
-      description: pkg?.description || ''
-    });
+  const openEdit = async (pkg) => {
+    const packageId = pkg?.packageId || pkg?.id;
+    if (!packageId) {
+      setEditError('Không tìm thấy ID gói thành viên.');
+      return;
+    }
+
+    // Fetch chi tiết package từ API để có đầy đủ thông tin
+    const token = localStorage.getItem('authToken');
     setEditError('');
-    setEditOpen(true);
+    setEditLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && (data.code === 1000 || data.code === 0)) {
+        const packageDetail = data.result || {};
+        // Lọc bỏ giá trị "string" từ BE (có thể là placeholder)
+        const cleanValue = (value) => {
+          if (value === 'string' || value === 'String') return '';
+          return value || '';
+        };
+        
+        setEditData({
+          packageName: cleanValue(packageDetail.packageName) || cleanValue(pkg?.packageName) || '',
+          term: cleanValue(packageDetail.term) || cleanValue(pkg?.term) || '',
+          price: packageDetail.price !== undefined && packageDetail.price !== 'string' 
+            ? packageDetail.price 
+            : (pkg?.price !== undefined && pkg?.price !== 'string' ? pkg.price : 0),
+          description: cleanValue(packageDetail.description) || cleanValue(pkg?.description) || ''
+        });
+        setEditPackageId(packageId);
+        setEditOpen(true);
+      } else {
+        // Fallback to package data from list if API fails
+        const cleanValue = (value) => {
+          if (value === 'string' || value === 'String') return '';
+          return value || '';
+        };
+        setEditData({
+          packageName: cleanValue(pkg?.packageName) || '',
+          term: cleanValue(pkg?.term) || '',
+          price: pkg?.price !== undefined && pkg?.price !== 'string' ? pkg.price : 0,
+          description: cleanValue(pkg?.description) || ''
+        });
+        setEditPackageId(packageId);
+        setEditOpen(true);
+        setEditError(data?.message || 'Không thể tải chi tiết gói. Đang sử dụng dữ liệu từ danh sách.');
+      }
+    } catch (err) {
+      console.error('Fetch package detail for edit error:', err);
+      // Fallback to package data from list
+      const cleanValue = (value) => {
+        if (value === 'string' || value === 'String') return '';
+        return value || '';
+      };
+      setEditData({
+        packageName: cleanValue(pkg?.packageName) || '',
+        term: cleanValue(pkg?.term) || '',
+        price: pkg?.price !== undefined && pkg?.price !== 'string' ? pkg.price : 0,
+        description: cleanValue(pkg?.description) || ''
+      });
+      setEditPackageId(packageId);
+      setEditOpen(true);
+      setEditError('Không thể tải chi tiết gói. Đang sử dụng dữ liệu từ danh sách.');
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   const handleEditChange = (e) => {
@@ -106,58 +175,104 @@ const ClubFeeManagement = ({ club }) => {
   };
 
   const handleUpdatePackage = async (packageId) => {
-    if (!packageId) return;
-    if (!editData.packageName.trim()) {
+    if (!packageId) {
+      setEditError('Không tìm thấy ID gói thành viên.');
+      return;
+    }
+    
+    if (!editData.packageName || !editData.packageName.trim()) {
       setEditError('Tên gói không được để trống');
       return;
     }
+
+    if (!editData.term || !editData.term.trim()) {
+      setEditError('Thời hạn không được để trống');
+      return;
+    }
+
+    // Validate price - phải là số và >= 0
+    const price = Number(editData.price);
+    if (isNaN(price) || price < 0) {
+      setEditError('Giá phải là số và lớn hơn hoặc bằng 0');
+      return;
+    }
+
     setEditLoading(true);
     setEditError('');
-    const controller = new AbortController();
+    
     const token = localStorage.getItem('authToken');
+    if (!token) {
+      setEditError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      setEditLoading(false);
+      return;
+    }
+
     try {
+      // Chuẩn bị payload theo đúng format API
+      const payload = {
+        packageName: editData.packageName.trim(),
+        term: (editData.term || '').trim(),
+        price: price,
+        description: (editData.description || '').trim()
+      };
+
+      console.log('Updating package:', { packageId, payload });
+
       const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          packageName: editData.packageName.trim(),
-          price: editData.price || 0,
-          description: editData.description || ''
-        }),
-        signal: controller.signal
+        body: JSON.stringify(payload)
       });
+
       const data = await res.json().catch(() => ({}));
+
+      console.log('Update package response:', { status: res.status, data });
+
+      if (res.status === 401) {
+        setEditError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        setEditLoading(false);
+        return;
+      }
+
+      if (res.status === 500) {
+        const errorMessage = data?.message || 'Lỗi máy chủ. Vui lòng thử lại sau hoặc liên hệ quản trị viên.';
+        console.error('Server error (500):', { packageId, payload, response: data });
+        setEditError(errorMessage);
+        setEditLoading(false);
+        return;
+      }
+
       if (res.ok && (data.code === 1000 || data.code === 0)) {
         const updated = data.result || {};
         setPackages(prev =>
           prev.map(pkg =>
-            (pkg.packageId || pkg.id) === (updated.packageId || updated.id)
+            (pkg.packageId || pkg.id) === (updated.packageId || updated.id || packageId)
               ? { ...pkg, ...updated }
               : pkg
           )
         );
         // also update detail if same package
         setDetail(prev =>
-          prev && (prev.packageId === updated.packageId || prev.id === updated.id)
+          prev && (prev.packageId === updated.packageId || prev.id === updated.id || prev.packageId === packageId)
             ? { ...prev, ...updated }
             : prev
         );
         setEditOpen(false);
+        setEditError('');
       } else {
-        setEditError(data.message || 'Cập nhật gói không thành công.');
+        const errorMessage = data?.message || data?.error || `Cập nhật gói không thành công (mã ${res.status}).`;
+        console.error('Update package failed:', { status: res.status, data, packageId });
+        setEditError(errorMessage);
       }
     } catch (err) {
-      if (err.name !== 'AbortError') {
-        console.error('Update package error:', err);
-        setEditError('Cập nhật gói không thành công.');
-      }
+      console.error('Update package error:', err);
+      setEditError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.');
     } finally {
       setEditLoading(false);
     }
-    return () => controller.abort();
   };
 
   if (!club) {
@@ -271,19 +386,29 @@ const ClubFeeManagement = ({ club }) => {
       )}
 
       {/* Edit modal */}
-      {editOpen && packages[0] && (
+      {editOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden">
             <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white px-6 py-4 flex items-center justify-between">
               <h3 className="m-0 text-xl font-semibold">Cập nhật gói</h3>
               <button
                 className="text-white text-xl bg-transparent border-none cursor-pointer px-2 py-1"
-                onClick={() => setEditOpen(false)}
+                onClick={() => {
+                  setEditOpen(false);
+                  setEditError('');
+                  setEditPackageId(null);
+                }}
               >
                 ×
               </button>
             </div>
             <div className="p-6 space-y-4 text-gray-800">
+              {editLoading && (
+                <div className="text-center py-4">
+                  <div className="animate-spin inline-block w-6 h-6 border-2 border-fpt-blue/30 border-t-fpt-blue rounded-full"></div>
+                  <p className="text-sm text-gray-600 mt-2">Đang tải thông tin gói...</p>
+                </div>
+              )}
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700">Tên gói *</label>
                 <input
@@ -293,6 +418,17 @@ const ClubFeeManagement = ({ club }) => {
                   onChange={handleEditChange}
                   className="px-4 py-3 border-2 rounded-lg text-sm focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 border-gray-200"
                   placeholder="Nhập tên gói"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">Thời hạn *</label>
+                <input
+                  type="text"
+                  name="term"
+                  value={editData.term}
+                  onChange={handleEditChange}
+                  className="px-4 py-3 border-2 rounded-lg text-sm focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 border-gray-200"
+                  placeholder="VD: 1 năm, 6 tháng, 1 tháng"
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -322,7 +458,11 @@ const ClubFeeManagement = ({ club }) => {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setEditOpen(false)}
+                  onClick={() => {
+                    setEditOpen(false);
+                    setEditError('');
+                    setEditPackageId(null);
+                  }}
                   className="px-4 py-2 rounded-lg bg-gray-100 text-gray-800 text-sm font-semibold hover:bg-gray-200 transition-all"
                   disabled={editLoading}
                 >
@@ -330,9 +470,9 @@ const ClubFeeManagement = ({ club }) => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleUpdatePackage(packages[0].packageId || packages[0].id)}
+                  onClick={() => handleUpdatePackage(editPackageId)}
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white text-sm font-semibold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-70"
-                  disabled={editLoading}
+                  disabled={editLoading || !editPackageId}
                 >
                   {editLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
                 </button>
