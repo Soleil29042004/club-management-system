@@ -1,5 +1,4 @@
 import React from 'react';
-import { clubCategories, statusOptions } from '../data/mockData';
 
 const ClubInfoForm = ({ formData, onFormChange, onFormSubmit, onFormCancel }) => {
   return (
@@ -9,35 +8,6 @@ const ClubInfoForm = ({ formData, onFormChange, onFormSubmit, onFormCancel }) =>
       </div>
       
       <form onSubmit={onFormSubmit} className="p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-800 text-sm">Tên câu lạc bộ *</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={onFormChange}
-              required
-              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
-            />
-          </div>
-          
-          <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-800 text-sm">Danh mục *</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={onFormChange}
-              required
-              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
-            >
-              {clubCategories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
         <div className="mb-6">
           <label className="mb-2 font-semibold text-gray-800 text-sm block">Mô tả *</label>
           <textarea
@@ -52,93 +22,29 @@ const ClubInfoForm = ({ formData, onFormChange, onFormSubmit, onFormCancel }) =>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-800 text-sm">Ngày thành lập *</label>
-            <input
-              type="date"
-              name="foundedDate"
-              value={formData.foundedDate}
-              onChange={onFormChange}
-              required
-              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
-            />
-          </div>
-          
-          <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-800 text-sm">Trạng thái *</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={onFormChange}
-              required
-              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
-            >
-              {statusOptions.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-800 text-sm">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={onFormChange}
-              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
-            />
-          </div>
-          
-          <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-800 text-sm">Địa điểm</label>
+            <label className="mb-2 font-semibold text-gray-800 text-sm">Địa điểm *</label>
             <input
               type="text"
               name="location"
               value={formData.location}
               onChange={onFormChange}
+              required
               className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
             />
           </div>
-        </div>
 
-        <div className="mb-6">
-          <label className="mb-2 font-semibold text-gray-800 text-sm block">Logo URL</label>
-          <input
-            type="url"
-            name="logo"
-            value={formData.logo || ''}
-            onChange={onFormChange}
-            placeholder="https://example.com/logo.png"
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
-          />
-          <p className="text-xs text-gray-500 mt-1">Dán URL logo hợp lệ (PNG/JPG/SVG).</p>
-        </div>
-
-        <div className="mb-6">
-          <label className="mb-2 font-semibold text-gray-800 text-sm block">Thời gian sinh hoạt mỗi ngày</label>
-          <input
-            type="text"
-            name="activityTime"
-            value={formData.activityTime || ''}
-            onChange={onFormChange}
-            placeholder="VD: 18:00 - 20:00"
-            className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
-          />
-          <p className="text-xs text-gray-500 mt-1">Nhập thời gian sinh hoạt hàng ngày của club (VD: 18:00 - 20:00)</p>
-        </div>
-
-        <div className="mb-6">
-          <label className="mb-2 font-semibold text-gray-800 text-sm block">Số thành viên</label>
-          <input
-            type="number"
-            name="memberCount"
-            value={formData.memberCount}
-            onChange={onFormChange}
-            min="0"
-            className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
-          />
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-800 text-sm">Logo URL</label>
+            <input
+              type="url"
+              name="logo"
+              value={formData.logo || ''}
+              onChange={onFormChange}
+              placeholder="https://example.com/logo.png"
+              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+            />
+            <p className="text-xs text-gray-500 mt-1">Dán URL logo hợp lệ (PNG/JPG/SVG).</p>
+          </div>
         </div>
 
         <div className="flex gap-4 justify-end pt-6 border-t-2 border-gray-100">

@@ -88,10 +88,12 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
 
   if (!club) return null;
 
-  const requestStatus = getRequestStatus ? getRequestStatus(club.id) : null;
+  const normalizedClubId = club?.id || club?.clubId;
+  const requestStatus = getRequestStatus ? getRequestStatus(normalizedClubId) : null;
   
   // Use API data if available, otherwise fallback to passed club data
   const displayClub = clubDetail || club;
+  const joinableClub = { ...displayClub, id: displayClub.id || displayClub.clubId };
 
   const getStatusBadgeClass = (status) => {
     const statusLower = status.toLowerCase();
@@ -108,7 +110,7 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
           <h2 className="text-2xl font-bold m-0">Chi tiết câu lạc bộ</h2>
           <button 
             className="bg-transparent border-none text-white text-3xl cursor-pointer p-0 w-10 h-10 flex items-center justify-center rounded-full transition-colors hover:bg-white/20" 
-            onClick={onClose}
+            onClick={() => onClose && onClose()}
           >
             ×
           </button>
@@ -140,13 +142,16 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
                 {displayClub.clubName || displayClub.name}
               </h3>
             </div>
-            <span className={`px-4 py-2 rounded-full text-xs font-semibold uppercase ${
-              displayClub.isActive !== false 
-                ? 'bg-green-500 text-white' 
-                : 'bg-red-500 text-white'
-            }`}>
-              {displayClub.isActive !== false ? 'Hoạt động' : 'Tạm dừng'}
-            </span>
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <span className="opacity-70">Trạng thái:</span>
+              <span className={`px-4 py-2 rounded-full text-xs font-semibold uppercase ${
+                displayClub.isActive !== false 
+                  ? 'bg-green-500 text-white' 
+                  : 'bg-red-500 text-white'
+              }`}>
+                {displayClub.isActive !== false ? 'Hoạt động' : 'Tạm dừng'}
+              </span>
+            </div>
           </div>
 
           <div className="mb-6">
@@ -246,8 +251,8 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
                   className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:-translate-y-1 hover:shadow-xl" 
                   onClick={() => {
                     if (onJoinRequest) {
-                      onJoinRequest(displayClub);
-                      onClose();
+                      onJoinRequest(joinableClub);
+                      if (onClose) onClose({ keepSelected: true });
                     }
                   }}
                 >
