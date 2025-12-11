@@ -54,7 +54,7 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
             founderId: result.founderId,
             founderName: result.founderName || club.president,
             founderStudentCode: result.founderStudentCode,
-            memberCount: result.memberCount || 0, // Số thành viên từ API
+            memberCount: result.memberCount || result.totalMembers || 0, // Số thành viên từ API
             activityTime: result.activityTime || club.activityTime
           });
           
@@ -170,7 +170,9 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
               <div className="flex flex-col p-4 bg-gray-50 rounded-lg">
                 <span className="text-xs text-gray-500 font-medium mb-1">Số thành viên:</span>
                 <span className="text-sm font-semibold text-gray-800">
-                  {displayClub.memberCount !== undefined ? displayClub.memberCount : (club.memberCount || 0)}
+                  {displayClub.memberCount !== undefined
+                    ? displayClub.memberCount
+                    : (club.memberCount || club.totalMembers || 0)}
                 </span>
               </div>
               <div className="flex flex-col p-4 bg-gray-50 rounded-lg">
