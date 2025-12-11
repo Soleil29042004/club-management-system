@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const MemberList = ({ members, clubs, onEdit, onDelete }) => {
+const MemberList = ({ members, clubs, onEdit, onDelete, deleteLoadingId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClub, setFilterClub] = useState('all');
   const [filterRole, setFilterRole] = useState('all');
@@ -142,10 +142,11 @@ const MemberList = ({ members, clubs, onEdit, onDelete }) => {
                           ✅ Sửa
                         </button>
                         <button 
-                          onClick={() => onDelete(member.id)} 
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap"
+                          onClick={() => onDelete(member)} 
+                          disabled={deleteLoadingId === member.id}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                          ❌ Xóa
+                          {deleteLoadingId === member.id ? 'Đang xóa...' : '❌ Xóa'}
                         </button>
                       </div>
                     </td>
