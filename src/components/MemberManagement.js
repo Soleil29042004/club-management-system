@@ -2,8 +2,12 @@ import React, { useEffect, useState } from 'react';
 import MemberList from './MemberList';
 import MemberForm from './MemberForm';
 import { getNextMemberId } from '../data/mockData';
+import { useToast } from './Toast';
+
+const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
 const MemberManagement = ({ members, setMembers, clubs }) => {
+  const { showToast } = useToast();
   const nonAdminMembers = members.filter(
     m => String(m.role || '').toLowerCase() !== 'admin'
   );
@@ -11,6 +15,7 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
   const [editingMember, setEditingMember] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -77,9 +82,53 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa thành viên này?')) {
-      setMembers(members.filter(member => member.id !== id));
+  const handleDelete = async (member) => {
+    if (!member?.id) return;
+
+    if (!window.confirm(`Xác nhận xóa (deactivate) tài khoản ${member.fullName}?`)) {
+      return;
+    }
+
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Vui lòng đăng nhập với quyền Admin.', 'error');
+      return;
+    }
+
+    setDeleteLoadingId(member.id);
+    setError('');
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/${member.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+        const message = data?.message || 'Không thể xóa người dùng.';
+        setError(message);
+        showToast(message, 'error');
+        return;
+      }
+
+      // Soft delete: đánh dấu trạng thái tạm dừng thay vì loại bỏ
+      setMembers(prev =>
+        prev.map(m =>
+          m.id === member.id ? { ...m, status: 'Tạm dừng', active: false } : m
+        )
+      );
+      showToast('Đã hủy kích hoạt tài khoản người dùng.', 'success');
+    } catch (err) {
+      console.error('Delete user error:', err);
+      const message = err.message || 'Không thể xóa người dùng.';
+      setError(message);
+      showToast(message, 'error');
+    } finally {
+      setDeleteLoadingId(null);
     }
   };
 
@@ -139,6 +188,7 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
           clubs={clubs}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          deleteLoadingId={deleteLoadingId}
         />
       )}
 
