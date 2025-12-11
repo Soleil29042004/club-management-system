@@ -29,14 +29,19 @@ const Profile = ({ userRole, clubs, members }) => {
   useEffect(() => {
     const fallbackLocal = () => {
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      setUser(userData);
+      const profileData = JSON.parse(localStorage.getItem('profile') || '{}');
+      const merged = {
+        ...userData,
+        ...profileData
+      };
+      setUser(merged);
       setFormData({
-        name: userData.name || '',
-        email: userData.email || '',
-        phone: '',
-        studentId: '',
-        major: '',
-        avatar: userData.avatar || ''
+        name: merged.name || '',
+        email: merged.email || '',
+        phone: merged.phone || '',
+        studentId: merged.studentId || '',
+        major: merged.major || '',
+        avatar: merged.avatar || ''
       });
       setLoadingProfile(false);
     };
@@ -49,7 +54,7 @@ const Profile = ({ userRole, clubs, members }) => {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/users/my-info`, {
+        const response = await fetch('https://clubmanage.azurewebsites.net/api/users/my-info', {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
@@ -62,39 +67,67 @@ const Profile = ({ userRole, clubs, members }) => {
           throw new Error(message);
         }
 
-        // Một số response có thể gói trong result/data, lấy lần lượt
+        // Response format: { code: 1000, message: null, result: { ... } }
         const info = data.result || data.data || data;
+        
+        // Map API response fields to local format
         const normalized = {
-          name: info.fullName ?? info.name ?? '',
-          email: info.email ?? '',
-          phone: info.phoneNumber ?? info.phone ?? '',
-          studentId: info.studentCode ?? info.studentId ?? '',
-          major: info.major ?? '',
-          role: info.roleName ?? info.role ?? info.userRole ?? '',
-          avatar: info.avatarUrl ?? info.avatar ?? ''
+          userId: info.userId || '',
+          name: info.fullName || info.name || '',
+          email: info.email || '',
+          phone: info.phoneNumber || info.phone || '',
+          phoneNumber: info.phoneNumber || info.phone || '',
+          studentId: info.studentCode || info.studentId || '',
+          studentCode: info.studentCode || info.studentId || '',
+          major: info.major || '',
+          role: info.role || info.roleName || info.userRole || '',
+          avatar: info.avatarUrl || info.avatar || '',
+          createdAt: info.createdAt || null,
+          clubIds: info.clubIds || null,
+          active: info.active !== undefined ? info.active : true
         };
 
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
         const mergedUser = {
           ...userData,
+          userId: normalized.userId || userData.userId,
           name: normalized.name || userData.name,
           email: normalized.email || userData.email,
           role: normalized.role || userData.role,
-          avatar: normalized.avatar || userData.avatar
+          avatar: normalized.avatar || userData.avatar,
+          clubIds: normalized.clubIds || userData.clubIds
+        };
+
+        // Profile data for storage (used by JoinRequestModal and other components)
+        const profileForStorage = {
+          userId: normalized.userId || '',
+          name: normalized.name || mergedUser.name || '',
+          email: normalized.email || mergedUser.email || '',
+          phone: normalized.phone || '',
+          phoneNumber: normalized.phoneNumber || normalized.phone || '',
+          studentId: normalized.studentId || '',
+          studentCode: normalized.studentCode || normalized.studentId || '',
+          major: normalized.major || '',
+          avatar: normalized.avatar || mergedUser.avatar || '',
+          role: normalized.role || mergedUser.role || '',
+          createdAt: normalized.createdAt,
+          clubIds: normalized.clubIds,
+          active: normalized.active
         };
 
         setUser(mergedUser);
         setFormData({
-          name: normalized.name || mergedUser.name || '',
-          email: normalized.email || mergedUser.email || '',
-          phone: normalized.phone || 'Chưa cập nhật',
-          studentId: normalized.studentId || 'Chưa cập nhật',
-          major: normalized.major || 'Chưa cập nhật',
-          avatar: normalized.avatar || mergedUser.avatar || ''
+          name: profileForStorage.name || 'Chưa cập nhật',
+          email: profileForStorage.email || 'Chưa cập nhật',
+          phone: profileForStorage.phone || 'Chưa cập nhật',
+          studentId: profileForStorage.studentId || 'Chưa cập nhật',
+          major: profileForStorage.major || 'Chưa cập nhật',
+          avatar: profileForStorage.avatar || ''
         });
 
-        // Sync latest info to localStorage session
+        // Sync latest info to localStorage session for other components to reuse
         localStorage.setItem('user', JSON.stringify(mergedUser));
+        localStorage.setItem('profile', JSON.stringify(profileForStorage));
       } catch (error) {
         console.error('Fetch profile error:', error);
         setFetchError(error.message || 'Không thể tải thông tin cá nhân.');
@@ -244,15 +277,22 @@ const Profile = ({ userRole, clubs, members }) => {
         throw new Error(message);
       }
 
+      // Response format: { code: 1000, message: null, result: { ... } }
       const info = data.result || data.data || data;
       const normalized = {
-        name: info.fullName ?? info.name ?? formData.name,
-        email: info.email ?? formData.email,
-        phone: info.phoneNumber ?? info.phone ?? formData.phone,
-        studentId: info.studentCode ?? info.studentId ?? formData.studentId,
-        major: info.major ?? formData.major,
-        role: info.roleName ?? info.role ?? info.userRole ?? user.role,
-        avatar: info.avatarUrl ?? info.avatar ?? formData.avatar
+        userId: info.userId || user.userId || '',
+        name: info.fullName || info.name || formData.name,
+        email: info.email || formData.email,
+        phone: info.phoneNumber || info.phone || formData.phone,
+        phoneNumber: info.phoneNumber || info.phone || formData.phone,
+        studentId: info.studentCode || info.studentId || formData.studentId,
+        studentCode: info.studentCode || info.studentId || formData.studentId,
+        major: info.major || formData.major,
+        role: info.role || info.roleName || info.userRole || user.role,
+        avatar: info.avatarUrl || info.avatar || formData.avatar,
+        createdAt: info.createdAt || user.createdAt || null,
+        clubIds: info.clubIds || user.clubIds || null,
+        active: info.active !== undefined ? info.active : (user.active !== undefined ? user.active : true)
       };
 
       // Update registeredUsers cache so the rest of the app sees the latest info
@@ -267,13 +307,34 @@ const Profile = ({ userRole, clubs, members }) => {
       // Update user session
       const updatedUser = {
         ...user,
+        userId: normalized.userId || user.userId,
         name: normalized.name,
         email: normalized.email,
         role: normalized.role,
-        avatar: normalized.avatar
+        avatar: normalized.avatar,
+        clubIds: normalized.clubIds || user.clubIds,
+        active: normalized.active
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
+
+      // Update profile storage for JoinRequestModal
+      const updatedProfile = {
+        userId: normalized.userId || user.userId || '',
+        name: normalized.name || '',
+        email: normalized.email || '',
+        phone: normalized.phone || '',
+        phoneNumber: normalized.phoneNumber || normalized.phone || '',
+        studentId: normalized.studentId || '',
+        studentCode: normalized.studentCode || normalized.studentId || '',
+        major: normalized.major || '',
+        avatar: normalized.avatar || '',
+        role: normalized.role || user.role || '',
+        createdAt: normalized.createdAt || user.createdAt,
+        clubIds: normalized.clubIds || user.clubIds,
+        active: normalized.active
+      };
+      localStorage.setItem('profile', JSON.stringify(updatedProfile));
 
       setFormData({
         name: normalized.name || '',

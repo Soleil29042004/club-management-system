@@ -71,70 +71,78 @@ function AppContent() {
 
   // Check if user is already logged in on component mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('authToken');
-
-    let roleFromStorage = null;
-    let userIdFromToken = null;
-    let scopeFromToken = null;
-    let clubIdFromToken = null;
-    let clubIdsFromToken = [];
-
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        roleFromStorage = userData.role;
-        if (userData.clubId) {
-          clubIdFromToken = userData.clubId;
-        }
-        if (Array.isArray(userData.clubIds)) {
-          clubIdsFromToken = userData.clubIds;
-          clubIdFromToken = clubIdFromToken || userData.clubIds[0];
-        }
-      } catch (e) {
-        console.warn('Cannot parse stored user', e);
-      }
+    
+    // If no token, user is not authenticated
+    if (!token) {
+      setIsAuthenticated(false);
+      setUserRole(null);
+      return;
     }
 
-    if (!roleFromStorage && token) {
-      const payload = parseJWTToken(token);
-      if (payload) {
-        scopeFromToken = payload.scope || payload.role || payload.Roles;
-        userIdFromToken = payload.sub || payload.nameid || payload.userId || payload.UserId;
-        const tokenClubIds = Array.isArray(payload.clubIds || payload.clubIDs || payload.ClubIds || payload.ClubIDs)
-          ? (payload.clubIds || payload.clubIDs || payload.ClubIds || payload.ClubIDs)
-          : [];
-        clubIdsFromToken = clubIdsFromToken.length ? clubIdsFromToken : tokenClubIds;
-        clubIdFromToken =
-          payload.clubId ||
-          payload.clubID ||
-          payload.ClubId ||
-          payload.ClubID ||
-          payload.club?.clubId ||
-          clubIdFromToken ||
-          clubIdsFromToken?.[0] ||
-          null;
-        roleFromStorage = mapScopeToRole(scopeFromToken);
-      }
+    // Parse token to get user info
+    const payload = parseJWTToken(token);
+    if (!payload) {
+      // Invalid token, clear and logout
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      setIsAuthenticated(false);
+      setUserRole(null);
+      return;
     }
 
-    if (roleFromStorage === 'admin' || roleFromStorage === 'student' || roleFromStorage === 'club_leader') {
+    // Extract role from token
+    const scopeFromToken = payload.scope || payload.role || payload.Roles || payload.roleName;
+    const roleFromToken = mapScopeToRole(scopeFromToken);
+    
+    // Extract other info from token
+    const userIdFromToken = payload.sub || payload.nameid || payload.userId || payload.UserId;
+    const tokenClubIds = Array.isArray(payload.clubIds || payload.clubIDs || payload.ClubIds || payload.ClubIDs)
+      ? (payload.clubIds || payload.clubIDs || payload.ClubIds || payload.ClubIDs)
+      : [];
+    const clubIdFromToken =
+      payload.clubId ||
+      payload.clubID ||
+      payload.ClubId ||
+      payload.ClubID ||
+      payload.club?.clubId ||
+      tokenClubIds?.[0] ||
+      null;
+
+    // Check if role is valid
+    if (roleFromToken === 'admin' || roleFromToken === 'student' || roleFromToken === 'club_leader') {
+      // Set authenticated state
       setIsAuthenticated(true);
-      setUserRole(roleFromStorage);
+      setUserRole(roleFromToken);
       setShowHome(false);
 
-      // If stored user missing role, hydrate it for later renders
-      if (!storedUser && token) {
-        const hydrated = {
-          role: roleFromStorage,
-          token,
-          ...(userIdFromToken ? { userId: userIdFromToken } : {}),
-          ...(clubIdFromToken ? { clubId: clubIdFromToken } : {}),
-          ...(clubIdsFromToken && clubIdsFromToken.length ? { clubIds: clubIdsFromToken } : {})
-        };
-        localStorage.setItem('user', JSON.stringify(hydrated));
+      // Hydrate localStorage.user with complete info
+      const storedUser = localStorage.getItem('user');
+      let userData = {};
+      
+      if (storedUser) {
+        try {
+          userData = JSON.parse(storedUser);
+        } catch (e) {
+          console.warn('Cannot parse stored user', e);
+          userData = {};
+        }
       }
+
+      // Update user data with token info
+      const hydrated = {
+        ...userData,
+        role: roleFromToken,
+        ...(userIdFromToken ? { userId: userIdFromToken } : {}),
+        ...(clubIdFromToken ? { clubId: clubIdFromToken } : {}),
+        ...(tokenClubIds && tokenClubIds.length ? { clubIds: tokenClubIds } : {})
+      };
+      
+      localStorage.setItem('user', JSON.stringify(hydrated));
     } else {
+      // Invalid role, but still have token - might be a new role type
+      // Keep authenticated but with null role (will show error if needed)
+      console.warn('Unknown role from token:', scopeFromToken, 'mapped to:', roleFromToken);
       setIsAuthenticated(false);
       setUserRole(null);
     }
