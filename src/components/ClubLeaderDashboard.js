@@ -405,24 +405,17 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   const handleFormSubmit = (e) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.description.trim()) {
-      showToast('Vui lòng điền đầy đủ thông tin!', 'error');
+    if (!formData.description.trim() || !formData.location.trim()) {
+      showToast('Vui lòng nhập mô tả và địa điểm.', 'error');
       return;
     }
 
     const token = localStorage.getItem('authToken');
+    // API cập nhật thông tin cơ bản: logo, mô tả, địa điểm
     const payload = {
-      clubName: formData.name,
-      category: formData.category,
       logo: formData.logo || null,
-      location: formData.location || '',
       description: formData.description || '',
-      email: formData.email || '',
-      isActive: (formData.status || '').toLowerCase().includes('hoạt'),
-      establishedDate: formData.foundedDate || null,
-      founderId: myClub?.founderId || null,
-      founderStudentCode: myClub?.founderStudentCode || null,
-      activityTime: formData.activityTime || null
+      location: formData.location || ''
     };
 
     const doUpdate = async () => {
@@ -443,7 +436,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
           return;
         }
 
-        const mapped = mapApiClub(data.result || payload);
+        const mapped = mapApiClub({ ...(data.result || {}), ...payload });
         setMyClub(mapped);
         setFormData(mapped);
         setClubs(prev =>
@@ -569,15 +562,30 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   return (
     <div className="max-w-[1400px] mx-auto p-5">
       <div className="bg-gradient-to-br from-white to-blue-50 p-8 rounded-2xl shadow-lg mb-8 border border-fpt-blue/10">
-        <h1 className="text-3xl font-bold text-fpt-blue mb-2">👑 Trang Quản lý Club Leader</h1>
-        <p className="text-gray-600 text-lg">
-          Quản lý câu lạc bộ: <strong className="text-fpt-blue">{myClub.name}</strong>
-          {myClub.category && (
-            <span className="ml-3 text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              {clubCategoryLabels[myClub.category] || myClub.category}
-            </span>
+        <div className="flex items-center gap-4 mb-2">
+          {myClub.logo ? (
+            <img
+              src={myClub.logo}
+              alt={myClub.name || 'Club logo'}
+              className="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-md"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-xl bg-blue-100 text-fpt-blue flex items-center justify-center text-2xl font-bold shadow-md border-2 border-white">
+              {(myClub.name || 'CLB').charAt(0)}
+            </div>
           )}
-        </p>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-fpt-blue m-0">👑 Trang Quản lý Club Leader</h1>
+            <p className="text-gray-600 text-lg m-0 mt-1">
+              Quản lý câu lạc bộ: <strong className="text-fpt-blue">{myClub.name}</strong>
+              {myClub.category && (
+                <span className="ml-3 text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                  {clubCategoryLabels[myClub.category] || myClub.category}
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Manage Club Tab */}
