@@ -489,6 +489,13 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     setShowPaymentModal(true);
   };
 
+  const closeDetailsModal = (keepSelected = false) => {
+    setShowDetailsModal(false);
+    if (!keepSelected) {
+      setSelectedClub(null);
+    }
+  };
+
   const handleViewDetails = (club) => {
     setSelectedClub(club);
     setShowDetailsModal(true);
@@ -751,9 +758,9 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
       {showDetailsModal && (
         <ClubDetailsModal
           club={selectedClub}
-          onClose={() => {
-            setShowDetailsModal(false);
-            setSelectedClub(null);
+          onClose={(options = {}) => {
+            const keepSelected = options.keepSelected === true;
+            closeDetailsModal(keepSelected);
           }}
           onJoinRequest={handleJoinRequest}
           getRequestStatus={getRequestStatus}
