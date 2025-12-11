@@ -108,6 +108,7 @@ const StudentMyClubRequests = () => {
     );
   };
 
+  // Tạo link thanh toán PayOS cho đăng ký CLB
   const handlePayment = async (reg) => {
     const subscriptionId = reg.subscriptionId;
     if (!subscriptionId) {
@@ -123,39 +124,34 @@ const StudentMyClubRequests = () => {
 
     setPayingId(subscriptionId);
     try {
-      const res = await fetch(`${API_BASE_URL}/registrations/confirm-payment`, {
-        method: 'PUT',
+      const res = await fetch(`${API_BASE_URL}/payments/create-link`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({
-          subscriptionId,
-          paymentMethod: 'Online'
-        })
+        body: JSON.stringify({ subscriptionId })
       });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-        throw new Error(data?.message || 'Không thể thanh toán. Vui lòng thử lại.');
+        throw new Error(data?.message || 'Không thể tạo link thanh toán.');
       }
 
-      setRegistrations((prev) =>
-        prev.map((item) =>
-          item.subscriptionId === subscriptionId
-            ? {
-                ...item,
-                isPaid: true,
-                paymentMethod: data.result?.paymentMethod || 'Online',
-                paymentDate: data.result?.paymentDate || new Date().toISOString()
-              }
-            : item
-        )
-      );
-      showToast('Thanh toán thành công!', 'success');
+      const paymentLink = data.result?.paymentLink;
+      const qrCode = data.result?.qrCode;
+
+      if (paymentLink) {
+        window.open(paymentLink, '_blank', 'noopener');
+        showToast('Đã mở link thanh toán trong tab mới.', 'success');
+      } else if (qrCode) {
+        showToast('Không có link, hãy dùng QR để thanh toán.', 'info');
+      } else {
+        showToast('Tạo link thành công, nhưng không nhận được link/QR.', 'info');
+      }
     } catch (err) {
-      console.error('Payment error:', err);
-      showToast(err.message || 'Không thể thanh toán. Vui lòng thử lại.', 'error');
+      console.error('Create payment link error:', err);
+      showToast(err.message || 'Không thể tạo link thanh toán.', 'error');
     } finally {
       setPayingId(null);
     }
