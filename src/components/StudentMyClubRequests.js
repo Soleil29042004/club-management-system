@@ -15,6 +15,7 @@ const StudentMyClubRequests = () => {
   const [registrations, setRegistrations] = useState([]);
   const [error, setError] = useState('');
   const [payingId, setPayingId] = useState(null);
+  const [cancellingId, setCancellingId] = useState(null);
 
   useEffect(() => {
     let isMounted = true; // Flag để tránh setState sau khi component unmount
@@ -160,6 +161,52 @@ const StudentMyClubRequests = () => {
     }
   };
 
+  const handleCancel = async (reg) => {
+    const subscriptionId = reg.subscriptionId;
+    if (!subscriptionId) {
+      showToast('Không tìm thấy mã đăng ký để hủy.', 'error');
+      return;
+    }
+
+    if (reg.status !== 'ChoDuyet' && reg.status !== 'pending') {
+      showToast('Chỉ có thể hủy đơn khi đang chờ duyệt.', 'error');
+      return;
+    }
+
+    if (!window.confirm('Bạn có chắc muốn hủy đơn đăng ký này?')) return;
+
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Vui lòng đăng nhập để hủy đơn.', 'error');
+      return;
+    }
+
+    setCancellingId(subscriptionId);
+    try {
+      const res = await fetch(`${API_BASE_URL}/registers/${subscriptionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+        throw new Error(data?.message || 'Không thể hủy đơn. Vui lòng thử lại.');
+      }
+
+      // Remove khỏi danh sách sau khi hủy thành công
+      setRegistrations((prev) => prev.filter((item) => item.subscriptionId !== subscriptionId));
+      showToast(data.message || 'Đã hủy đơn đăng ký.', 'success');
+    } catch (err) {
+      console.error('Cancel registration error:', err);
+      showToast(err.message || 'Không thể hủy đơn. Vui lòng thử lại.', 'error');
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-600">
@@ -247,17 +294,31 @@ const StudentMyClubRequests = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">
-                    {(reg.status === 'DaDuyet' || reg.status === 'approved') && !reg.isPaid ? (
-                      <button
-                        onClick={() => handlePayment(reg)}
-                        disabled={payingId === reg.subscriptionId}
-                        className="px-5 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg text-sm font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {payingId === reg.subscriptionId ? 'Đang thanh toán...' : '💳 Thanh toán'}
-                      </button>
-                    ) : (
-                      <span className="text-sm text-gray-500">—</span>
-                    )}
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      {(reg.status === 'DaDuyet' || reg.status === 'approved') && !reg.isPaid && (
+                        <button
+                          onClick={() => handlePayment(reg)}
+                          disabled={payingId === reg.subscriptionId}
+                          className="px-5 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg text-sm font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {payingId === reg.subscriptionId ? 'Đang thanh toán...' : '💳 Thanh toán'}
+                        </button>
+                      )}
+                      {(reg.status === 'ChoDuyet' || reg.status === 'pending') && (
+                        <button
+                          onClick={() => handleCancel(reg)}
+                          disabled={cancellingId === reg.subscriptionId}
+                          className="px-5 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg text-sm font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {cancellingId === reg.subscriptionId ? 'Đang hủy...' : '🛑 Hủy đơn'}
+                        </button>
+                      )}
+                      {!((reg.status === 'DaDuyet' || reg.status === 'approved') && !reg.isPaid) &&
+                        !(reg.status === 'ChoDuyet' || reg.status === 'pending') && (
+                          <span className="text-sm text-gray-500">—</span>
+                        )
+                      }
+                    </div>
                   </td>
                 </tr>
               ))}
