@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { clubCategories, statusOptions } from '../data/mockData';
 
 const ClubForm = ({ club, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
-    name: '',
     description: '',
-    category: 'Công nghệ',
-    foundedDate: '',
-    president: '',
-    memberCount: 0,
-    status: 'Hoạt động',
-    email: '',
-    location: ''
+    location: '',
+    logo: ''
   });
 
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (club) {
-      setFormData(club);
+      setFormData({
+        description: club.description || '',
+        location: club.location || '',
+        logo: club.logo || ''
+      });
     }
   }, [club]);
 
@@ -26,7 +23,7 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'memberCount' ? parseInt(value) || 0 : value
+      [name]: value
     }));
     // Clear error when user starts typing
     if (errors[name]) {
@@ -37,34 +34,12 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Tên câu lạc bộ là bắt buộc';
-    }
-
     if (!formData.description.trim()) {
       newErrors.description = 'Mô tả là bắt buộc';
     }
 
-    if (!formData.foundedDate) {
-      newErrors.foundedDate = 'Ngày thành lập là bắt buộc';
-    }
-
-    if (!formData.president.trim()) {
-      newErrors.president = 'Tên chủ tịch là bắt buộc';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email là bắt buộc';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email không hợp lệ';
-    }
-
     if (!formData.location.trim()) {
       newErrors.location = 'Địa điểm là bắt buộc';
-    }
-
-    if (formData.memberCount < 0) {
-      newErrors.memberCount = 'Số thành viên phải >= 0';
     }
 
     setErrors(newErrors);
@@ -92,37 +67,7 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="flex flex-col">
-              <label htmlFor="name" className="mb-2 font-semibold text-gray-800 text-sm">Tên câu lạc bộ *</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
-                  errors.name ? 'border-red-500' : 'border-gray-200'
-                }`}
-              />
-              {errors.name && <span className="text-red-500 text-xs mt-1">{errors.name}</span>}
-            </div>
-
-            <div className="flex flex-col">
-              <label htmlFor="category" className="mb-2 font-semibold text-gray-800 text-sm">Danh mục *</label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
-              >
-                {clubCategories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
+          <div className="grid grid-cols-1 gap-5">
             <div className="flex flex-col md:col-span-2">
               <label htmlFor="description" className="mb-2 font-semibold text-gray-800 text-sm">Mô tả *</label>
               <textarea
@@ -136,51 +81,6 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
                 }`}
               />
               {errors.description && <span className="text-red-500 text-xs mt-1">{errors.description}</span>}
-            </div>
-
-            <div className="flex flex-col">
-              <label htmlFor="president" className="mb-2 font-semibold text-gray-800 text-sm">Chủ tịch *</label>
-              <input
-                type="text"
-                id="president"
-                name="president"
-                value={formData.president}
-                onChange={handleChange}
-                className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
-                  errors.president ? 'border-red-500' : 'border-gray-200'
-                }`}
-              />
-              {errors.president && <span className="text-red-500 text-xs mt-1">{errors.president}</span>}
-            </div>
-
-            <div className="flex flex-col">
-              <label htmlFor="email" className="mb-2 font-semibold text-gray-800 text-sm">Email *</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
-                  errors.email ? 'border-red-500' : 'border-gray-200'
-                }`}
-              />
-              {errors.email && <span className="text-red-500 text-xs mt-1">{errors.email}</span>}
-            </div>
-
-            <div className="flex flex-col">
-              <label htmlFor="foundedDate" className="mb-2 font-semibold text-gray-800 text-sm">Ngày thành lập *</label>
-              <input
-                type="date"
-                id="foundedDate"
-                name="foundedDate"
-                value={formData.foundedDate}
-                onChange={handleChange}
-                className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
-                  errors.foundedDate ? 'border-red-500' : 'border-gray-200'
-                }`}
-              />
-              {errors.foundedDate && <span className="text-red-500 text-xs mt-1">{errors.foundedDate}</span>}
             </div>
 
             <div className="flex flex-col">
@@ -199,34 +99,17 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
             </div>
 
             <div className="flex flex-col">
-              <label htmlFor="memberCount" className="mb-2 font-semibold text-gray-800 text-sm">Số thành viên</label>
+              <label htmlFor="logo" className="mb-2 font-semibold text-gray-800 text-sm">Logo URL</label>
               <input
-                type="number"
-                id="memberCount"
-                name="memberCount"
-                value={formData.memberCount}
+                type="url"
+                id="logo"
+                name="logo"
+                value={formData.logo}
                 onChange={handleChange}
-                min="0"
-                className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
-                  errors.memberCount ? 'border-red-500' : 'border-gray-200'
-                }`}
+                placeholder="https://example.com/logo.png"
+                className="px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 border-gray-200"
               />
-              {errors.memberCount && <span className="text-red-500 text-xs mt-1">{errors.memberCount}</span>}
-            </div>
-
-            <div className="flex flex-col">
-              <label htmlFor="status" className="mb-2 font-semibold text-gray-800 text-sm">Trạng thái</label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
-              >
-                {statusOptions.map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
+              <span className="text-xs text-gray-500 mt-1">Dán URL logo hợp lệ (PNG/JPG/SVG).</span>
             </div>
           </div>
 
