@@ -242,7 +242,12 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && (data.code === 1000 || data.code === 0)) {
-          const mapped = (data.result || []).map(m => mapApiMember(m, targetClubId));
+          const rawMembers = Array.isArray(data.result)
+            ? data.result
+            : Array.isArray(data.result?.members)
+              ? data.result.members
+              : [];
+          const mapped = rawMembers.map(m => mapApiMember(m, targetClubId));
           setMembers(mapped);
           setMyClub(prev => (prev ? { ...prev, memberCount: mapped.length } : prev));
           setClubs(prev =>
