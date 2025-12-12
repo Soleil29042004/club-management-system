@@ -6,10 +6,10 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [apiRequests, setApiRequests] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('all');
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [actionError, setActionError] = useState('');
   const [paymentLoadingId, setPaymentLoadingId] = useState(null);
-  const [statusFilter, setStatusFilter] = useState('All');
 
   useEffect(() => {
     if (!clubId) return;
@@ -20,12 +20,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
       setLoading(true);
       setError('');
       try {
-        const endpoint =
-          statusFilter && statusFilter !== 'All'
-            ? `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}/status/${statusFilter}`
-            : `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`;
-
-        const res = await fetch(endpoint, {
+        const statusPath = statusFilter === 'all' ? '' : `/status/${statusFilter}`;
+        const res = await fetch(`https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}${statusPath}`, {
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -37,6 +33,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           const mapped = (data.result || []).map(item => ({
             id: item.subscriptionId || item.id,
             subscriptionId: item.subscriptionId || item.id,
+            statusRaw: item.status || '',
             studentName: item.studentName || '',
             studentEmail: item.studentEmail || '',
             studentId: item.studentCode || '',
@@ -58,7 +55,10 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             isPaid: item.isPaid,
             paymentMethod: item.paymentMethod
           }));
-          setApiRequests(mapped);
+          const filtered = statusFilter === 'all'
+            ? mapped
+            : mapped.filter(r => (r.statusRaw || '') === statusFilter);
+          setApiRequests(filtered);
         } else {
           setApiRequests([]);
           setError(data.message || 'Không thể tải danh sách đơn đăng ký.');
@@ -187,6 +187,14 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     return () => controller.abort();
   };
 
+  const statusOptions = [
+    { value: 'all', label: 'Tất cả' },
+    { value: 'ChoDuyet', label: 'Chờ duyệt' },
+    { value: 'DaDuyet', label: 'Đã duyệt' },
+    { value: 'TuChoi', label: 'Từ chối' },
+    { value: 'DaRoiCLB', label: 'Đã rời CLB' }
+  ];
+
   if (loading) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
@@ -230,26 +238,31 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   return (
     <>
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="flex items-center justify-between px-6 pt-6 pb-2 gap-3 flex-wrap">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 m-0">Danh sách đơn đăng ký</h3>
-          </div>
+        <div className="p-4 flex flex-wrap gap-4 items-center justify-between">
           <div className="flex items-center gap-3">
-            <label className="text-sm text-gray-600">Trạng thái:</label>
+            <label className="text-sm font-semibold text-gray-700">Lọc theo trạng thái:</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-fpt-blue focus:border-fpt-blue"
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fpt-blue"
             >
-              <option value="All">Tất cả</option>
-              <option value="ChoDuyet">Chờ duyệt</option>
-              <option value="DaDuyet">Đã duyệt</option>
-              <option value="TuChoi">Từ chối</option>
+              {statusOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          {displayRequests.length === 0 ? (
+            <div className="p-10 text-center text-gray-600">
+              <div className="text-5xl mb-4">✅</div>
+              <p className="text-lg font-semibold mb-2">Không có yêu cầu nào đang chờ duyệt</p>
+              <p className="text-sm text-gray-500 m-0">Tất cả các yêu cầu đã được xử lý.</p>
+            </div>
+          ) : (
+            <table className="w-full">
               <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Tên sinh viên</th>
@@ -261,12 +274,22 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {displayRequests.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-gray-600">
-                    <div className="text-4xl mb-3">✅</div>
-                    <div className="text-lg font-semibold">Không có yêu cầu nào ở trạng thái này</div>
-                    <div className="text-sm text-gray-500 mt-1">Hãy chọn trạng thái khác để xem các đơn khác.</div>
+              {displayRequests.map((request) => (
+                <tr key={`${request.id}-${request.status}`} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="font-semibold text-gray-800">{request.studentName}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-600">{request.studentEmail}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-800">{request.studentId || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
+                    {new Date(request.requestDate).toLocaleDateString('vi-VN')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getStatusBadge(request.status)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-start gap-2">
@@ -295,45 +318,23 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
                       )}
                       {request.status === 'approved' && !request.isPaid && (
                         <button
-                          onClick={() => handleViewDetails(request)}
-                          className="px-4 py-2 bg-fpt-blue text-white rounded-lg text-sm font-medium hover:bg-fpt-blue-light transition-all whitespace-nowrap"
+                          onClick={() => handleConfirmPayment(request)}
+                          className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-all whitespace-nowrap disabled:opacity-60"
+                          disabled={paymentLoadingId === (request.subscriptionId || request.id)}
                         >
-                          Chi tiết
+                          {paymentLoadingId === (request.subscriptionId || request.id) ? 'Đang xác nhận...' : '✓ Xác nhận đã thu phí'}
                         </button>
-                        {request.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => handleApproveClick(request)}
-                              className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all whitespace-nowrap disabled:opacity-60"
-                              disabled={actionLoadingId === (request.subscriptionId || request.id)}
-                            >
-                              {actionLoadingId === (request.subscriptionId || request.id) ? 'Đang duyệt...' : '✅ Chấp nhận'}
-                            </button>
-                            <button
-                              onClick={() => handleRejectClick(request)}
-                              className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap disabled:opacity-60"
-                              disabled={actionLoadingId === (request.subscriptionId || request.id)}
-                            >
-                              {actionLoadingId === (request.subscriptionId || request.id) ? 'Đang cập nhật...' : '❌ Từ chối'}
-                            </button>
-                          </>
-                        )}
-                        {request.status === 'approved' && !request.isPaid && (
-                          <button
-                            onClick={() => handleConfirmPayment(request)}
-                            className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-all whitespace-nowrap disabled:opacity-60"
-                            disabled={paymentLoadingId === (request.subscriptionId || request.id)}
-                          >
-                            {paymentLoadingId === (request.subscriptionId || request.id) ? 'Đang xác nhận...' : '✓ Xác nhận đã thu phí'}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+                      )}
+                      {request.status !== 'pending' && request.status !== 'approved' && (
+                        <span className="text-sm text-gray-500 whitespace-nowrap">—</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
+          )}
         </div>
       </div>
 
@@ -447,5 +448,3 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 };
 
 export default JoinRequestsList;
-
-
