@@ -142,7 +142,7 @@ const ClubList = ({
                       </td>
                       <td className="px-6 py-4">
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                          {club.category}
+                          {club.category ? (clubCategoryLabels[club.category] || club.category) : 'Chưa cập nhật'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-gray-800">

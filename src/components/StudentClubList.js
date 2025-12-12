@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { clubCategoryLabels } from '../data/mockData';
 
 const StudentClubList = ({ 
   clubs, 
@@ -21,7 +22,7 @@ const StudentClubList = ({
     return matchesSearch && matchesCategory && isActive;
   });
 
-  const categories = [...new Set(clubs.map(club => club.category || 'Khác'))];
+  const categories = [...new Set(clubs.map(club => club.category || 'Khac').filter(Boolean))];
 
   return (
     <div>
@@ -43,7 +44,7 @@ const StudentClubList = ({
           >
             <option value="all">Tất cả danh mục</option>
             {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
+              <option key={category} value={category}>{clubCategoryLabels[category] || category}</option>
             ))}
           </select>
         </div>
@@ -90,7 +91,7 @@ const StudentClubList = ({
                   <div className="flex flex-col gap-2.5 mb-5">
                     <div className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-gray-500 font-medium">Danh mục:</span>
-                      <span className="text-gray-800 font-semibold">{club.category}</span>
+                      <span className="text-gray-800 font-semibold">{clubCategoryLabels[club.category] || club.category}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-gray-500 font-medium">Chủ tịch:</span>

@@ -266,12 +266,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-start gap-2">
-                      <button
-                        onClick={() => handleViewDetails(request)}
-                        className="px-4 py-2 bg-fpt-blue text-white rounded-lg text-sm font-medium hover:bg-fpt-blue-light transition-all whitespace-nowrap"
-                      >
-                        Chi tiết
-                      </button>
+                      {request.status === 'approved' && request.isPaid && (
+                        <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-semibold border border-green-200 whitespace-nowrap">
+                          ✅ Thanh toán thành công
+                        </span>
+                      )}
                       {request.status === 'pending' && (
                         <>
                           <button
@@ -298,6 +297,9 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
                         >
                           {paymentLoadingId === (request.subscriptionId || request.id) ? 'Đang xác nhận...' : '✓ Xác nhận đã thu phí'}
                         </button>
+                      )}
+                      {request.status !== 'pending' && request.status !== 'approved' && (
+                        <span className="text-sm text-gray-500 whitespace-nowrap">—</span>
                       )}
                     </div>
                   </td>
