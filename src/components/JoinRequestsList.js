@@ -9,6 +9,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [actionError, setActionError] = useState('');
   const [paymentLoadingId, setPaymentLoadingId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('All');
 
   useEffect(() => {
     if (!clubId) return;
@@ -19,7 +20,12 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`, {
+        const endpoint =
+          statusFilter && statusFilter !== 'All'
+            ? `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}/status/${statusFilter}`
+            : `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`;
+
+        const res = await fetch(endpoint, {
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -69,7 +75,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 
     fetchRegistrations();
     return () => controller.abort();
-  }, [clubId]);
+  }, [clubId, statusFilter]);
 
   const displayRequests = apiRequests.length ? apiRequests : requests;
 
@@ -201,16 +207,6 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     );
   }
 
-  if (displayRequests.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-        <div className="text-6xl mb-6">✅</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Không có yêu cầu nào đang chờ duyệt</h2>
-        <p className="text-gray-600">Tất cả các yêu cầu đã được xử lý.</p>
-      </div>
-    );
-  }
-
   const handleViewDetails = (request) => {
     setSelectedRequest(request);
     setShowDetailModal(true);
@@ -234,6 +230,24 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   return (
     <>
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="flex items-center justify-between px-6 pt-6 pb-2 gap-3 flex-wrap">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 m-0">Danh sách đơn đăng ký</h3>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="text-sm text-gray-600">Trạng thái:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-fpt-blue focus:border-fpt-blue"
+            >
+              <option value="All">Tất cả</option>
+              <option value="ChoDuyet">Chờ duyệt</option>
+              <option value="DaDuyet">Đã duyệt</option>
+              <option value="TuChoi">Từ chối</option>
+            </select>
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
               <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
@@ -247,62 +261,72 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {displayRequests.map((request) => (
-                <tr key={`${request.id}-${request.status}`} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-semibold text-gray-800">{request.studentName}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{request.studentEmail}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-800">{request.studentId || '-'}</div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
-                    {new Date(request.requestDate).toLocaleDateString('vi-VN')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(request.status)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center justify-start gap-2">
-                      <button
-                        onClick={() => handleViewDetails(request)}
-                        className="px-4 py-2 bg-fpt-blue text-white rounded-lg text-sm font-medium hover:bg-fpt-blue-light transition-all whitespace-nowrap"
-                      >
-                        Chi tiết
-                      </button>
-                      {request.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => handleApproveClick(request)}
-                            className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all whitespace-nowrap disabled:opacity-60"
-                            disabled={actionLoadingId === (request.subscriptionId || request.id)}
-                          >
-                            {actionLoadingId === (request.subscriptionId || request.id) ? 'Đang duyệt...' : '✅ Chấp nhận'}
-                          </button>
-                          <button
-                            onClick={() => handleRejectClick(request)}
-                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap disabled:opacity-60"
-                            disabled={actionLoadingId === (request.subscriptionId || request.id)}
-                          >
-                            {actionLoadingId === (request.subscriptionId || request.id) ? 'Đang cập nhật...' : '❌ Từ chối'}
-                          </button>
-                        </>
-                      )}
-                      {request.status === 'approved' && !request.isPaid && (
-                        <button
-                          onClick={() => handleConfirmPayment(request)}
-                          className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-all whitespace-nowrap disabled:opacity-60"
-                          disabled={paymentLoadingId === (request.subscriptionId || request.id)}
-                        >
-                          {paymentLoadingId === (request.subscriptionId || request.id) ? 'Đang xác nhận...' : '✓ Xác nhận đã thu phí'}
-                        </button>
-                      )}
-                    </div>
+              {displayRequests.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-600">
+                    <div className="text-4xl mb-3">✅</div>
+                    <div className="text-lg font-semibold">Không có yêu cầu nào ở trạng thái này</div>
+                    <div className="text-sm text-gray-500 mt-1">Hãy chọn trạng thái khác để xem các đơn khác.</div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                displayRequests.map((request) => (
+                  <tr key={`${request.id}-${request.status}`} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-semibold text-gray-800">{request.studentName}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-600">{request.studentEmail}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-800">{request.studentId || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
+                      {new Date(request.requestDate).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusBadge(request.status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center justify-start gap-2">
+                        <button
+                          onClick={() => handleViewDetails(request)}
+                          className="px-4 py-2 bg-fpt-blue text-white rounded-lg text-sm font-medium hover:bg-fpt-blue-light transition-all whitespace-nowrap"
+                        >
+                          Chi tiết
+                        </button>
+                        {request.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => handleApproveClick(request)}
+                              className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all whitespace-nowrap disabled:opacity-60"
+                              disabled={actionLoadingId === (request.subscriptionId || request.id)}
+                            >
+                              {actionLoadingId === (request.subscriptionId || request.id) ? 'Đang duyệt...' : '✅ Chấp nhận'}
+                            </button>
+                            <button
+                              onClick={() => handleRejectClick(request)}
+                              className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap disabled:opacity-60"
+                              disabled={actionLoadingId === (request.subscriptionId || request.id)}
+                            >
+                              {actionLoadingId === (request.subscriptionId || request.id) ? 'Đang cập nhật...' : '❌ Từ chối'}
+                            </button>
+                          </>
+                        )}
+                        {request.status === 'approved' && !request.isPaid && (
+                          <button
+                            onClick={() => handleConfirmPayment(request)}
+                            className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-all whitespace-nowrap disabled:opacity-60"
+                            disabled={paymentLoadingId === (request.subscriptionId || request.id)}
+                          >
+                            {paymentLoadingId === (request.subscriptionId || request.id) ? 'Đang xác nhận...' : '✓ Xác nhận đã thu phí'}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
