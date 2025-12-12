@@ -7,7 +7,6 @@ import ClubLeaderDashboard from './components/ClubLeaderDashboard';
 import Profile from './components/Profile';
 import ClubRequestsManagement from './components/ClubRequestsManagement';
 import StudentMyClubRequests from './components/StudentMyClubRequests';
-import StudentJoinedClubs from './components/StudentJoinedClubs';
 import Login from './pages/login';
 import Register from './pages/register';
 import Home from './pages/home';
@@ -25,7 +24,6 @@ function AppContent() {
   const [clubs, setClubs] = useState([]);
   const [members, setMembers] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [userReady, setUserReady] = useState(false);
 
   // Reset currentPage when user role changes
   useEffect(() => {
@@ -79,7 +77,6 @@ function AppContent() {
     if (!token) {
       setIsAuthenticated(false);
       setUserRole(null);
-      setUserReady(true);
       return;
     }
 
@@ -142,14 +139,12 @@ function AppContent() {
       };
       
       localStorage.setItem('user', JSON.stringify(hydrated));
-      setUserReady(true);
     } else {
       // Invalid role, but still have token - might be a new role type
       // Keep authenticated but with null role (will show error if needed)
       console.warn('Unknown role from token:', scopeFromToken, 'mapped to:', roleFromToken);
       setIsAuthenticated(false);
       setUserRole(null);
-      setUserReady(true);
     }
   }, []);
 
@@ -159,7 +154,6 @@ function AppContent() {
     setShowHome(false);
     setShowLogin(false);
     setShowRegister(false);
-    setUserReady(true);
   };
 
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
@@ -185,7 +179,7 @@ function AppContent() {
 
   // Fetch clubs từ API khi đã đăng nhập
   useEffect(() => {
-    if (!isAuthenticated || !userReady) return;
+    if (!isAuthenticated) return;
 
     const controller = new AbortController();
     const token = localStorage.getItem('authToken');
@@ -300,17 +294,6 @@ function AppContent() {
   };
 
   // Show home/login/register page if not authenticated
-  if (!userReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-600">
-          <div className="animate-spin inline-block w-12 h-12 border-4 border-fpt-blue/30 border-t-fpt-blue rounded-full mb-4"></div>
-          <p className="m-0 text-base">Đang tải thông tin người dùng...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (!isAuthenticated) {
     if (showRegister) {
       return (
@@ -351,8 +334,6 @@ function AppContent() {
         return <StudentDashboard clubs={clubs} currentPage={currentPage} setClubs={setClubs} />;
       case 'my-requests':
         return <StudentMyClubRequests />;
-      case 'joined-clubs':
-        return <StudentJoinedClubs />;
       case 'profile':
         return <Profile userRole={userRole} clubs={clubs} members={members} />;
       default:
@@ -418,20 +399,6 @@ function AppContent() {
             </button>
             <button
               className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                currentPage === 'joined-clubs' 
-                  ? 'bg-fpt-orange text-white shadow-lg' 
-                  : 'text-white/90 hover:bg-white/10 hover:text-white'
-              }`}
-              onClick={() => {
-                setCurrentPage('joined-clubs');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
-              }}
-            >
-              <span className="text-xl flex-shrink-0">🤝</span>
-              <span className="whitespace-nowrap">CLB đã tham gia</span>
-            </button>
-            <button
-              className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 currentPage === 'profile' 
                   ? 'bg-fpt-orange text-white shadow-lg' 
                   : 'text-white/90 hover:bg-white/10 hover:text-white'
@@ -470,7 +437,6 @@ function AppContent() {
                 <h2 className="text-xl font-semibold text-gray-800 m-0">
                   {currentPage === 'clubs' && 'Danh sách Câu lạc bộ'}
                   {currentPage === 'my-requests' && 'Đơn mở Club đã gửi'}
-                {currentPage === 'joined-clubs' && 'CLB đã tham gia'}
                   {currentPage === 'profile' && 'Hồ sơ cá nhân'}
                 </h2>
               </div>
