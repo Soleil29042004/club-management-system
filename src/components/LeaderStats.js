@@ -1,4 +1,5 @@
 import React from 'react';
+import { clubCategoryLabels } from '../data/mockData';
 
 const LeaderStats = ({ 
   memberCount, 
@@ -36,7 +37,7 @@ const LeaderStats = ({
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">Danh mục</h3>
-          <p className="text-lg font-semibold text-fpt-blue truncate">{category}</p>
+          <p className="text-lg font-semibold text-fpt-blue truncate">{category ? (clubCategoryLabels[category] || category) : 'Chưa cập nhật'}</p>
         </div>
       </div>
       

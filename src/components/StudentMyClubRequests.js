@@ -256,7 +256,6 @@ const StudentMyClubRequests = () => {
                 <tr key={reg.subscriptionId} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-semibold text-gray-800">{reg.clubName || '-'}</div>
-                    <div className="text-xs text-gray-500">#{reg.subscriptionId}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-semibold text-gray-800">{reg.packageName || '-'}</div>
