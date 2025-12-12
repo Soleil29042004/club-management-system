@@ -268,27 +268,32 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
                     <div className="text-lg font-semibold">Không có yêu cầu nào ở trạng thái này</div>
                     <div className="text-sm text-gray-500 mt-1">Hãy chọn trạng thái khác để xem các đơn khác.</div>
                   </td>
-                </tr>
-              ) : (
-                displayRequests.map((request) => (
-                  <tr key={`${request.id}-${request.status}`} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-semibold text-gray-800">{request.studentName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">{request.studentEmail}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-800">{request.studentId || '-'}</div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600 whitespace-nowrap">
-                      {new Date(request.requestDate).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(request.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center justify-start gap-2">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center justify-start gap-2">
+                      {request.status === 'approved' && request.isPaid && (
+                        <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-semibold border border-green-200 whitespace-nowrap">
+                          ✅ Thanh toán thành công
+                        </span>
+                      )}
+                      {request.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApproveClick(request)}
+                            className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all whitespace-nowrap disabled:opacity-60"
+                            disabled={actionLoadingId === (request.subscriptionId || request.id)}
+                          >
+                            {actionLoadingId === (request.subscriptionId || request.id) ? 'Đang duyệt...' : '✅ Chấp nhận'}
+                          </button>
+                          <button
+                            onClick={() => handleRejectClick(request)}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap disabled:opacity-60"
+                            disabled={actionLoadingId === (request.subscriptionId || request.id)}
+                          >
+                            {actionLoadingId === (request.subscriptionId || request.id) ? 'Đang cập nhật...' : '❌ Từ chối'}
+                          </button>
+                        </>
+                      )}
+                      {request.status === 'approved' && !request.isPaid && (
                         <button
                           onClick={() => handleViewDetails(request)}
                           className="px-4 py-2 bg-fpt-blue text-white rounded-lg text-sm font-medium hover:bg-fpt-blue-light transition-all whitespace-nowrap"
