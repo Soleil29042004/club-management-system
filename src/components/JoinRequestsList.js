@@ -421,4 +421,3 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 
 export default JoinRequestsList;
 
-
