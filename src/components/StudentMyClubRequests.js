@@ -290,6 +290,11 @@ const StudentMyClubRequests = () => {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2 flex-wrap">
+                      {(reg.status === 'DaDuyet' || reg.status === 'approved') && reg.isPaid && (
+                        <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-semibold border border-green-200">
+                          ✅ Thanh toán thành công
+                        </span>
+                      )}
                       {(reg.status === 'DaDuyet' || reg.status === 'approved') && !reg.isPaid && (
                         <button
                           onClick={() => handlePayment(reg)}
@@ -308,11 +313,11 @@ const StudentMyClubRequests = () => {
                           {cancellingId === reg.subscriptionId ? 'Đang hủy...' : '🛑 Hủy đơn'}
                         </button>
                       )}
-                      {!((reg.status === 'DaDuyet' || reg.status === 'approved') && !reg.isPaid) &&
-                        !(reg.status === 'ChoDuyet' || reg.status === 'pending') && (
-                          <span className="text-sm text-gray-500">—</span>
-                        )
-                      }
+                      {(reg.status !== 'DaDuyet' && reg.status !== 'approved') &&
+                        reg.status !== 'ChoDuyet' &&
+                        reg.status !== 'pending' && (
+                        <span className="text-sm text-gray-500">—</span>
+                      )}
                     </div>
                   </td>
                 </tr>
