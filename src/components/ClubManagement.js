@@ -226,7 +226,7 @@ const ClubManagement = ({ clubs, setClubs }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="font-semibold text-gray-600 block mb-1.5 text-sm">Danh mục:</label>
-                  <p className="text-gray-800 m-0 text-base">{viewingClub.category}</p>
+                  <p className="text-gray-800 m-0 text-base">{viewingClub.category ? (clubCategoryLabels[viewingClub.category] || viewingClub.category) : 'Chưa cập nhật'}</p>
                 </div>
                 <div>
                   <label className="font-semibold text-gray-600 block mb-1.5 text-sm">Chủ tịch:</label>

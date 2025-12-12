@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SubscriptionDetailModal from './SubscriptionDetailModal';
+import { clubCategoryLabels } from '../data/mockData';
 
 const Profile = ({ userRole, clubs, members }) => {
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
@@ -791,7 +792,7 @@ const Profile = ({ userRole, clubs, members }) => {
                     </div>
                     <div className="p-5">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Danh mục:</strong> {item.club.category}</span>
+                        <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Danh mục:</strong> {item.club.category ? (clubCategoryLabels[item.club.category] || item.club.category) : 'Chưa cập nhật'}</span>
                         <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Chủ tịch:</strong> {item.club.president}</span>
                         <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Ngày bắt đầu:</strong> {formatDate(item.requestDate)}</span>
                         <span className="text-sm text-gray-600"><strong className="text-gray-800 mr-1">Ngày hết hạn:</strong> {formatDate(expiryDate)}</span>
@@ -840,7 +841,7 @@ const Profile = ({ userRole, clubs, members }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-1.5 p-4 bg-white rounded-lg">
                     <span className="text-xs text-gray-500 font-medium uppercase">Danh mục:</span>
-                    <span className="text-base text-gray-800 font-semibold">{myClub.category}</span>
+                    <span className="text-base text-gray-800 font-semibold">{myClub.category ? (clubCategoryLabels[myClub.category] || myClub.category) : 'Chưa cập nhật'}</span>
                   </div>
                   <div className="flex flex-col gap-1.5 p-4 bg-white rounded-lg">
                     <span className="text-xs text-gray-500 font-medium uppercase">Ngày thành lập:</span>

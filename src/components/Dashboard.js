@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { clubCategoryLabels } from '../data/mockData';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
@@ -207,7 +208,7 @@ const Dashboard = ({ clubs = [], members = [] }) => {
           <div className="flex flex-col gap-4">
             {Object.entries(clubsByCategory).map(([category, count]) => (
               <div key={category} className="grid grid-cols-[120px_1fr_80px] items-center gap-4">
-                <span className="font-semibold text-gray-800">{category}</span>
+                <span className="font-semibold text-gray-800">{clubCategoryLabels[category] || category}</span>
                 <div className="h-5 bg-gray-200 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-fpt-blue to-fpt-blue-light rounded-full transition-all duration-500 shadow-md"
@@ -245,7 +246,7 @@ const Dashboard = ({ clubs = [], members = [] }) => {
                 </div>
                 <div className="flex-1">
                   <h4 className="m-0 mb-1 text-gray-800 text-lg">{club.name}</h4>
-                  <p className="m-0 text-gray-600 text-sm">{club.category}</p>
+                  <p className="m-0 text-gray-600 text-sm">{club.category ? (clubCategoryLabels[club.category] || club.category) : 'Chưa cập nhật'}</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-cyan-50 px-6 py-2.5 rounded-full font-semibold text-fpt-blue text-sm border border-fpt-blue/15">
                   {club.memberCount} thành viên
@@ -269,7 +270,7 @@ const Dashboard = ({ clubs = [], members = [] }) => {
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
                     <h4 className="m-0 text-gray-900 text-lg font-semibold">{club.name}</h4>
-                    <p className="m-0 text-gray-600 text-sm">{club.category}</p>
+                    <p className="m-0 text-gray-600 text-sm">{club.category ? (clubCategoryLabels[club.category] || club.category) : 'Chưa cập nhật'}</p>
                   </div>
                   <div className="text-sm text-gray-600">
                     {club.establishedDate ? `Thành lập: ${club.establishedDate}` : ''}

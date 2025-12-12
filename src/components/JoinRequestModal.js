@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
+import { clubCategoryLabels } from '../data/mockData';
 
 const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   const { showToast } = useToast();
@@ -216,7 +217,10 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
             ) : clubDetail ? (
               <>
                 <p className="m-0 mb-2 text-sm"><strong>Câu lạc bộ:</strong> {clubDetail.clubName || club.name}</p>
-                <p className="m-0 mb-2 text-sm"><strong>Danh mục:</strong> {clubDetail.category || club.category}</p>
+                <p className="m-0 mb-2 text-sm"><strong>Danh mục:</strong> {(() => {
+                  const category = clubDetail.category || club.category;
+                  return category ? (clubCategoryLabels[category] || category) : 'Chưa cập nhật';
+                })()}</p>
                 <p className="m-0 mb-2 text-sm"><strong>Chủ tịch:</strong> {clubDetail.founderName || clubDetail.president || club.president || 'Chưa cập nhật'}</p>
                 <p className="m-0 mb-2 text-sm"><strong>Số thành viên:</strong> {clubDetail.memberCount ?? club.memberCount ?? 'Chưa cập nhật'}</p>
                 <p className="m-0 mb-2 text-sm"><strong>Địa điểm:</strong> {clubDetail.location || 'Chưa cập nhật'}</p>

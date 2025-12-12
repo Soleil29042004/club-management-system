@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
 import StudentClubList from './StudentClubList';
-import StudentUnpaidFees from './StudentUnpaidFees';
 import JoinRequestModal from './JoinRequestModal';
 import PaymentModal from './PaymentModal';
 import ClubDetailsModal from './ClubDetailsModal';
@@ -659,29 +658,6 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     return payments.filter(p => p.studentEmail === user.email);
   };
 
-  // Get clubs that student has been approved to join but hasn't paid yet
-  const getUnpaidFees = () => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const myApprovedRequests = joinRequests.filter(
-      r => r.studentEmail === user.email && r.status === 'approved'
-    );
-    
-    const paidClubIds = getMyPayments().map(p => p.clubId);
-    
-    return myApprovedRequests
-      .filter(request => !paidClubIds.includes(request.clubId))
-      .map(request => {
-        const club = clubs.find(c => c.id === request.clubId);
-        return {
-          ...request,
-          club: club
-        };
-      })
-      .filter(item => item.club); // Only include if club still exists
-  };
-
-  const unpaidFees = getUnpaidFees();
-
   return (
     <div className="max-w-[1400px] mx-auto p-5">
       <div className="bg-gradient-to-br from-white to-blue-50 p-8 rounded-2xl shadow-lg mb-8 border border-fpt-blue/10">
@@ -720,14 +696,6 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
             />
           )}
         </>
-      )}
-
-      {/* Unpaid Fees Tab */}
-      {currentPage === 'unpaid-fees' && (
-        <StudentUnpaidFees
-          unpaidFees={unpaidFees}
-          onPayment={handlePayment}
-        />
       )}
 
       {/* Join Request Modal */}

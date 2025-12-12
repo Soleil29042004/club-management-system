@@ -332,8 +332,6 @@ function AppContent() {
     switch (currentPage) {
       case 'clubs':
         return <StudentDashboard clubs={clubs} currentPage={currentPage} setClubs={setClubs} />;
-      case 'unpaid-fees':
-        return <StudentDashboard clubs={clubs} currentPage={currentPage} setClubs={setClubs} />;
       case 'my-requests':
         return <StudentMyClubRequests />;
       case 'profile':
@@ -384,20 +382,6 @@ function AppContent() {
             >
               <span className="text-xl flex-shrink-0">🏛️</span>
               <span className="whitespace-nowrap">Danh sách CLB</span>
-            </button>
-            <button
-              className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                currentPage === 'unpaid-fees' 
-                  ? 'bg-fpt-orange text-white shadow-lg' 
-                  : 'text-white/90 hover:bg-white/10 hover:text-white'
-              }`}
-              onClick={() => {
-                setCurrentPage('unpaid-fees');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
-              }}
-            >
-              <span className="text-xl flex-shrink-0">💰</span>
-              <span className="whitespace-nowrap">Phí chưa nộp</span>
             </button>
             <button
               className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
@@ -452,7 +436,6 @@ function AppContent() {
                 </button>
                 <h2 className="text-xl font-semibold text-gray-800 m-0">
                   {currentPage === 'clubs' && 'Danh sách Câu lạc bộ'}
-                  {currentPage === 'unpaid-fees' && 'Phí chưa nộp'}
                   {currentPage === 'my-requests' && 'Đơn mở Club đã gửi'}
                   {currentPage === 'profile' && 'Hồ sơ cá nhân'}
                 </h2>
@@ -478,8 +461,6 @@ function AppContent() {
       case 'requests':
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
       case 'members':
-        return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
-      case 'activities':
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
       case 'fee':
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
@@ -562,20 +543,6 @@ function AppContent() {
             </button>
             <button
               className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
-                currentPage === 'activities' 
-                  ? 'bg-fpt-orange text-white shadow-lg' 
-                  : 'text-white/90 hover:bg-white/10 hover:text-white'
-              }`}
-              onClick={() => {
-                setCurrentPage('activities');
-                if (window.innerWidth < 1024) setSidebarOpen(false);
-              }}
-            >
-              <span className="text-xl flex-shrink-0">📅</span>
-              <span className="whitespace-nowrap">Hoạt động</span>
-            </button>
-            <button
-              className={`w-full px-4 py-3 rounded-lg text-left flex items-center gap-3 transition-all ${
                 currentPage === 'fee' 
                   ? 'bg-fpt-orange text-white shadow-lg' 
                   : 'text-white/90 hover:bg-white/10 hover:text-white'
@@ -629,7 +596,6 @@ function AppContent() {
                   {currentPage === 'manage' && 'Quản lý Club'}
                   {currentPage === 'requests' && 'Duyệt yêu cầu'}
                   {currentPage === 'members' && 'Quản lý thành viên'}
-                  {currentPage === 'activities' && 'Hoạt động'}
                   {currentPage === 'fee' && 'Phí & Thời hạn'}
                   {currentPage === 'profile' && 'Hồ sơ cá nhân'}
                 </h2>

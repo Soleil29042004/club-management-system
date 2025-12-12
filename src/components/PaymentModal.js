@@ -1,6 +1,7 @@
 import React from 'react';
 import { useToast } from './Toast';
 import { QRCodeSVG } from 'qrcode.react';
+import { clubCategoryLabels } from '../data/mockData';
 
 const PaymentModal = ({ club, onClose, onSubmit }) => {
   const { showToast } = useToast();
@@ -45,7 +46,7 @@ const PaymentModal = ({ club, onClose, onSubmit }) => {
         <div className="p-6">
           <div className="bg-blue-50 p-4 rounded-lg mb-6 border-l-4 border-fpt-blue">
             <p className="m-0 mb-2 text-sm"><strong>Câu lạc bộ:</strong> {club.name}</p>
-            <p className="m-0 mb-2 text-sm"><strong>Danh mục:</strong> {club.category}</p>
+            <p className="m-0 mb-2 text-sm"><strong>Danh mục:</strong> {club.category ? (clubCategoryLabels[club.category] || club.category) : 'Chưa cập nhật'}</p>
             <p className="m-0 mb-2 text-sm"><strong>Chủ tịch:</strong> {club.president}</p>
             <p className="m-0 text-sm"><strong>Phí tham gia:</strong> <span className="text-fpt-blue font-bold">{paymentAmount.toLocaleString('vi-VN')} VNĐ</span></p>
           </div>

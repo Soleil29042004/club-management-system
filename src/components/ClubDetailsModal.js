@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
+import { clubCategoryLabels } from '../data/mockData';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
@@ -54,7 +55,7 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
             founderId: result.founderId,
             founderName: result.founderName || club.president,
             founderStudentCode: result.founderStudentCode,
-            memberCount: result.memberCount || 0, // Số thành viên từ API
+            memberCount: result.memberCount || result.totalMembers || 0, // Số thành viên từ API
             activityTime: result.activityTime || club.activityTime
           });
           
@@ -159,7 +160,7 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col p-4 bg-gray-50 rounded-lg">
                 <span className="text-xs text-gray-500 font-medium mb-1">Danh mục:</span>
-                <span className="text-sm font-semibold text-gray-800">{displayClub.category || 'Chưa cập nhật'}</span>
+                <span className="text-sm font-semibold text-gray-800">{displayClub.category ? (clubCategoryLabels[displayClub.category] || displayClub.category) : 'Chưa cập nhật'}</span>
               </div>
               <div className="flex flex-col p-4 bg-gray-50 rounded-lg">
                 <span className="text-xs text-gray-500 font-medium mb-1">Chủ tịch:</span>
@@ -170,7 +171,9 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
               <div className="flex flex-col p-4 bg-gray-50 rounded-lg">
                 <span className="text-xs text-gray-500 font-medium mb-1">Số thành viên:</span>
                 <span className="text-sm font-semibold text-gray-800">
-                  {displayClub.memberCount !== undefined ? displayClub.memberCount : (club.memberCount || 0)}
+                  {displayClub.memberCount !== undefined
+                    ? displayClub.memberCount
+                    : (club.memberCount || club.totalMembers || 0)}
                 </span>
               </div>
               <div className="flex flex-col p-4 bg-gray-50 rounded-lg">
