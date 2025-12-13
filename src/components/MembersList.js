@@ -1,5 +1,5 @@
 import React from 'react';
-import { memberRoles } from '../data/mockData';
+import { memberRoles } from '../data/constants';
 
 const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadingId }) => {
   const parseDate = (value) => {

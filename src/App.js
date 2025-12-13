@@ -12,7 +12,6 @@ import Login from './pages/login';
 import Register from './pages/register';
 import Home from './pages/home';
 import { ToastProvider, useToast } from './components/Toast';
-import { mockClubs, mockMembers, initializeDemoData } from './data/mockData';
 
 function AppContent() {
   const { showToast } = useToast();
@@ -40,10 +39,6 @@ function AppContent() {
     }
   }, [userRole]);
 
-  // Initialize demo data on component mount
-  useEffect(() => {
-    initializeDemoData();
-  }, []);
 
   // Parse JWT token to extract payload
   const parseJWTToken = (token) => {

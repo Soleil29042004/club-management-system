@@ -1,7 +1,7 @@
 import React from 'react';
 import { useToast } from './Toast';
 import { QRCodeSVG } from 'qrcode.react';
-import { clubCategoryLabels } from '../data/mockData';
+import { clubCategoryLabels } from '../data/constants';
 
 const PaymentModal = ({ club, onClose, onSubmit }) => {
   const { showToast } = useToast();

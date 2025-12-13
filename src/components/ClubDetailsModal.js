@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
-import { clubCategoryLabels } from '../data/mockData';
+import { clubCategoryLabels } from '../data/constants';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 

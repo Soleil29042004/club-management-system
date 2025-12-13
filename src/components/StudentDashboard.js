@@ -5,7 +5,6 @@ import JoinRequestModal from './JoinRequestModal';
 import PaymentModal from './PaymentModal';
 import ClubDetailsModal from './ClubDetailsModal';
 import RegisterClubModal from './RegisterClubModal';
-import { initializeDemoData } from '../data/mockData';
 
 const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   const { showToast } = useToast();
@@ -128,9 +127,6 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
 
   // Load other data from localStorage on mount
   useEffect(() => {
-    // Đảm bảo dữ liệu được khởi tạo trước khi load
-    initializeDemoData();
-    
     const savedPayments = localStorage.getItem('payments');
     const savedClubRequests = localStorage.getItem('clubRequests');
     

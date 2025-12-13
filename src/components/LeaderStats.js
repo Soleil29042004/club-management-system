@@ -1,5 +1,5 @@
 import React from 'react';
-import { clubCategoryLabels } from '../data/mockData';
+import { clubCategoryLabels } from '../data/constants';
 
 const LeaderStats = ({ 
   memberCount, 

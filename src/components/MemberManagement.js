@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import MemberList from './MemberList';
 import MemberForm from './MemberForm';
-import { getNextMemberId } from '../data/mockData';
 import { useToast } from './Toast';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
@@ -139,10 +138,9 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
         member.id === editingMember.id ? { ...formData, id: editingMember.id } : member
       ));
     } else {
-      // Add new member
+      // Add new member - ID will be assigned by API
       const newMember = {
-        ...formData,
-        id: getNextMemberId(members)
+        ...formData
       };
       setMembers([...members, newMember]);
     }

@@ -5,8 +5,7 @@ import ClubInfo from './ClubInfo';
 import JoinRequestsList from './JoinRequestsList';
 import MembersList from './MembersList';
 import ClubFeeManagement from './ClubFeeManagement';
-import { initializeDemoData } from '../data/mockData';
-import { clubCategoryLabels } from '../data/mockData';
+import { clubCategoryLabels } from '../data/constants';
 
 const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage }) => {
   const { showToast } = useToast();
