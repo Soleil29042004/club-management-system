@@ -9,6 +9,15 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [actionError, setActionError] = useState('');
   const [paymentLoadingId, setPaymentLoadingId] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState('all'); // Default filter: Tất cả
+
+  const statusOptions = [
+    { value: 'all', label: 'Tất cả' },
+    { value: 'ChoDuyet', label: 'Chờ duyệt' },
+    { value: 'DaDuyet', label: 'Đã duyệt' },
+    { value: 'TuChoi', label: 'Từ chối' },
+    { value: 'DaRoiCLB', label: 'Đã rời CLB' }
+  ];
 
   useEffect(() => {
     if (!clubId) return;
@@ -19,7 +28,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`, {
+        // Nếu chọn "Tất cả", gọi API không có status filter
+        const url = selectedStatus === 'all'
+          ? `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`
+          : `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}/status/${selectedStatus}`;
+        const res = await fetch(url, {
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -42,6 +55,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
               if (st === 'choduyet') return 'pending';
               if (st === 'daduyet') return 'approved';
               if (st === 'tuchoi') return 'rejected';
+              if (st === 'daroi') return 'left';
               return st || 'pending';
             })(),
             reason: item.reason || '',
@@ -50,7 +64,13 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             price: item.price,
             term: item.term,
             isPaid: item.isPaid,
-            paymentMethod: item.paymentMethod
+            paymentMethod: item.paymentMethod,
+            clubRole: item.clubRole,
+            approverName: item.approverName,
+            paymentDate: item.paymentDate,
+            startDate: item.startDate,
+            endDate: item.endDate,
+            joinDate: item.joinDate
           }));
           setApiRequests(mapped);
         } else {
@@ -69,7 +89,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 
     fetchRegistrations();
     return () => controller.abort();
-  }, [clubId]);
+  }, [clubId, selectedStatus]);
 
   const displayRequests = apiRequests.length ? apiRequests : requests;
 
@@ -220,7 +240,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     const statusConfig = {
       pending: { bg: 'bg-amber-500', text: 'Chờ duyệt' },
       approved: { bg: 'bg-green-500', text: 'Đã chấp nhận' },
-      rejected: { bg: 'bg-red-500', text: 'Đã từ chối' }
+      rejected: { bg: 'bg-red-500', text: 'Đã từ chối' },
+      left: { bg: 'bg-gray-500', text: 'Đã rời CLB' }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
@@ -233,21 +254,60 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 
   return (
     <>
+      <div className="bg-white rounded-xl shadow-md p-6 mb-4">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+              Lọc theo trạng thái:
+            </label>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:border-fpt-blue focus:outline-none focus:ring-2 focus:ring-fpt-blue focus:border-transparent transition-all cursor-pointer min-w-[180px]"
+            >
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="text-sm text-gray-600">
+            Tổng số: <span className="font-semibold text-fpt-blue">{apiRequests.length}</span> đơn
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        {displayRequests.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="text-6xl mb-6">✅</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              {selectedStatus === 'all' 
+                ? 'Không có yêu cầu nào' 
+                : `Không có yêu cầu nào với trạng thái "${statusOptions.find(opt => opt.value === selectedStatus)?.label || selectedStatus}"`}
+            </h2>
+            <p className="text-gray-600">
+              {selectedStatus === 'all' 
+                ? 'Chưa có đơn đăng ký nào cho câu lạc bộ này.' 
+                : 'Hãy thử chọn trạng thái khác để xem các đơn đăng ký.'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Tên sinh viên</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Email</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Mã sinh viên</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Ngày gửi</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Trạng thái</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold whitespace-nowrap">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {displayRequests.map((request) => (
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Tên sinh viên</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Email</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Mã sinh viên</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Ngày gửi</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Trạng thái</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold whitespace-nowrap">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {displayRequests.map((request) => (
                 <tr key={`${request.id}-${request.status}`} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-semibold text-gray-800">{request.studentName}</div>
@@ -298,16 +358,20 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
                           {paymentLoadingId === (request.subscriptionId || request.id) ? 'Đang xác nhận...' : '✓ Xác nhận đã thu phí'}
                         </button>
                       )}
-                      {request.status !== 'pending' && request.status !== 'approved' && (
+                      {request.status !== 'pending' && request.status !== 'approved' && request.status !== 'left' && (
+                        <span className="text-sm text-gray-500 whitespace-nowrap">—</span>
+                      )}
+                      {request.status === 'left' && (
                         <span className="text-sm text-gray-500 whitespace-nowrap">—</span>
                       )}
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Detail Modal */}

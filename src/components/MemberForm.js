@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { memberRoles, statusOptions } from '../data/mockData';
+import { memberRoles, statusOptions } from '../data/constants';
 
 const MemberForm = ({ member, clubs, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
