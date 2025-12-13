@@ -15,7 +15,6 @@ const ClubList = ({
   // Use external search and filter if provided, otherwise use internal state
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [internalFilterCategory, setInternalFilterCategory] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
 
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
   const filterCategory = externalFilterCategory !== undefined ? externalFilterCategory : internalFilterCategory;
@@ -36,22 +35,11 @@ const ClubList = ({
     }
   };
 
-  const filteredClubs = clubs.filter(club => {
-    const matchesSearch = club.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         club.description.toLowerCase().includes(searchTerm.toLowerCase());
-    // Match by category code or display name
-    const matchesCategory = filterCategory === 'all' || 
-                            club.category === filterCategory || 
-                            club.categoryCode === filterCategory;
-    const matchesStatus = filterStatus === 'all' || club.status === filterStatus;
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  // Không cần filter nữa vì search và category đã được filter ở server
+  const filteredClubs = clubs;
 
-  // Get unique categories from clubs or use predefined categories
-  const categories = clubs.length > 0 
-    ? [...new Set(clubs.map(club => club.categoryCode || club.category).filter(Boolean))]
-    : clubCategories;
-  const statuses = [...new Set(clubs.map(club => club.status))];
+  // Luôn sử dụng danh sách categories từ constants để dropdown không bị mất options khi filter
+  const categories = clubCategories;
 
   const getStatusBadgeClass = (status) => {
     const statusLower = status.toLowerCase();
@@ -71,7 +59,7 @@ const ClubList = ({
         <div className="mb-4">
           <input
             type="text"
-            placeholder="Tìm kiếm câu lạc bộ theo tên..."
+            placeholder="Tìm kiếm câu lạc bộ theo tên (tìm kiếm từ server)..."
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full px-5 py-3 text-base border-2 border-gray-300 rounded-lg transition-all focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-500/10"
@@ -88,16 +76,6 @@ const ClubList = ({
               <option key={category} value={category}>
                 {clubCategoryLabels[category] || category}
               </option>
-            ))}
-          </select>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2.5 text-sm border-2 border-gray-300 rounded-lg bg-white cursor-pointer transition-all flex-1 min-w-[200px] focus:outline-none focus:border-green-500"
-          >
-            <option value="all">Tất cả trạng thái</option>
-            {statuses.map(status => (
-              <option key={status} value={status}>{status}</option>
             ))}
           </select>
         </div>
