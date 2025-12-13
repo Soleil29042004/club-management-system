@@ -21,7 +21,6 @@ export const memberRoles = [
   "Chủ tịch",
   "Phó chủ tịch",
   "Thư ký",
-  "Thủ quỹ",
   "Thành viên"
 ];
 
