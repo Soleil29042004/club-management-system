@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SubscriptionDetailModal from './SubscriptionDetailModal';
-import { clubCategoryLabels } from '../data/mockData';
+import { clubCategoryLabels } from '../data/constants';
 
 const Profile = ({ userRole, clubs, members }) => {
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';

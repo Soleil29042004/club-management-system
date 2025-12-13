@@ -24,31 +24,43 @@ const StudentJoinedClubs = () => {
   const [clubs, setClubs] = useState([]);
 
   const resolveUserId = () => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        return parsed.userId || parsed.id || parsed.userID || parsed.user?.id;
-      } catch (e) {
-        console.warn('Cannot parse stored user', e);
-      }
-    }
+    // Ưu tiên lấy userId từ token trước (đảm bảo là userId, không phải email)
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (token) {
       const payload = parseJWT(token);
-      return (
+      const userIdFromToken = 
         payload?.sub ||
         payload?.nameid ||
         payload?.userId ||
         payload?.UserId ||
-        payload?.id
-      );
+        payload?.id;
+      
+      // Chỉ dùng nếu không phải email (không chứa @)
+      if (userIdFromToken && !userIdFromToken.includes('@')) {
+        return userIdFromToken;
+      }
     }
+    
+    // Fallback: lấy từ localStorage nhưng kiểm tra không phải email
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        const userId = parsed.userId || parsed.id || parsed.userID || parsed.user?.id;
+        // Chỉ dùng nếu không phải email
+        if (userId && !userId.includes('@')) {
+          return userId;
+        }
+      } catch (e) {
+        console.warn('Cannot parse stored user', e);
+      }
+    }
+    
     return null;
   };
 
   useEffect(() => {
-    const fetchJoinedClubs = async () => {
+    const fetchJoinedClubs = async (retryCount = 0) => {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
       if (!token) {
         setError('Vui lòng đăng nhập để xem danh sách CLB đã tham gia.');
@@ -56,9 +68,45 @@ const StudentJoinedClubs = () => {
         return;
       }
 
-      const userId = resolveUserId();
+      let userId = resolveUserId();
+      
+      // Nếu chưa có userId, thử fetch từ API /users/my-info
       if (!userId) {
-        setError('Không tìm thấy thông tin user.');
+        try {
+          const userInfoRes = await fetch(`${API_BASE_URL}/users/my-info`, {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            }
+          });
+          const userInfoData = await userInfoRes.json().catch(() => ({}));
+          
+          if (userInfoRes.ok && (userInfoData.code === 1000 || userInfoData.code === 0)) {
+            const info = userInfoData.result || userInfoData.data || userInfoData;
+            userId = info.userId;
+            
+            // Lưu vào localStorage để lần sau dùng
+            if (userId) {
+              const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+              storedUser.userId = userId;
+              localStorage.setItem('user', JSON.stringify(storedUser));
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to fetch user info:', err);
+        }
+      }
+      
+      // Nếu vẫn không có userId sau khi fetch, thử retry
+      if (!userId && retryCount < 2) {
+        setTimeout(() => {
+          fetchJoinedClubs(retryCount + 1);
+        }, 1000 * (retryCount + 1));
+        return;
+      }
+
+      if (!userId) {
+        setError('Không tìm thấy thông tin user. Vui lòng thử tải lại trang.');
         setLoading(false);
         return;
       }

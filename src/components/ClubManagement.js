@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ClubList from './ClubList';
 import ClubForm from './ClubForm';
-import { getNextClubId, clubCategoryLabels } from '../data/mockData';
+import { clubCategoryLabels } from '../data/constants';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
@@ -41,10 +41,9 @@ const ClubManagement = ({ clubs, setClubs }) => {
         club.id === editingClub.id ? { ...formData, id: editingClub.id } : club
       ));
     } else {
-      // Add new club
+      // Add new club - ID will be assigned by API
       const newClub = {
-        ...formData,
-        id: getNextClubId(clubs)
+        ...formData
       };
       setClubs([...clubs, newClub]);
     }

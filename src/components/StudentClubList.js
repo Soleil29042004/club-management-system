@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { clubCategoryLabels } from '../data/mockData';
+import { clubCategoryLabels } from '../data/constants';
 
 const StudentClubList = ({ 
   clubs, 

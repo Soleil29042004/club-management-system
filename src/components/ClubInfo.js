@@ -1,6 +1,6 @@
 import React from 'react';
 import ClubInfoForm from './ClubInfoForm';
-import { clubCategoryLabels } from '../data/mockData';
+import { clubCategoryLabels } from '../data/constants';
 
 const ClubInfo = ({ club, onEdit, showEditForm, formData, onFormChange, onFormSubmit, onFormCancel }) => {
   if (!club) return null;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
-import { clubCategoryLabels } from '../data/mockData';
+import { clubCategoryLabels } from '../data/constants';
 
 const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   const { showToast } = useToast();

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { clubCategoryLabels } from '../data/mockData';
+import { clubCategoryLabels } from '../data/constants';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
