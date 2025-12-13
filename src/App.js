@@ -27,6 +27,8 @@ function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userReady, setUserReady] = useState(false);
 
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+
   // Reset currentPage when user role changes
   useEffect(() => {
     if (userRole === 'student') {
@@ -142,7 +144,45 @@ function AppContent() {
       };
       
       localStorage.setItem('user', JSON.stringify(hydrated));
-      setUserReady(true);
+      
+      // Fetch user info from API to ensure we have complete user data including userId
+      const fetchUserInfo = async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/users/my-info`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && (data.code === 1000 || data.code === 0)) {
+            const info = data.result || data.data || data;
+            // Chỉ dùng userIdFromToken nếu không phải email (không chứa @)
+            const validUserId = info.userId || 
+              (userIdFromToken && !userIdFromToken.includes('@') ? userIdFromToken : null) || 
+              '';
+            const normalized = {
+              userId: validUserId,
+              name: info.fullName || info.name || hydrated.name || '',
+              email: info.email || hydrated.email || '',
+              phone: info.phoneNumber || info.phone || hydrated.phone || '',
+              studentId: info.studentCode || info.studentId || hydrated.studentId || '',
+              major: info.major || hydrated.major || '',
+              role: roleFromToken,
+              avatar: info.avatarUrl || info.avatar || hydrated.avatar || '',
+              clubIds: info.clubIds || tokenClubIds || hydrated.clubIds || []
+            };
+            const updatedUser = { ...hydrated, ...normalized };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        } catch (err) {
+          console.warn('Failed to fetch user info, using token data:', err);
+        } finally {
+          setUserReady(true);
+        }
+      };
+      
+      fetchUserInfo();
     } else {
       // Invalid role, but still have token - might be a new role type
       // Keep authenticated but with null role (will show error if needed)
@@ -161,8 +201,6 @@ function AppContent() {
     setShowRegister(false);
     setUserReady(true);
   };
-
-  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
   const mapApiClub = (apiClub) => ({
     id: apiClub?.clubId,
