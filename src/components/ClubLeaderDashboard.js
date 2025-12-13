@@ -19,6 +19,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   const [clubStats, setClubStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState('');
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const lastFetchedClubId = useRef(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -470,8 +471,48 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     return members.filter(member => member.clubId === myClub.id || member.clubId === myClub.clubId);
   }, [members, myClub]);
 
-  const handleDeleteMember = (memberId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa thành viên này khỏi club?')) {
+  const handleDeleteMember = async (memberId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa thành viên này khỏi club? (Đánh dấu DaRoiCLB)')) {
+      return;
+    }
+
+    const member = members.find(m => m.id === memberId);
+    if (!member) {
+      showToast('Không tìm thấy thành viên.', 'error');
+      return;
+    }
+
+    const clubId = myClub?.clubId || myClub?.id;
+    const userId = member.userId || member.id;
+
+    if (!clubId || !userId) {
+      showToast('Thiếu thông tin club hoặc user.', 'error');
+      return;
+    }
+
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Vui lòng đăng nhập lại.', 'error');
+      return;
+    }
+
+    setDeleteLoadingId(memberId);
+    try {
+      const res = await fetch(`${API_BASE_URL}/registrations/club/${clubId}/user/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+        throw new Error(data.message || 'Không thể xóa thành viên khỏi club.');
+      }
+
+      // Remove member from local state
       setMembers(members.filter(m => m.id !== memberId));
       
       // Update member count
@@ -484,7 +525,12 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
         setMyClub({ ...myClub, memberCount: Math.max(0, myClub.memberCount - 1) });
       }
       
-      showToast('Đã xóa thành viên khỏi club!', 'success');
+      showToast('Đã xóa thành viên khỏi club (đánh dấu DaRoiCLB)!', 'success');
+    } catch (err) {
+      console.error('Delete member error:', err);
+      showToast(err.message || 'Không thể xóa thành viên khỏi club.', 'error');
+    } finally {
+      setDeleteLoadingId(null);
     }
   };
 
@@ -685,6 +731,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
           club={myClub}
           onUpdateRole={handleUpdateMemberRole}
           onDeleteMember={handleDeleteMember}
+          deleteLoadingId={deleteLoadingId}
         />
       )}
 

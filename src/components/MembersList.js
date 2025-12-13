@@ -1,7 +1,7 @@
 import React from 'react';
 import { memberRoles } from '../data/mockData';
 
-const MembersList = ({ members, club, onUpdateRole, onDeleteMember }) => {
+const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadingId }) => {
   const parseDate = (value) => {
     if (!value) return null;
     if (typeof value === 'string' && value.includes('/')) {
@@ -168,9 +168,10 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember }) => {
                       <div className="flex items-center justify-start gap-2">
                         <button
                           onClick={() => onDeleteMember(member.id)}
-                          className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all"
+                          disabled={deleteLoadingId === member.id}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                          ❌ Xóa
+                          {deleteLoadingId === member.id ? 'Đang xóa...' : '❌ Xóa'}
                         </button>
                       </div>
                     </td>
