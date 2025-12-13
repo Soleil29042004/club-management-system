@@ -1,7 +1,7 @@
 import React from 'react';
 import { memberRoles } from '../data/constants';
 
-const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadingId }) => {
+const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadingId, roleLoadingId }) => {
   const parseDate = (value) => {
     if (!value) return null;
     if (typeof value === 'string' && value.includes('/')) {
@@ -116,15 +116,26 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadin
               {members.map((member) => {
                 const membershipInfo = getMembershipInfo(member);
                 const normalizeRole = (role) => {
+                  if (!role) return 'Thành viên';
+                  // Nếu role đã là tiếng Việt, map về format đúng với memberRoles (chữ thường "chủ")
                   const r = (role || '').toLowerCase();
-                  if (r === 'chutich' || r === 'chủ tịch' || r === 'chu tich') return 'Chủ tịch';
-                  if (r === 'phochutich' || r === 'phó chủ tịch' || r === 'pho chu tich') return 'Phó Chủ tịch';
-                  if (r === 'thuky' || r === 'thư ký' || r === 'thu ky') return 'Thư ký';
+                  if (r === 'chutich' || r === 'chủ tịch' || r === 'chu tich' || role === 'Chủ tịch') return 'Chủ tịch';
+                  if (r === 'phochutich' || r === 'phó chủ tịch' || r === 'pho chu tich' || role === 'Phó Chủ tịch' || role === 'Phó chủ tịch') return 'Phó chủ tịch';
+                  if (r === 'thuky' || r === 'thư ký' || r === 'thu ky' || role === 'Thư ký') return 'Thư ký';
                   if (r === 'thuquy' || r === 'thủ quỹ' || r === 'thu quy') return 'Thủ quỹ';
-                  if (r === 'thanhvien' || r === 'thành viên' || r === 'thanh vien') return 'Thành viên';
+                  if (r === 'thanhvien' || r === 'thành viên' || r === 'thanh vien' || role === 'Thành viên') return 'Thành viên';
                   return role || 'Thành viên';
                 };
-                const roleValue = normalizeRole(member.role || member.clubRole || member.roleCode);
+                // Ưu tiên dùng member.role (đã được normalize) trước, nếu không có mới normalize từ roleCode/clubRole
+                const roleValue = member.role || normalizeRole(member.clubRole || member.roleCode);
+                // Debug log
+                if (member.email === 'hbhuyhoang04@gmail.com') {
+                  console.log('MembersList - member:', member);
+                  console.log('MembersList - roleValue:', roleValue);
+                  console.log('MembersList - member.role:', member.role);
+                  console.log('MembersList - member.clubRole:', member.clubRole);
+                  console.log('MembersList - member.roleCode:', member.roleCode);
+                }
                 return (
                   <tr 
                     key={member.id} 
@@ -157,12 +168,16 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadin
                       <select
                         value={roleValue}
                         onChange={(e) => onUpdateRole(member.id, e.target.value)}
-                        className="px-3 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-sans focus:outline-none focus:border-fpt-blue focus:ring-2 focus:ring-fpt-blue/20 bg-white"
+                        disabled={roleLoadingId === member.id}
+                        className="px-3 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-sans focus:outline-none focus:border-fpt-blue focus:ring-2 focus:ring-fpt-blue/20 bg-white disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {memberRoles.map(role => (
                           <option key={role} value={role}>{role}</option>
                         ))}
                       </select>
+                      {roleLoadingId === member.id && (
+                        <span className="ml-2 text-xs text-gray-500">Đang cập nhật...</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-start gap-2">

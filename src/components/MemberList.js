@@ -136,12 +136,6 @@ const MemberList = ({ members, clubs, onEdit, onDelete, deleteLoadingId }) => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center justify-start gap-2">
                         <button 
-                          onClick={() => onEdit(member)} 
-                          className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-all whitespace-nowrap"
-                        >
-                          ✅ Sửa
-                        </button>
-                        <button 
                           onClick={() => onDelete(member)} 
                           disabled={deleteLoadingId === member.id}
                           className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
