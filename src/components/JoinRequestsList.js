@@ -9,7 +9,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [actionError, setActionError] = useState('');
   const [paymentLoadingId, setPaymentLoadingId] = useState(null);
-  const [selectedStatus, setSelectedStatus] = useState('all'); // Default filter: Tất cả
+  // Lưu filter state vào localStorage để giữ lại khi chuyển trang
+  const [selectedStatus, setSelectedStatus] = useState(() => {
+    const saved = localStorage.getItem('joinRequestsFilter');
+    return saved || 'all';
+  });
 
   const statusOptions = [
     { value: 'all', label: 'Tất cả' },
@@ -201,35 +205,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     return () => controller.abort();
   };
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-        <div className="text-6xl mb-6">⏳</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Đang tải danh sách yêu cầu...</h2>
-        <p className="text-gray-600">Vui lòng đợi trong giây lát.</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-        <div className="text-6xl mb-6">⚠️</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Không thể tải danh sách</h2>
-        <p className="text-gray-600">{error}</p>
-      </div>
-    );
-  }
-
-  if (displayRequests.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-        <div className="text-6xl mb-6">✅</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Không có yêu cầu nào đang chờ duyệt</h2>
-        <p className="text-gray-600">Tất cả các yêu cầu đã được xử lý.</p>
-      </div>
-    );
-  }
+  // Không return sớm để filter luôn hiển thị
 
   const handleViewDetails = (request) => {
     setSelectedRequest(request);
@@ -254,6 +230,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 
   return (
     <>
+      {/* Filter luôn hiển thị, không phụ thuộc vào loading/error/empty state */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-4">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
@@ -262,7 +239,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             </label>
             <select
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
+              onChange={(e) => {
+                const newStatus = e.target.value;
+                setSelectedStatus(newStatus);
+                localStorage.setItem('joinRequestsFilter', newStatus);
+              }}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:border-fpt-blue focus:outline-none focus:ring-2 focus:ring-fpt-blue focus:border-transparent transition-all cursor-pointer min-w-[180px]"
             >
               {statusOptions.map((option) => (
@@ -278,6 +259,26 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
         </div>
       </div>
 
+      {/* Hiển thị loading state */}
+      {loading && (
+        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+          <div className="text-6xl mb-6">⏳</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Đang tải danh sách yêu cầu...</h2>
+          <p className="text-gray-600">Vui lòng đợi trong giây lát.</p>
+        </div>
+      )}
+
+      {/* Hiển thị error state */}
+      {error && !loading && (
+        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+          <div className="text-6xl mb-6">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Không thể tải danh sách</h2>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      )}
+
+      {/* Hiển thị nội dung chính */}
+      {!loading && !error && (
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         {displayRequests.length === 0 ? (
           <div className="p-12 text-center">
@@ -373,6 +374,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           </div>
         )}
       </div>
+      )}
 
       {/* Detail Modal */}
               {showDetailModal && selectedRequest && (
