@@ -19,6 +19,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState('');
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
+  const [roleLoadingId, setRoleLoadingId] = useState(null);
   const lastFetchedClubId = useRef(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -57,9 +58,12 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   });
 
   const normalizeRole = (role) => {
+    if (!role) return 'Thành viên';
+    // Chuyển về lowercase để so sánh (xử lý cả camelCase như PhoChuTich)
+    // Map về format đúng với memberRoles trong constants (chữ thường "chủ")
     const r = (role || '').toLowerCase();
     if (r === 'chutich' || r === 'chủ tịch' || r === 'chu tich') return 'Chủ tịch';
-    if (r === 'phochutich' || r === 'phó chủ tịch' || r === 'pho chu tich') return 'Phó Chủ tịch';
+    if (r === 'phochutich' || r === 'phó chủ tịch' || r === 'pho chu tich') return 'Phó chủ tịch';
     if (r === 'thuky' || r === 'thư ký' || r === 'thu ky') return 'Thư ký';
     if (r === 'thuquy' || r === 'thủ quỹ' || r === 'thu quy') return 'Thủ quỹ';
     if (r === 'thanhvien' || r === 'thành viên' || r === 'thanh vien') return 'Thành viên';
@@ -533,13 +537,82 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     }
   };
 
-  const handleUpdateMemberRole = (memberId, newRole) => {
-    setMembers(members.map(member =>
-      member.id === memberId
-        ? { ...member, role: newRole }
-        : member
-    ));
-    showToast('Đã cập nhật vai trò thành viên!', 'success');
+  // Map role từ tiếng Việt (UI) sang API format
+  const mapRoleToApiFormat = (role) => {
+    const r = (role || '').toLowerCase();
+    if (r === 'chủ tịch' || r === 'chu tich' || r === 'chutich') return 'ChuTich';
+    if (r === 'phó chủ tịch' || r === 'pho chu tich' || r === 'phochutich') return 'PhoChuTich';
+    if (r === 'thư ký' || r === 'thu ky' || r === 'thuky') return 'ThuKy';
+    if (r === 'thành viên' || r === 'thanh vien' || r === 'thanhvien') return 'ThanhVien';
+    return 'ThanhVien'; // Default
+  };
+
+  const handleUpdateMemberRole = async (memberId, newRole) => {
+    const member = members.find(m => m.id === memberId);
+    if (!member) {
+      showToast('Không tìm thấy thành viên.', 'error');
+      return;
+    }
+
+    const clubId = myClub?.clubId || myClub?.id;
+    const userId = member.userId || member.id;
+
+    if (!clubId || !userId) {
+      showToast('Thiếu thông tin club hoặc user.', 'error');
+      return;
+    }
+
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Vui lòng đăng nhập lại.', 'error');
+      return;
+    }
+
+    // Map role từ UI (tiếng Việt) sang API format
+    const apiRole = mapRoleToApiFormat(newRole);
+
+    setRoleLoadingId(memberId);
+    try {
+      const res = await fetch(`${API_BASE_URL}/registrations/club/${clubId}/user/${userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          newRole: apiRole
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+        throw new Error(data.message || 'Không thể cập nhật vai trò thành viên.');
+      }
+
+      // Lấy role từ API response và map về tiếng Việt
+      const responseRole = data.result?.clubRole || apiRole;
+      console.log('API Response role:', responseRole);
+      const normalizedRole = normalizeRole(responseRole);
+      console.log('Normalized role:', normalizedRole);
+
+      // Update local state với role từ API response (đã được map về tiếng Việt)
+      setMembers(members.map(m => {
+        if (m.id === memberId) {
+          const updated = { ...m, role: normalizedRole, roleCode: responseRole };
+          console.log('Updated member:', updated);
+          return updated;
+        }
+        return m;
+      }));
+      
+      showToast('Đã cập nhật vai trò thành viên!', 'success');
+    } catch (err) {
+      console.error('Update member role error:', err);
+      showToast(err.message || 'Không thể cập nhật vai trò thành viên.', 'error');
+    } finally {
+      setRoleLoadingId(null);
+    }
   };
 
   const handleUpdateFee = (feeData) => {
@@ -731,6 +804,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
           onUpdateRole={handleUpdateMemberRole}
           onDeleteMember={handleDeleteMember}
           deleteLoadingId={deleteLoadingId}
+          roleLoadingId={roleLoadingId}
         />
       )}
 

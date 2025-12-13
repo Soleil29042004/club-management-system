@@ -199,12 +199,6 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
                 </span>
               </div>
               <div className="flex flex-col p-4 bg-gray-50 rounded-lg">
-                <span className="text-xs text-gray-500 font-medium mb-1">Thời gian sinh hoạt:</span>
-                <span className="text-sm font-semibold text-gray-800">
-                  {displayClub.activityTime || 'Chưa cập nhật'}
-                </span>
-              </div>
-              <div className="flex flex-col p-4 bg-gray-50 rounded-lg">
                 <span className="text-xs text-gray-500 font-medium mb-1">Phí tham gia:</span>
                 <span className="text-sm font-semibold text-gray-800">
                   {packages.length > 0 ? (() => {
