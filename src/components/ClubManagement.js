@@ -70,7 +70,7 @@ const ClubManagement = ({ clubs, setClubs }) => {
       categoryCode: apiClub.category, // Keep original category code
       foundedDate: apiClub.establishedDate,
       president: apiClub.founderName || '',
-      memberCount: 0, // API doesn't provide member count, will need to fetch separately
+      memberCount: apiClub.totalMembers || 0, // Sử dụng totalMembers từ API
       status: apiClub.isActive ? 'Hoạt động' : 'Ngừng hoạt động',
       email: apiClub.email || '',
       location: apiClub.location || '',
@@ -80,8 +80,8 @@ const ClubManagement = ({ clubs, setClubs }) => {
     };
   };
 
-  // Fetch clubs from API
-  const fetchClubs = async (category = null) => {
+  // Fetch clubs from API với search và filter
+  const fetchClubs = async (category = null, searchName = '') => {
     setLoading(true);
     setError(null);
 
@@ -93,11 +93,14 @@ const ClubManagement = ({ clubs, setClubs }) => {
         return;
       }
 
-      // Build URL with optional category filter
+      // Build URL with optional category filter and search
       let url = `${API_BASE_URL}/clubs`;
       const params = new URLSearchParams();
       if (category && category !== 'all') {
         params.append('category', category);
+      }
+      if (searchName && searchName.trim()) {
+        params.append('name', searchName.trim());
       }
       if (params.toString()) {
         url += `?${params.toString()}`;
@@ -137,11 +140,25 @@ const ClubManagement = ({ clubs, setClubs }) => {
     }
   };
 
-  // Fetch clubs when component mounts or filter changes
+  // Fetch clubs khi component mounts hoặc khi filter/search thay đổi (với debounce cho search)
   useEffect(() => {
-    fetchClubs(filterCategory);
+    let timeoutId;
+    
+    // Nếu searchTerm thay đổi, debounce 500ms
+    // Nếu chỉ filterCategory thay đổi, fetch ngay
+    if (searchTerm) {
+      timeoutId = setTimeout(() => {
+        fetchClubs(filterCategory, searchTerm);
+      }, 500);
+    } else {
+      fetchClubs(filterCategory, searchTerm);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterCategory]);
+  }, [filterCategory, searchTerm]);
 
   // Handle search and filter changes
   const handleSearchChange = (term) => {
