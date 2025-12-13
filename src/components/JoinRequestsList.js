@@ -6,7 +6,6 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [apiRequests, setApiRequests] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('all');
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [actionError, setActionError] = useState('');
   const [paymentLoadingId, setPaymentLoadingId] = useState(null);
@@ -20,8 +19,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
       setLoading(true);
       setError('');
       try {
-        const statusPath = statusFilter === 'all' ? '' : `/status/${statusFilter}`;
-        const res = await fetch(`https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}${statusPath}`, {
+        const res = await fetch(`https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`, {
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -33,7 +31,6 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           const mapped = (data.result || []).map(item => ({
             id: item.subscriptionId || item.id,
             subscriptionId: item.subscriptionId || item.id,
-            statusRaw: item.status || '',
             studentName: item.studentName || '',
             studentEmail: item.studentEmail || '',
             studentId: item.studentCode || '',
@@ -55,10 +52,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             isPaid: item.isPaid,
             paymentMethod: item.paymentMethod
           }));
-          const filtered = statusFilter === 'all'
-            ? mapped
-            : mapped.filter(r => (r.statusRaw || '') === statusFilter);
-          setApiRequests(filtered);
+          setApiRequests(mapped);
         } else {
           setApiRequests([]);
           setError(data.message || 'Không thể tải danh sách đơn đăng ký.');
@@ -75,7 +69,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 
     fetchRegistrations();
     return () => controller.abort();
-  }, [clubId, statusFilter]);
+  }, [clubId]);
 
   const displayRequests = apiRequests.length ? apiRequests : requests;
 
@@ -187,14 +181,6 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     return () => controller.abort();
   };
 
-  const statusOptions = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'ChoDuyet', label: 'Chờ duyệt' },
-    { value: 'DaDuyet', label: 'Đã duyệt' },
-    { value: 'TuChoi', label: 'Từ chối' },
-    { value: 'DaRoiCLB', label: 'Đã rời CLB' }
-  ];
-
   if (loading) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
@@ -211,6 +197,16 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
         <div className="text-6xl mb-6">⚠️</div>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Không thể tải danh sách</h2>
         <p className="text-gray-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (displayRequests.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+        <div className="text-6xl mb-6">✅</div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Không có yêu cầu nào đang chờ duyệt</h2>
+        <p className="text-gray-600">Tất cả các yêu cầu đã được xử lý.</p>
       </div>
     );
   }
@@ -238,31 +234,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   return (
     <>
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-4 flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-semibold text-gray-700">Lọc theo trạng thái:</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fpt-blue"
-            >
-              {statusOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
         <div className="overflow-x-auto">
-          {displayRequests.length === 0 ? (
-            <div className="p-10 text-center text-gray-600">
-              <div className="text-5xl mb-4">✅</div>
-              <p className="text-lg font-semibold mb-2">Không có yêu cầu nào đang chờ duyệt</p>
-              <p className="text-sm text-gray-500 m-0">Tất cả các yêu cầu đã được xử lý.</p>
-            </div>
-          ) : (
-            <table className="w-full">
+          <table className="w-full">
               <thead className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold whitespace-nowrap">Tên sinh viên</th>
@@ -334,7 +307,6 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
               ))}
             </tbody>
           </table>
-          )}
         </div>
       </div>
 
@@ -448,3 +420,4 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 };
 
 export default JoinRequestsList;
+

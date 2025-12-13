@@ -58,7 +58,7 @@ const StudentJoinedClubs = () => {
 
       const userId = resolveUserId();
       if (!userId) {
-        setError('Không tìm thấy thông tin người dùng.');
+        setError('Không tìm thấy thông tin user.');
         setLoading(false);
         return;
       }
