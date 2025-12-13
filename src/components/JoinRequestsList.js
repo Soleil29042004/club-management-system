@@ -221,6 +221,16 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     );
   }
 
+  if (displayRequests.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+        <div className="text-6xl mb-6">✅</div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Không có yêu cầu nào đang chờ duyệt</h2>
+        <p className="text-gray-600">Tất cả các yêu cầu đã được xử lý.</p>
+      </div>
+    );
+  }
+
   const handleViewDetails = (request) => {
     setSelectedRequest(request);
     setShowDetailModal(true);
