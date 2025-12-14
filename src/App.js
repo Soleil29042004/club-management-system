@@ -25,6 +25,7 @@ function AppContent() {
   const [members, setMembers] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userReady, setUserReady] = useState(false);
+  const [hasSetUserReady, setHasSetUserReady] = useState(false); // Flag để tránh set userReady trùng lặp
 
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
@@ -70,13 +71,19 @@ function AppContent() {
 
   // Check if user is already logged in on component mount
   useEffect(() => {
+    // Chỉ chạy một lần khi component mount, không chạy lại khi state thay đổi
+    let isMounted = true;
+    
     const token = localStorage.getItem('authToken');
     
     // If no token, user is not authenticated
     if (!token) {
-      setIsAuthenticated(false);
-      setUserRole(null);
-      setUserReady(true);
+      if (isMounted && !hasSetUserReady) {
+        setIsAuthenticated(false);
+        setUserRole(null);
+        setUserReady(true);
+        setHasSetUserReady(true);
+      }
       return;
     }
 
@@ -86,8 +93,12 @@ function AppContent() {
       // Invalid token, clear and logout
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
-      setIsAuthenticated(false);
-      setUserRole(null);
+      if (isMounted && !hasSetUserReady) {
+        setIsAuthenticated(false);
+        setUserRole(null);
+        setUserReady(true);
+        setHasSetUserReady(true);
+      }
       return;
     }
 
@@ -112,9 +123,11 @@ function AppContent() {
     // Check if role is valid
     if (roleFromToken === 'admin' || roleFromToken === 'student' || roleFromToken === 'club_leader') {
       // Set authenticated state
-      setIsAuthenticated(true);
-      setUserRole(roleFromToken);
-      setShowHome(false);
+      if (isMounted) {
+        setIsAuthenticated(true);
+        setUserRole(roleFromToken);
+        setShowHome(false);
+      }
 
       // Hydrate localStorage.user with complete info
       const storedUser = localStorage.getItem('user');
@@ -173,7 +186,17 @@ function AppContent() {
         } catch (err) {
           console.warn('Failed to fetch user info, using token data:', err);
         } finally {
-          setUserReady(true);
+          // Chỉ set userReady nếu component vẫn còn mount và chưa được set
+          // Sử dụng functional update để tránh race condition
+          if (isMounted) {
+            setHasSetUserReady(prev => {
+              if (!prev) {
+                setUserReady(true);
+                return true;
+              }
+              return prev;
+            });
+          }
         }
       };
       
@@ -182,10 +205,17 @@ function AppContent() {
       // Invalid role, but still have token - might be a new role type
       // Keep authenticated but with null role (will show error if needed)
       console.warn('Unknown role from token:', scopeFromToken, 'mapped to:', roleFromToken);
-      setIsAuthenticated(false);
-      setUserRole(null);
-      setUserReady(true);
+      if (isMounted && !hasSetUserReady) {
+        setIsAuthenticated(false);
+        setUserRole(null);
+        setUserReady(true);
+        setHasSetUserReady(true);
+      }
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleLoginSuccess = (role) => {
@@ -194,7 +224,12 @@ function AppContent() {
     setShowHome(false);
     setShowLogin(false);
     setShowRegister(false);
-    setUserReady(true);
+    // Set userReady ngay để UI hiển thị, useEffect sẽ fetch user info ở background
+    // Nhưng chỉ set nếu chưa được set bởi useEffect
+    if (!hasSetUserReady) {
+      setUserReady(true);
+      setHasSetUserReady(true);
+    }
   };
 
   const mapApiClub = (apiClub) => ({
