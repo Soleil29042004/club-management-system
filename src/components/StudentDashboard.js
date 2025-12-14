@@ -175,7 +175,7 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
       category: item.category || item.type || 'Khác',
       president: item.founderName || item.president || item.chairman || item.leaderName || item.adminName || 'Chưa cập nhật',
       founderName: item.founderName || item.president || item.chairman || item.leaderName || item.adminName || 'Chưa cập nhật',
-      memberCount: item.memberCount || item.totalMembers || item.membersCount || item.memberTotal || 0,
+      memberCount: item.totalMembers !== undefined && item.totalMembers !== null ? item.totalMembers : (item.memberCount !== undefined && item.memberCount !== null ? item.memberCount : (item.membersCount !== undefined && item.membersCount !== null ? item.membersCount : (item.memberTotal !== undefined && item.memberTotal !== null ? item.memberTotal : 0))),
       status: item.statusText || item.status || (item.isActive !== false ? 'Hoạt động' : 'Tạm dừng'),
       email: item.email || item.contactEmail || item.creatorEmail || '',
       location: item.location || item.address || 'Chưa cập nhật',
@@ -219,19 +219,24 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
         const packageResults = await Promise.all(packagePromises);
         
         // Update clubs with package data
+        // Sử dụng clubsList thay vì prevClubs để đảm bảo giữ nguyên memberCount từ lần fetch đầu
         setClubs(prevClubs => {
+          // Tạo map từ clubsList để đảm bảo có memberCount đúng
+          const clubsMap = new Map(clubsList.map(c => [c.clubId || c.id, c]));
+          
           return prevClubs.map(club => {
+            const originalClub = clubsMap.get(club.clubId || club.id) || club;
             const packageData = packageResults.find(pr => pr && (pr.clubId === club.clubId || pr.clubId === club.id));
             if (packageData && packageData.package) {
               const pkg = packageData.package;
               return {
-                ...club,
-                participationFee: pkg.price !== undefined ? pkg.price : club.participationFee,
-                membershipDuration: pkg.term || club.membershipDuration,
+                ...originalClub, // Sử dụng originalClub để đảm bảo có memberCount đúng
+                participationFee: pkg.price !== undefined ? pkg.price : originalClub.participationFee,
+                membershipDuration: pkg.term || originalClub.membershipDuration,
                 packageTerm: pkg.term // Store term separately for display
               };
             }
-            return club;
+            return originalClub; // Trả về originalClub để đảm bảo có memberCount đúng
           });
         });
       } catch (error) {
@@ -263,9 +268,13 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
         
         const list = Array.isArray(data?.result) ? data.result : Array.isArray(data) ? data : [];
         const normalizedClubs = list.map(normalizeClub);
+        console.log('Fetched clubs with memberCount:', normalizedClubs.map(c => ({ name: c.name, memberCount: c.memberCount, totalMembers: list.find(l => (l.clubId || l.id) === c.clubId)?.totalMembers })));
+        
+        // Set clubs trước
         setClubs(normalizedClubs);
         
         // Fetch packages for each club to get correct participation fee
+        // Truyền normalizedClubs để đảm bảo có memberCount đúng
         fetchPackagesForClubs(normalizedClubs);
       } catch (error) {
         // Retry on network errors
@@ -292,7 +301,8 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     };
 
     fetchClubs();
-  }, [API_BASE_URL, setClubs, showToast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Chỉ chạy một lần khi component mount
 
   const handleJoinRequest = (club) => {
     setSelectedClub(club);
