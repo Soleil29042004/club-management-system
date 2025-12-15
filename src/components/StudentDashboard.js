@@ -327,9 +327,10 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     }
 
     // Chuẩn bị payload theo đúng format API yêu cầu
-    // API chỉ cần packageId trong body, không cần clubId (API tự lấy từ package)
+    // API cần packageId và joinReason trong body
     const payload = {
-      packageId: parseInt(formData.packageId)
+      packageId: parseInt(formData.packageId),
+      joinReason: formData.reason.trim()
     };
 
     // API endpoint: POST /api/registers
