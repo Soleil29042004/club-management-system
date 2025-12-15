@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useToast } from './Toast';
 
 const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
+  const { showToast } = useToast();
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -9,6 +11,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [actionError, setActionError] = useState('');
   const [paymentLoadingId, setPaymentLoadingId] = useState(null);
+  // Lưu trạng thái thanh toán trước đó để phát hiện thay đổi
+  const previousPaymentStatusRef = useRef(new Map());
   // Lưu filter state vào localStorage để giữ lại khi chuyển trang
   const [selectedStatus, setSelectedStatus] = useState(() => {
     const saved = localStorage.getItem('joinRequestsFilter');
@@ -76,6 +80,23 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             endDate: item.endDate,
             joinDate: item.joinDate
           }));
+          
+          // Kiểm tra thay đổi trạng thái thanh toán để hiển thị toast
+          mapped.forEach((req) => {
+            const subscriptionId = req.subscriptionId || req.id;
+            const currentIsPaid = req.isPaid || false;
+            const previousIsPaid = previousPaymentStatusRef.current.get(subscriptionId);
+            
+            // Nếu có thay đổi từ chưa thanh toán sang đã thanh toán, hiển thị toast
+            if (previousIsPaid === false && currentIsPaid === true) {
+              const studentName = req.studentName || 'Sinh viên';
+              showToast(`💰 ${studentName} đã chuyển tiền thành công!`, 'success');
+            }
+            
+            // Lưu trạng thái thanh toán hiện tại
+            previousPaymentStatusRef.current.set(subscriptionId, currentIsPaid);
+          });
+          
           setApiRequests(mapped);
         } else {
           setApiRequests([]);
@@ -94,6 +115,94 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     fetchRegistrations();
     return () => controller.abort();
   }, [clubId, selectedStatus]);
+
+  // Polling để kiểm tra thay đổi trạng thái thanh toán realtime (mỗi 5 giây)
+  useEffect(() => {
+    if (!clubId || loading) return;
+
+    const token = localStorage.getItem('authToken');
+    const controller = new AbortController();
+
+    const pollInterval = setInterval(async () => {
+      try {
+        // Luôn poll tất cả requests để không bỏ sót thông báo thanh toán
+        const url = `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`;
+        
+        const res = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          signal: controller.signal
+        });
+        
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          const mapped = (data.result || []).map(item => ({
+            id: item.subscriptionId || item.id,
+            subscriptionId: item.subscriptionId || item.id,
+            studentName: item.studentName || '',
+            studentEmail: item.studentEmail || '',
+            studentId: item.studentCode || '',
+            phone: item.phone || '',
+            major: item.major || '',
+            requestDate: item.createdAt || item.joinDate || new Date().toISOString(),
+            status: (() => {
+              const st = (item.status || '').toLowerCase();
+              if (st === 'choduyet') return 'pending';
+              if (st === 'daduyet') return 'approved';
+              if (st === 'tuchoi') return 'rejected';
+              if (st === 'daroi') return 'left';
+              return st || 'pending';
+            })(),
+            reason: item.reason || '',
+            message: item.message || '',
+            packageName: item.packageName,
+            price: item.price,
+            term: item.term,
+            isPaid: item.isPaid,
+            paymentMethod: item.paymentMethod,
+            clubRole: item.clubRole,
+            approverName: item.approverName,
+            paymentDate: item.paymentDate,
+            startDate: item.startDate,
+            endDate: item.endDate,
+            joinDate: item.joinDate
+          }));
+          
+          // So sánh với trạng thái thanh toán trước đó
+          mapped.forEach((req) => {
+            const subscriptionId = req.subscriptionId || req.id;
+            const currentIsPaid = req.isPaid || false;
+            const previousIsPaid = previousPaymentStatusRef.current.get(subscriptionId);
+            
+            // Nếu có thay đổi từ chưa thanh toán sang đã thanh toán, hiển thị toast
+            if (previousIsPaid === false && currentIsPaid === true) {
+              const studentName = req.studentName || 'Sinh viên';
+              showToast(`💰 ${studentName} đã chuyển tiền thành công!`, 'success');
+            }
+            
+            // Cập nhật trạng thái thanh toán hiện tại
+            previousPaymentStatusRef.current.set(subscriptionId, currentIsPaid);
+          });
+          
+          // Cập nhật danh sách requests
+          setApiRequests(mapped);
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Polling payment status error:', err);
+          // Không hiển thị lỗi khi polling để tránh spam
+        }
+      }
+    }, 5000); // Poll mỗi 5 giây
+
+    return () => {
+      clearInterval(pollInterval);
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clubId, loading, selectedStatus]); // Chạy khi clubId, loading hoặc selectedStatus thay đổi
 
   const displayRequests = apiRequests.length ? apiRequests : requests;
 
