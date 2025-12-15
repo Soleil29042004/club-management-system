@@ -64,53 +64,51 @@ const Home = ({ onNavigateToLogin, onNavigateToRegister }) => {
         <h3 className="text-4xl font-bold text-center text-gray-800 mb-12">
           Tính năng nổi bật
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-gray-100">
-            <div className="text-5xl mb-4">🏛️</div>
-            <h4 className="text-xl font-bold text-gray-800 mb-3">Quản lý Câu lạc bộ</h4>
-            <p className="text-gray-600 leading-relaxed">
-              Tạo và quản lý thông tin câu lạc bộ một cách dễ dàng. Theo dõi số lượng thành viên, hoạt động và thông tin liên hệ.
-            </p>
+        <div>
+          {/* First row - 3 cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all border border-gray-100 group">
+              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">🏛️</div>
+              <h4 className="text-xl font-bold text-gray-800 mb-3">Quản lý Câu lạc bộ</h4>
+              <p className="text-gray-600 leading-relaxed">
+                Tạo và quản lý thông tin câu lạc bộ một cách dễ dàng. Theo dõi số lượng thành viên, hoạt động và thông tin liên hệ.
+              </p>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all border border-gray-100 group">
+              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">👥</div>
+              <h4 className="text-xl font-bold text-gray-800 mb-3">Quản lý Thành viên</h4>
+              <p className="text-gray-600 leading-relaxed">
+                Duyệt yêu cầu tham gia, quản lý danh sách thành viên và phân quyền vai trò trong câu lạc bộ.
+              </p>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all border border-gray-100 group">
+              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">📋</div>
+              <h4 className="text-xl font-bold text-gray-800 mb-3">Duyệt Yêu cầu</h4>
+              <p className="text-gray-600 leading-relaxed">
+                Hệ thống duyệt yêu cầu tham gia và đăng ký mở câu lạc bộ mới một cách nhanh chóng và minh bạch.
+              </p>
+            </div>
           </div>
 
-          <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-gray-100">
-            <div className="text-5xl mb-4">👥</div>
-            <h4 className="text-xl font-bold text-gray-800 mb-3">Quản lý Thành viên</h4>
-            <p className="text-gray-600 leading-relaxed">
-              Duyệt yêu cầu tham gia, quản lý danh sách thành viên và phân quyền vai trò trong câu lạc bộ.
-            </p>
-          </div>
+          {/* Second row - 2 cards centered */}
+          <div className="flex flex-wrap justify-center gap-8">
+            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all border border-gray-100 group w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)] max-w-md">
+              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">💰</div>
+              <h4 className="text-xl font-bold text-gray-800 mb-3">Quản lý Phí</h4>
+              <p className="text-gray-600 leading-relaxed">
+                Theo dõi và quản lý phí tham gia câu lạc bộ, thời hạn thành viên và các khoản thanh toán.
+              </p>
+            </div>
 
-          <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-gray-100">
-            <div className="text-5xl mb-4">📋</div>
-            <h4 className="text-xl font-bold text-gray-800 mb-3">Duyệt Yêu cầu</h4>
-            <p className="text-gray-600 leading-relaxed">
-              Hệ thống duyệt yêu cầu tham gia và đăng ký mở câu lạc bộ mới một cách nhanh chóng và minh bạch.
-            </p>
-          </div>
-
-          <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-gray-100">
-            <div className="text-5xl mb-4">💰</div>
-            <h4 className="text-xl font-bold text-gray-800 mb-3">Quản lý Phí</h4>
-            <p className="text-gray-600 leading-relaxed">
-              Theo dõi và quản lý phí tham gia câu lạc bộ, thời hạn thành viên và các khoản thanh toán.
-            </p>
-          </div>
-
-          <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-gray-100">
-            <div className="text-5xl mb-4">📅</div>
-            <h4 className="text-xl font-bold text-gray-800 mb-3">Hoạt động</h4>
-            <p className="text-gray-600 leading-relaxed">
-              Tổ chức và quản lý các hoạt động, sự kiện của câu lạc bộ một cách có hệ thống.
-            </p>
-          </div>
-
-          <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-gray-100">
-            <div className="text-5xl mb-4">📊</div>
-            <h4 className="text-xl font-bold text-gray-800 mb-3">Thống kê</h4>
-            <p className="text-gray-600 leading-relaxed">
-              Xem thống kê tổng quan về câu lạc bộ, thành viên và các hoạt động đang diễn ra.
-            </p>
+            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all border border-gray-100 group w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)] max-w-md">
+              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">📊</div>
+              <h4 className="text-xl font-bold text-gray-800 mb-3">Thống kê</h4>
+              <p className="text-gray-600 leading-relaxed">
+                Xem thống kê tổng quan về câu lạc bộ, thành viên và các hoạt động đang diễn ra.
+              </p>
+            </div>
           </div>
         </div>
       </section>

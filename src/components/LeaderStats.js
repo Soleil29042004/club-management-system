@@ -56,7 +56,7 @@ const LeaderStats = ({
           💰
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">Doanh thu phí</h3>
+          <h3 className="text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">Doanh thu theo tháng</h3>
           <p className="text-3xl font-bold text-fpt-blue">{(totalRevenue || 0).toLocaleString('vi-VN')} VNĐ</p>
         </div>
       </div>
