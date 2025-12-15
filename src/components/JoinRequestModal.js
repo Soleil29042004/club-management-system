@@ -5,6 +5,7 @@ import { clubCategoryLabels } from '../data/constants';
 const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   const { showToast } = useToast();
   const [formData, setFormData] = useState({
+    fullName: '',
     phone: '',
     studentId: '',
     major: '',
@@ -118,6 +119,14 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
       const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]'); // legacy mock storage
       const detailedUser = registeredUsers.find(u => u.email === user.email) || {};
 
+      const fullName =
+        profile.fullName ||
+        profile.name ||
+        user.fullName ||
+        user.name ||
+        detailedUser.fullName ||
+        detailedUser.name ||
+        '';
       const phone =
         profile.phone ||
         profile.phoneNumber ||
@@ -136,6 +145,7 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
 
       setFormData(prev => ({
         ...prev,
+        fullName,
         phone,
         studentId,
         major,
@@ -163,6 +173,10 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
 
   const validateForm = () => {
     const newErrors = {};
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Họ và tên không được để trống';
+    }
 
     if (!formData.phone.trim()) {
       newErrors.phone = 'Số điện thoại không được để trống';
@@ -238,6 +252,22 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Thông tin cá nhân</h3>
               <div className="space-y-4">
+                <div className="flex flex-col">
+                  <label htmlFor="fullName" className="mb-2 font-semibold text-gray-800 text-sm">Họ và tên *</label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    placeholder="Nhập họ và tên"
+                    className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                      errors.fullName ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                  />
+                  {errors.fullName && <span className="text-red-500 text-xs mt-1">{errors.fullName}</span>}
+                </div>
+
                 <div className="flex flex-col">
                   <label htmlFor="phone" className="mb-2 font-semibold text-gray-800 text-sm">Số điện thoại *</label>
                   <input
