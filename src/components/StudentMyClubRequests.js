@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useToast } from './Toast';
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
@@ -16,6 +16,8 @@ const StudentMyClubRequests = () => {
   const [error, setError] = useState('');
   const [payingId, setPayingId] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
+  // Lưu trạng thái trước đó để phát hiện thay đổi
+  const previousStatusesRef = useRef(new Map());
 
   useEffect(() => {
     let isMounted = true; // Flag để tránh setState sau khi component unmount
@@ -73,6 +75,23 @@ const StudentMyClubRequests = () => {
         });
 
         if (isMounted) {
+          // Kiểm tra thay đổi trạng thái để hiển thị toast
+          raw.forEach((reg) => {
+            const subscriptionId = reg.subscriptionId;
+            const currentStatus = reg.status || '';
+            const previousStatus = previousStatusesRef.current.get(subscriptionId);
+            
+            // Nếu có thay đổi từ ChoDuyet sang DaDuyet, hiển thị toast
+            if (previousStatus && previousStatus === 'ChoDuyet' && 
+                (currentStatus === 'DaDuyet' || currentStatus === 'approved')) {
+              const clubName = reg.clubName || 'CLB';
+              showToast(`🎉 Đơn đăng ký tham gia ${clubName} đã được duyệt!`, 'success');
+            }
+            
+            // Lưu trạng thái hiện tại
+            previousStatusesRef.current.set(subscriptionId, currentStatus);
+          });
+          
           setRegistrations(raw);
           setLoading(false);
         }
@@ -98,6 +117,61 @@ const StudentMyClubRequests = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Chỉ chạy một lần khi component mount, không phụ thuộc vào showToast
+
+  // Polling để kiểm tra thay đổi trạng thái realtime (mỗi 5 giây)
+  useEffect(() => {
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token || loading) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/registers/my-registrations`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json().catch(() => null);
+        
+        if (response.ok && data && data.code === 1000) {
+          const raw = data.result || [];
+          
+          // So sánh với trạng thái trước đó
+          raw.forEach((reg) => {
+            const subscriptionId = reg.subscriptionId;
+            const currentStatus = reg.status || '';
+            const previousStatus = previousStatusesRef.current.get(subscriptionId);
+            
+            // Nếu có thay đổi từ ChoDuyet sang DaDuyet, hiển thị toast
+            if (previousStatus && previousStatus === 'ChoDuyet' && 
+                (currentStatus === 'DaDuyet' || currentStatus === 'approved')) {
+              const clubName = reg.clubName || 'CLB';
+              showToast(`🎉 Đơn đăng ký tham gia ${clubName} đã được duyệt!`, 'success');
+            }
+            
+            // Cập nhật trạng thái hiện tại
+            previousStatusesRef.current.set(subscriptionId, currentStatus);
+          });
+          
+          // Cập nhật danh sách đăng ký
+          raw.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+          });
+          setRegistrations(raw);
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+        // Không hiển thị lỗi khi polling để tránh spam
+      }
+    }, 5000); // Poll mỗi 5 giây
+
+    return () => clearInterval(pollInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]); // Chỉ chạy khi loading thay đổi
 
   const renderStatus = (status) => {
     const info = statusMap[status] || { text: status || 'Không xác định', color: 'bg-gray-100 text-gray-700' };
