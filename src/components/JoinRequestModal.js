@@ -18,6 +18,45 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   const [clubDetail, setClubDetail] = useState(null);
   const [clubDetailError, setClubDetailError] = useState('');
   const [clubDetailLoading, setClubDetailLoading] = useState(false);
+  const [userInfoLoading, setUserInfoLoading] = useState(false);
+
+  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+
+  // Fetch user info để tự điền vào form
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      if (!token) return;
+
+      setUserInfoLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/users/my-info`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          const info = data.result || data.data || data;
+          // Tự điền thông tin vào form nếu chưa có
+          setFormData(prev => ({
+            ...prev,
+            phone: prev.phone || info.phoneNumber || info.phone || '',
+            studentId: prev.studentId || info.studentCode || info.studentId || '',
+            major: prev.major || info.major || ''
+          }));
+        }
+      } catch (error) {
+        console.warn('Failed to fetch user info for auto-fill:', error);
+      } finally {
+        setUserInfoLoading(false);
+      }
+    };
+
+    fetchUserInfo();
+  }, []); // Chỉ chạy một lần khi modal mở
 
   // Fetch club detail & packages khi club thay đổi
   useEffect(() => {
