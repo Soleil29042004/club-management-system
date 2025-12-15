@@ -22,6 +22,7 @@ const StudentJoinedClubs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [clubs, setClubs] = useState([]);
+  const [leavingId, setLeavingId] = useState(null);
 
   const resolveUserId = () => {
     // Ưu tiên lấy userId từ token trước (đảm bảo là userId, không phải email)
@@ -154,6 +155,77 @@ const StudentJoinedClubs = () => {
     );
   };
 
+  const normalize = (value) => (value || '').toString().trim().toLowerCase();
+
+  const isLeaderRole = (role) => normalize(role) === 'chutich';
+
+  const isApprovedStatus = (status) => {
+    const normalized = normalize(status);
+    return normalized === 'daduyet' || normalized === 'approved' || normalized === 'active';
+  };
+
+  const isPaidMembership = (club) => {
+    if (club.isPaid === undefined || club.isPaid === null) return true;
+    return !!club.isPaid;
+  };
+
+  const isActiveMembership = (club) => {
+    const now = new Date();
+    const end = club.endDate ? new Date(club.endDate) : null;
+    const inTime = !end || end >= now;
+    const apiActive = club.isActive !== false;
+    return apiActive && inTime;
+  };
+
+  const canLeaveClub = (club) => {
+    if (!club) return false;
+    if (isLeaderRole(club.clubRole || club.role)) return false; // Chủ tịch không thể tự rời
+    const statusValue = club.status || club.registerStatus || club.registrationStatus;
+    const approved = statusValue ? isApprovedStatus(statusValue) : true; // Danh sách này thường chỉ có bản ghi đã duyệt
+    return approved && isPaidMembership(club) && isActiveMembership(club);
+  };
+
+  const handleLeaveClub = async (club) => {
+    if (!club) return;
+    if (!canLeaveClub(club)) {
+      showToast('Chỉ thành viên đang hoạt động (đã duyệt & đã thanh toán) mới có thể rời CLB.', 'error');
+      return;
+    }
+
+    const confirmLeave = window.confirm(`Bạn chắc chắn muốn rời khỏi ${club.clubName || 'CLB này'}?`);
+    if (!confirmLeave) return;
+
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Vui lòng đăng nhập để thực hiện thao tác.', 'error');
+      return;
+    }
+
+    try {
+      setLeavingId(club.clubId);
+      const res = await fetch(`${API_BASE_URL}/registers/${club.clubId}/leave`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (data.code !== 0 && data.code !== 1000)) {
+        throw new Error(data?.message || 'Không thể rời khỏi CLB. Vui lòng thử lại.');
+      }
+
+      showToast(data.message || 'Bạn đã rời khỏi CLB thành công.', 'success');
+      setClubs((prev) => prev.filter((c) => String(c.clubId) !== String(club.clubId)));
+    } catch (err) {
+      console.error('Leave club error:', err);
+      showToast(err.message || 'Đã xảy ra lỗi khi rời CLB.', 'error');
+    } finally {
+      setLeavingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-600">
@@ -234,9 +306,26 @@ const StudentJoinedClubs = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <span className="px-2 py-1 bg-gray-100 rounded-md">Liên hệ: {club.email || '—'}</span>
-              {club.location && <span className="px-2 py-1 bg-gray-100 rounded-md">Địa điểm: {club.location}</span>}
+            <div className="flex items-center justify-between gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2 py-1 bg-gray-100 rounded-md">Liên hệ: {club.email || '—'}</span>
+                {club.location && <span className="px-2 py-1 bg-gray-100 rounded-md">Địa điểm: {club.location}</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                {canLeaveClub(club) ? (
+                  <button
+                    onClick={() => handleLeaveClub(club)}
+                    disabled={leavingId === club.clubId}
+                    className="px-3 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg font-semibold hover:bg-red-100 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {leavingId === club.clubId ? 'Đang xử lý...' : 'Rời CLB'}
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-gray-400">
+                    Chỉ thành viên đang hoạt động (không phải Chủ tịch) có thể rời
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ))}
