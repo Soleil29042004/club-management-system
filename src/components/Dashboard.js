@@ -159,7 +159,6 @@ const Dashboard = ({ clubs = [], members = [] }) => {
           <div className="flex-1">
             <h3 className="m-0 mb-2 text-sm text-gray-600 font-medium uppercase tracking-wide">Tổng số câu lạc bộ</h3>
             <p className="m-0 mb-1 text-[34px] font-bold text-fpt-blue tracking-tight">{totalClubs}</p>
-            <span className="text-xs text-gray-500">{activeClubs} đang hoạt động</span>
           </div>
         </div>
 
@@ -168,7 +167,6 @@ const Dashboard = ({ clubs = [], members = [] }) => {
           <div className="flex-1">
             <h3 className="m-0 mb-2 text-sm text-gray-600 font-medium uppercase tracking-wide">Tổng số thành viên</h3>
             <p className="m-0 mb-1 text-[34px] font-bold text-fpt-blue tracking-tight">{totalMembers}</p>
-            <span className="text-xs text-gray-500">{activeMembers} đang hoạt động</span>
           </div>
         </div>
 

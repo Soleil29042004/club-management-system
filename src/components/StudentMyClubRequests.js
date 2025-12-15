@@ -276,17 +276,11 @@ const StudentMyClubRequests = () => {
                   </td>
                   <td className="px-6 py-4 text-gray-700">
                     {reg.joinDate ? new Date(reg.joinDate).toLocaleString('vi-VN') : '—'}
-                    <div className="text-xs text-gray-500">
-                      {reg.paymentDate ? `Thanh toán: ${new Date(reg.paymentDate).toLocaleString('vi-VN')}` : ''}
-                    </div>
                   </td>
                   <td className="px-6 py-4 text-gray-700">
                     {reg.startDate && reg.endDate
                       ? `${new Date(reg.startDate).toLocaleDateString('vi-VN')} → ${new Date(reg.endDate).toLocaleDateString('vi-VN')}`
                       : '—'}
-                    {reg.approverName && (
-                      <div className="text-xs text-gray-500 mt-1">Duyệt: {reg.approverName}</div>
-                    )}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2 flex-wrap">
