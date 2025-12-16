@@ -20,6 +20,7 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   const [clubDetailError, setClubDetailError] = useState('');
   const [clubDetailLoading, setClubDetailLoading] = useState(false);
   const [userInfoLoading, setUserInfoLoading] = useState(false);
+  const [userInfoLoaded, setUserInfoLoaded] = useState(false); // Track if API user info has been loaded
 
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
@@ -41,13 +42,15 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
         const data = await res.json().catch(() => ({}));
         if (res.ok && (data.code === 1000 || data.code === 0)) {
           const info = data.result || data.data || data;
-          // Tự điền thông tin vào form nếu chưa có
+          // Tự điền thông tin vào form từ API (ưu tiên API data)
           setFormData(prev => ({
             ...prev,
-            phone: prev.phone || info.phoneNumber || info.phone || '',
-            studentId: prev.studentId || info.studentCode || info.studentId || '',
-            major: prev.major || info.major || ''
+            fullName: info.fullName || prev.fullName || '',
+            phone: info.phoneNumber || info.phone || prev.phone || '',
+            studentId: info.studentCode || info.studentId || prev.studentId || '',
+            major: info.major || prev.major || ''
           }));
+          setUserInfoLoaded(true); // Mark API data as loaded
         }
       } catch (error) {
         console.warn('Failed to fetch user info for auto-fill:', error);
@@ -151,50 +154,59 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   };
 
   useEffect(() => {
-    // Load user data from localStorage (profile info)
+    // Load user data from localStorage (profile info) - chỉ dùng làm fallback nếu API chưa load xong
+    // Chỉ set các field nếu API chưa load hoặc field chưa có giá trị (để không ghi đè API data)
+    if (userInfoLoaded) return; // Nếu API đã load xong, không dùng localStorage
+
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const profile = JSON.parse(localStorage.getItem('profile') || '{}'); // optional storage
       const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]'); // legacy mock storage
       const detailedUser = registeredUsers.find(u => u.email === user.email) || {};
 
-      const fullName =
-        profile.fullName ||
-        profile.name ||
-        user.fullName ||
-        user.name ||
-        detailedUser.fullName ||
-        detailedUser.name ||
-        '';
-      const phone =
-        profile.phone ||
-        profile.phoneNumber ||
-        user.phone ||
-        user.phoneNumber ||
-        detailedUser.phone ||
-        '';
-      const studentId =
-        profile.studentId ||
-        profile.studentCode ||
-        user.studentId ||
-        user.studentCode ||
-        detailedUser.studentId ||
-        '';
-      const major = profile.major || user.major || detailedUser.major || '';
+      setFormData(prev => {
+        // Chỉ set nếu field chưa có giá trị (để không ghi đè API data khi API load sau)
+        const fullName =
+          prev.fullName ||
+          profile.fullName ||
+          profile.name ||
+          user.fullName ||
+          user.name ||
+          detailedUser.fullName ||
+          detailedUser.name ||
+          '';
+        const phone =
+          prev.phone ||
+          profile.phone ||
+          profile.phoneNumber ||
+          user.phone ||
+          user.phoneNumber ||
+          detailedUser.phone ||
+          '';
+        const studentId =
+          prev.studentId ||
+          profile.studentId ||
+          profile.studentCode ||
+          user.studentId ||
+          user.studentCode ||
+          detailedUser.studentId ||
+          '';
+        const major = prev.major || profile.major || user.major || detailedUser.major || '';
 
-      setFormData(prev => ({
-        ...prev,
-        fullName,
-        phone,
-        studentId,
-        major,
-        reason: ''
-      }));
+        return {
+          ...prev,
+          fullName,
+          phone,
+          studentId,
+          major,
+          reason: prev.reason || '' // Giữ nguyên reason nếu đã có
+        };
+      });
     } catch (err) {
       console.error('Auto-fill profile error:', err);
-      showToast('Không thể tải thông tin hồ sơ.', 'error');
+      // Không hiển thị toast vì đây chỉ là fallback, API đã xử lý chính
     }
-  }, [club, showToast]); // Re-run when modal opens for a club
+  }, [club, userInfoLoaded]); // Re-run when modal opens for a club or when API data is loaded
 
   if (!club) return null;
 
