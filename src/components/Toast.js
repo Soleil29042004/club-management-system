@@ -19,10 +19,10 @@ export const ToastProvider = ({ children }) => {
     
     setToasts(prev => [...prev, newToast]);
     
-    // Auto remove after 3 seconds
+    // Auto remove after 10 seconds
     setTimeout(() => {
       removeToast(id);
-    }, 3000);
+    }, 10000);
   };
 
   const removeToast = (id) => {
@@ -60,7 +60,7 @@ const ToastItem = ({ toast, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       handleClose();
-    }, 3000);
+    }, 10000);
 
     return () => clearTimeout(timer);
   }, [handleClose]);
