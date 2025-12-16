@@ -375,6 +375,17 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
             previousPaymentStatusRef.current.set(subscriptionId, currentIsPaid);
           });
           
+          // Lưu trạng thái vào localStorage để giữ lại khi reload
+          try {
+            const targetClubId = myClub?.id || myClub?.clubId;
+            if (targetClubId) {
+              const statusMap = Object.fromEntries(previousPaymentStatusRef.current);
+              localStorage.setItem(`paymentStatus_${targetClubId}`, JSON.stringify(statusMap));
+            }
+          } catch (err) {
+            console.error('Error saving payment status to localStorage:', err);
+          }
+          
           // Đánh dấu đã hoàn thành lần load đầu tiên
           if (isInitialLoadRef.current) {
             isInitialLoadRef.current = false;
@@ -395,10 +406,33 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myClub?.id, myClub?.clubId]); // Chạy khi clubId thay đổi
 
-  // Reset flag khi clubId thay đổi
+  // Load và reset trạng thái từ localStorage khi clubId thay đổi
   useEffect(() => {
-    isInitialLoadRef.current = true;
-    previousPaymentStatusRef.current.clear();
+    const targetClubId = myClub?.id || myClub?.clubId;
+    if (!targetClubId) return;
+    
+    // Load trạng thái đã lưu từ localStorage
+    try {
+      const savedKey = `paymentStatus_${targetClubId}`;
+      const saved = localStorage.getItem(savedKey);
+      if (saved) {
+        const savedMap = JSON.parse(saved);
+        previousPaymentStatusRef.current.clear();
+        Object.entries(savedMap).forEach(([key, value]) => {
+          previousPaymentStatusRef.current.set(key, value);
+        });
+        // Nếu đã có dữ liệu lưu, không phải lần đầu load
+        isInitialLoadRef.current = false;
+      } else {
+        // Nếu chưa có dữ liệu lưu, đây là lần đầu load
+        isInitialLoadRef.current = true;
+        previousPaymentStatusRef.current.clear();
+      }
+    } catch (err) {
+      console.error('Error loading payment status from localStorage:', err);
+      isInitialLoadRef.current = true;
+      previousPaymentStatusRef.current.clear();
+    }
   }, [myClub?.id, myClub?.clubId]);
 
   // Get all requests for this leader's club (pending, approved, rejected)

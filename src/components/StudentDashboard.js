@@ -128,6 +128,24 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     fetchMyRegistrations();
   }, []);
 
+  // Load trạng thái đã lưu từ localStorage khi component mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('registrationStatus');
+      if (saved) {
+        const savedMap = JSON.parse(saved);
+        previousStatusesRef.current.clear();
+        Object.entries(savedMap).forEach(([key, value]) => {
+          previousStatusesRef.current.set(key, value);
+        });
+        // Nếu đã có dữ liệu lưu, không phải lần đầu load
+        isInitialLoadRef.current = false;
+      }
+    } catch (err) {
+      console.error('Error loading registration status from localStorage:', err);
+    }
+  }, []);
+
   // Polling để kiểm tra thay đổi trạng thái đăng ký realtime (mỗi 2 giây)
   useEffect(() => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -166,6 +184,14 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
             // Cập nhật trạng thái hiện tại
             previousStatusesRef.current.set(subscriptionId, currentStatus);
           });
+          
+          // Lưu trạng thái vào localStorage để giữ lại khi reload
+          try {
+            const statusMap = Object.fromEntries(previousStatusesRef.current);
+            localStorage.setItem('registrationStatus', JSON.stringify(statusMap));
+          } catch (err) {
+            console.error('Error saving registration status to localStorage:', err);
+          }
           
           // Đánh dấu đã hoàn thành lần load đầu tiên
           if (isInitialLoadRef.current) {

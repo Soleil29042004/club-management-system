@@ -21,6 +21,24 @@ const StudentMyClubRequests = () => {
   // Flag để đánh dấu đã load dữ liệu lần đầu (không hiển thị toast trong lần đầu)
   const isInitialLoadRef = useRef(true);
 
+  // Load trạng thái đã lưu từ localStorage khi component mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('myRegistrationStatus');
+      if (saved) {
+        const savedMap = JSON.parse(saved);
+        previousStatusesRef.current.clear();
+        Object.entries(savedMap).forEach(([key, value]) => {
+          previousStatusesRef.current.set(key, value);
+        });
+        // Nếu đã có dữ liệu lưu, không phải lần đầu load
+        isInitialLoadRef.current = false;
+      }
+    } catch (err) {
+      console.error('Error loading registration status from localStorage:', err);
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true; // Flag để tránh setState sau khi component unmount
     
@@ -168,6 +186,14 @@ const StudentMyClubRequests = () => {
             // Cập nhật trạng thái hiện tại
             previousStatusesRef.current.set(subscriptionId, currentStatus);
           });
+          
+          // Lưu trạng thái vào localStorage để giữ lại khi reload
+          try {
+            const statusMap = Object.fromEntries(previousStatusesRef.current);
+            localStorage.setItem('myRegistrationStatus', JSON.stringify(statusMap));
+          } catch (err) {
+            console.error('Error saving registration status to localStorage:', err);
+          }
           
           // Cập nhật danh sách đăng ký
           raw.sort((a, b) => {

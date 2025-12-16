@@ -15,6 +15,33 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   const previousPaymentStatusRef = useRef(new Map());
   // Flag để đánh dấu đã load dữ liệu lần đầu (không hiển thị toast trong lần đầu)
   const isInitialLoadRef = useRef(true);
+  
+  // Load trạng thái đã lưu từ localStorage khi clubId thay đổi
+  useEffect(() => {
+    if (!clubId) return;
+    
+    try {
+      const savedKey = `paymentStatus_${clubId}`;
+      const saved = localStorage.getItem(savedKey);
+      if (saved) {
+        const savedMap = JSON.parse(saved);
+        previousPaymentStatusRef.current.clear();
+        Object.entries(savedMap).forEach(([key, value]) => {
+          previousPaymentStatusRef.current.set(key, value);
+        });
+        // Nếu đã có dữ liệu lưu, không phải lần đầu load
+        isInitialLoadRef.current = false;
+      } else {
+        // Nếu chưa có dữ liệu lưu, đây là lần đầu load
+        isInitialLoadRef.current = true;
+        previousPaymentStatusRef.current.clear();
+      }
+    } catch (err) {
+      console.error('Error loading payment status from localStorage:', err);
+      isInitialLoadRef.current = true;
+      previousPaymentStatusRef.current.clear();
+    }
+  }, [clubId]);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState('');
   const [detailData, setDetailData] = useState(null);
@@ -34,8 +61,6 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 
   useEffect(() => {
     if (!clubId) return;
-    // Reset flag khi clubId thay đổi để đảm bảo logic đúng cho club mới
-    isInitialLoadRef.current = true;
     const controller = new AbortController();
     const token = localStorage.getItem('authToken');
 
@@ -204,6 +229,14 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             // Cập nhật trạng thái thanh toán hiện tại
             previousPaymentStatusRef.current.set(subscriptionId, currentIsPaid);
           });
+          
+          // Lưu trạng thái vào localStorage để giữ lại khi reload
+          try {
+            const statusMap = Object.fromEntries(previousPaymentStatusRef.current);
+            localStorage.setItem(`paymentStatus_${clubId}`, JSON.stringify(statusMap));
+          } catch (err) {
+            console.error('Error saving payment status to localStorage:', err);
+          }
           
           // Cập nhật danh sách requests
           setApiRequests(mapped);
