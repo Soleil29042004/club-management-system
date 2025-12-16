@@ -81,7 +81,13 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && (data.code === 1000 || data.code === 0)) {
-          const mapped = (data.result || []).map(item => ({
+          // Ẩn các yêu cầu đã rời CLB (DaRoiCLB)
+          const filtered = (data.result || []).filter(item => {
+            const st = (item.status || '').toLowerCase();
+            return st !== 'daroi' && st !== 'daroi clb' && st !== 'daroiclb';
+          });
+
+          const mapped = filtered.map(item => ({
             id: item.subscriptionId || item.id,
             subscriptionId: item.subscriptionId || item.id,
             studentName: item.studentName || '',
@@ -179,7 +185,13 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
         
         const data = await res.json().catch(() => ({}));
         if (res.ok && (data.code === 1000 || data.code === 0)) {
-          const mapped = (data.result || []).map(item => ({
+          // Ẩn các yêu cầu đã rời CLB (DaRoiCLB)
+          const filtered = (data.result || []).filter(item => {
+            const st = (item.status || '').toLowerCase();
+            return st !== 'daroi' && st !== 'daroi clb' && st !== 'daroiclb';
+          });
+
+          const mapped = filtered.map(item => ({
             id: item.subscriptionId || item.id,
             subscriptionId: item.subscriptionId || item.id,
             studentName: item.studentName || '',
