@@ -243,7 +243,7 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
                   Đã bị từ chối
                 </span>
               )}
-              {!requestStatus && (
+              {(requestStatus === 'left' || !requestStatus || requestStatus === 'expired') && (
                 <button 
                   className="px-8 py-3 border-none rounded-lg text-base font-semibold cursor-pointer transition-all bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:-translate-y-1 hover:shadow-xl" 
                   onClick={() => {
@@ -253,7 +253,7 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
                     }
                   }}
                 >
-                  Tham gia
+                  {requestStatus === 'left' ? 'Tham gia' : 'Tham gia'}
                 </button>
               )}
             </div>
