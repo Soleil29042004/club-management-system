@@ -23,6 +23,7 @@ const StudentJoinedClubs = () => {
   const [error, setError] = useState('');
   const [clubs, setClubs] = useState([]);
   const [leavingId, setLeavingId] = useState(null);
+  const [renewLoadingId, setRenewLoadingId] = useState(null);
 
   const resolveUserId = () => {
     // Ưu tiên lấy userId từ token trước (đảm bảo là userId, không phải email)
@@ -125,7 +126,33 @@ const StudentJoinedClubs = () => {
           throw new Error(data?.message || 'Không thể tải danh sách CLB đã tham gia.');
         }
 
-        setClubs(data.result || []);
+        const mapped = (data.result || []).map((item) => ({
+          id: item.clubId || item.id,
+          clubId: item.clubId || item.id,
+          clubName: item.clubName || item.name || 'CLB',
+          category: item.category || 'Khác',
+          logo: item.logo,
+          location: item.location,
+          description: item.description,
+          email: item.email,
+          isActive: item.isActive !== undefined ? item.isActive : true,
+          establishedDate: item.establishedDate,
+          founderId: item.founderId,
+          founderName: item.founderName,
+          founderStudentCode: item.founderStudentCode,
+          subscriptionId: item.subscriptionId,
+          packageId: item.packageId,
+          packageName: item.packageName,
+          clubRole: item.clubRole,
+          joinedAt: item.joinedAt,
+          endDate: item.endDate,
+          canRenew: item.canRenew,
+          isExpired: item.isExpired,
+          // giữ lại các field cũ nếu API bổ sung
+          ...item
+        }));
+
+        setClubs(mapped);
       } catch (err) {
         console.error('Fetch joined clubs error:', err);
         const message = err.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
@@ -143,7 +170,8 @@ const StudentJoinedClubs = () => {
   const renderStatus = (club) => {
     const now = new Date();
     const end = club.endDate ? new Date(club.endDate) : null;
-    const active = club.isActive !== false && (!end || end >= now);
+    const expiredFlag = club.isExpired === true || (end && end < now);
+    const active = club.isActive !== false && !expiredFlag && (!end || end >= now);
     return (
       <span
         className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -172,9 +200,10 @@ const StudentJoinedClubs = () => {
   const isActiveMembership = (club) => {
     const now = new Date();
     const end = club.endDate ? new Date(club.endDate) : null;
+    const expiredFlag = club.isExpired === true || (end && end < now);
     const inTime = !end || end >= now;
     const apiActive = club.isActive !== false;
-    return apiActive && inTime;
+    return apiActive && !expiredFlag && inTime;
   };
 
   const canLeaveClub = (club) => {
@@ -182,7 +211,11 @@ const StudentJoinedClubs = () => {
     if (isLeaderRole(club.clubRole || club.role)) return false; // Chủ tịch không thể tự rời
     const statusValue = club.status || club.registerStatus || club.registrationStatus;
     const approved = statusValue ? isApprovedStatus(statusValue) : true; // Danh sách này thường chỉ có bản ghi đã duyệt
-    return approved && isPaidMembership(club) && isActiveMembership(club);
+    const now = new Date();
+    const end = club.endDate ? new Date(club.endDate) : null;
+    const expiredFlag = club.isExpired === true || (end && end < now);
+    // Cho phép rời nếu đang hoạt động và đã thanh toán, hoặc đã hết hạn (expired)
+    return approved && isPaidMembership(club) && (isActiveMembership(club) || expiredFlag);
   };
 
   const handleLeaveClub = async (club) => {
@@ -223,6 +256,65 @@ const StudentJoinedClubs = () => {
       showToast(err.message || 'Đã xảy ra lỗi khi rời CLB.', 'error');
     } finally {
       setLeavingId(null);
+    }
+  };
+
+  const handleRenewClub = async (club) => {
+    if (!club?.subscriptionId) {
+      showToast('Không tìm thấy subscription để gia hạn.', 'error');
+      return;
+    }
+
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Vui lòng đăng nhập để gia hạn.', 'error');
+      return;
+    }
+
+    try {
+      setRenewLoadingId(club.subscriptionId);
+      const res = await fetch(`${API_BASE_URL}/registers/${club.subscriptionId}/renew`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        // Không truyền packageId để giữ nguyên gói hiện tại theo API
+        body: JSON.stringify({})
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (data.code !== 0 && data.code !== 1000)) {
+        throw new Error(data?.message || 'Không thể gia hạn gói thành viên.');
+      }
+
+      const updated = data.result || {};
+      showToast(data.message || 'Đã gửi yêu cầu gia hạn. Trạng thái chuyển về chờ duyệt, vui lòng thanh toán lại.', 'success');
+
+      // Cập nhật thẻ CLB với dữ liệu mới
+      setClubs((prev) =>
+        prev.map((c) => {
+          if (String(c.clubId) !== String(club.clubId)) return c;
+          return {
+            ...c,
+            status: updated.status || 'ChoDuyet',
+            isPaid: updated.isPaid ?? false,
+            packageId: updated.packageId ?? c.packageId,
+            packageName: updated.packageName ?? c.packageName,
+            term: updated.term ?? c.term,
+            price: updated.price ?? c.price,
+            canRenew: updated.canRenew ?? c.canRenew,
+            isExpired: updated.isExpired ?? c.isExpired,
+            endDate: updated.endDate ?? c.endDate,
+            joinedAt: updated.joinDate ?? updated.joinedAt ?? c.joinedAt
+          };
+        })
+      );
+    } catch (err) {
+      console.error('Renew club error:', err);
+      showToast(err.message || 'Không thể gia hạn gói thành viên.', 'error');
+    } finally {
+      setRenewLoadingId(null);
     }
   };
 
@@ -311,7 +403,17 @@ const StudentJoinedClubs = () => {
                 <span className="px-2 py-1 bg-gray-100 rounded-md">Liên hệ: {club.email || '—'}</span>
                 {club.location && <span className="px-2 py-1 bg-gray-100 rounded-md">Địa điểm: {club.location}</span>}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {club.canRenew && (club.isExpired || (club.endDate && new Date(club.endDate) < new Date())) && (
+                  <button
+                    onClick={() => handleRenewClub(club)}
+                    disabled={renewLoadingId === club.subscriptionId}
+                    className="px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg font-semibold hover:bg-blue-100 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {renewLoadingId === club.subscriptionId ? 'Đang gia hạn...' : 'Gia hạn'}
+                  </button>
+                )}
+
                 {canLeaveClub(club) ? (
                   <button
                     onClick={() => handleLeaveClub(club)}
