@@ -78,12 +78,12 @@ const StudentMyClubRequests = () => {
           // Kiểm tra thay đổi trạng thái để hiển thị toast
           raw.forEach((reg) => {
             const subscriptionId = reg.subscriptionId;
-            const currentStatus = reg.status || '';
-            const previousStatus = previousStatusesRef.current.get(subscriptionId);
+            const currentStatus = (reg.status || '').toLowerCase();
+            const previousStatus = (previousStatusesRef.current.get(subscriptionId) || '').toLowerCase();
             
-            // Nếu có thay đổi từ ChoDuyet sang DaDuyet, hiển thị toast
-            if (previousStatus && previousStatus === 'ChoDuyet' && 
-                (currentStatus === 'DaDuyet' || currentStatus === 'approved')) {
+            const isApproved = currentStatus === 'DaDuyet' || currentStatus === 'approved';
+            // Thông báo khi lần đầu thấy đã duyệt hoặc chuyển từ trạng thái khác sang đã duyệt
+            if (isApproved && previousStatus !== currentStatus) {
               const clubName = reg.clubName || 'CLB';
               showToast(`🎉 Đơn đăng ký tham gia ${clubName} đã được duyệt!`, 'success');
             }
@@ -141,12 +141,11 @@ const StudentMyClubRequests = () => {
           // So sánh với trạng thái trước đó
           raw.forEach((reg) => {
             const subscriptionId = reg.subscriptionId;
-            const currentStatus = reg.status || '';
-            const previousStatus = previousStatusesRef.current.get(subscriptionId);
+            const currentStatus = (reg.status || '').toLowerCase();
+            const previousStatus = (previousStatusesRef.current.get(subscriptionId) || '').toLowerCase();
             
-            // Nếu có thay đổi từ ChoDuyet sang DaDuyet, hiển thị toast
-            if (previousStatus && previousStatus === 'ChoDuyet' && 
-                (currentStatus === 'DaDuyet' || currentStatus === 'approved')) {
+            const isApproved = currentStatus === 'daduyet' || currentStatus === 'approved';
+            if (isApproved && previousStatus !== currentStatus) {
               const clubName = reg.clubName || 'CLB';
               showToast(`🎉 Đơn đăng ký tham gia ${clubName} đã được duyệt!`, 'success');
             }
