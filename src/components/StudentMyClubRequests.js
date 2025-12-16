@@ -85,8 +85,11 @@ const StudentMyClubRequests = () => {
           return;
         }
 
-        // Lấy danh sách đăng ký
-        const raw = data.result || [];
+        // Lấy danh sách đăng ký và ẩn các đơn đã rời CLB
+        const raw = (data.result || []).filter(reg => {
+          const st = (reg.status || '').toLowerCase();
+          return st !== 'daroi' && st !== 'daroi clb' && st !== 'daroiclb';
+        });
         // Sắp xếp mới nhất trước
         raw.sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -165,7 +168,11 @@ const StudentMyClubRequests = () => {
         const data = await response.json().catch(() => null);
         
         if (response.ok && data && data.code === 1000) {
-          const raw = data.result || [];
+          // Ẩn các đơn đã rời CLB
+          const raw = (data.result || []).filter(reg => {
+            const st = (reg.status || '').toLowerCase();
+            return st !== 'daroi' && st !== 'daroi clb' && st !== 'daroiclb';
+          });
           
           // So sánh với trạng thái trước đó
           raw.forEach((reg) => {
