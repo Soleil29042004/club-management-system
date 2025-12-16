@@ -18,6 +18,26 @@ const StudentMyClubRequests = () => {
   const [cancellingId, setCancellingId] = useState(null);
   // Lưu trạng thái trước đó để phát hiện thay đổi
   const previousStatusesRef = useRef(new Map());
+  // Flag để đánh dấu đã load dữ liệu lần đầu (không hiển thị toast trong lần đầu)
+  const isInitialLoadRef = useRef(true);
+
+  // Load trạng thái đã lưu từ localStorage khi component mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('myRegistrationStatus');
+      if (saved) {
+        const savedMap = JSON.parse(saved);
+        previousStatusesRef.current.clear();
+        Object.entries(savedMap).forEach(([key, value]) => {
+          previousStatusesRef.current.set(key, value);
+        });
+        // Nếu đã có dữ liệu lưu, không phải lần đầu load
+        isInitialLoadRef.current = false;
+      }
+    } catch (err) {
+      console.error('Error loading registration status from localStorage:', err);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true; // Flag để tránh setState sau khi component unmount
@@ -79,11 +99,15 @@ const StudentMyClubRequests = () => {
           raw.forEach((reg) => {
             const subscriptionId = reg.subscriptionId;
             const currentStatus = (reg.status || '').toLowerCase();
-            const previousStatus = (previousStatusesRef.current.get(subscriptionId) || '').toLowerCase();
+            const previousStatus = previousStatusesRef.current.has(subscriptionId)
+              ? (previousStatusesRef.current.get(subscriptionId) || '').toLowerCase()
+              : null; // null nếu chưa có trong map (lần đầu)
             
-            const isApproved = currentStatus === 'DaDuyet' || currentStatus === 'approved';
-            // Thông báo khi lần đầu thấy đã duyệt hoặc chuyển từ trạng thái khác sang đã duyệt
-            if (isApproved && previousStatus !== currentStatus) {
+            const isApproved = currentStatus === 'daduyet' || currentStatus === 'approved';
+            // Chỉ hiển thị toast nếu:
+            // 1. Không phải lần đầu load (isInitialLoadRef.current === false)
+            // 2. Có thay đổi từ trạng thái khác sang đã duyệt
+            if (!isInitialLoadRef.current && isApproved && previousStatus !== null && previousStatus !== currentStatus) {
               const clubName = reg.clubName || 'CLB';
               showToast(`🎉 Đơn đăng ký tham gia ${clubName} đã được duyệt!`, 'success');
             }
@@ -91,6 +115,11 @@ const StudentMyClubRequests = () => {
             // Lưu trạng thái hiện tại
             previousStatusesRef.current.set(subscriptionId, currentStatus);
           });
+          
+          // Đánh dấu đã hoàn thành lần load đầu tiên
+          if (isInitialLoadRef.current) {
+            isInitialLoadRef.current = false;
+          }
           
           setRegistrations(raw);
           setLoading(false);
@@ -118,7 +147,7 @@ const StudentMyClubRequests = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Chỉ chạy một lần khi component mount, không phụ thuộc vào showToast
 
-  // Polling để kiểm tra thay đổi trạng thái realtime (mỗi 5 giây)
+  // Polling để kiểm tra thay đổi trạng thái realtime (mỗi 2 giây)
   useEffect(() => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (!token || loading) return;
@@ -142,10 +171,14 @@ const StudentMyClubRequests = () => {
           raw.forEach((reg) => {
             const subscriptionId = reg.subscriptionId;
             const currentStatus = (reg.status || '').toLowerCase();
-            const previousStatus = (previousStatusesRef.current.get(subscriptionId) || '').toLowerCase();
+            const previousStatus = previousStatusesRef.current.has(subscriptionId)
+              ? (previousStatusesRef.current.get(subscriptionId) || '').toLowerCase()
+              : null; // null nếu chưa có trong map
             
             const isApproved = currentStatus === 'daduyet' || currentStatus === 'approved';
-            if (isApproved && previousStatus !== currentStatus) {
+            // Chỉ hiển thị toast khi có thay đổi từ trạng thái khác sang đã duyệt
+            // (không hiển thị nếu previousStatus là null vì đó là lần đầu thấy request này)
+            if (previousStatus !== null && isApproved && previousStatus !== currentStatus) {
               const clubName = reg.clubName || 'CLB';
               showToast(`🎉 Đơn đăng ký tham gia ${clubName} đã được duyệt!`, 'success');
             }
@@ -153,6 +186,14 @@ const StudentMyClubRequests = () => {
             // Cập nhật trạng thái hiện tại
             previousStatusesRef.current.set(subscriptionId, currentStatus);
           });
+          
+          // Lưu trạng thái vào localStorage để giữ lại khi reload
+          try {
+            const statusMap = Object.fromEntries(previousStatusesRef.current);
+            localStorage.setItem('myRegistrationStatus', JSON.stringify(statusMap));
+          } catch (err) {
+            console.error('Error saving registration status to localStorage:', err);
+          }
           
           // Cập nhật danh sách đăng ký
           raw.sort((a, b) => {
@@ -166,7 +207,7 @@ const StudentMyClubRequests = () => {
         console.error('Polling error:', err);
         // Không hiển thị lỗi khi polling để tránh spam
       }
-    }, 5000); // Poll mỗi 5 giây
+    }, 2000); // Poll mỗi 2 giây để real-time hơn
 
     return () => clearInterval(pollInterval);
     // eslint-disable-next-line react-hooks/exhaustive-deps

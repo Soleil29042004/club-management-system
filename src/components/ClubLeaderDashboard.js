@@ -22,6 +22,9 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   const [roleLoadingId, setRoleLoadingId] = useState(null);
   const lastFetchedClubId = useRef(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  // Lưu trạng thái thanh toán trước đó để phát hiện thay đổi
+  const previousPaymentStatusRef = useRef(new Map());
+  const isInitialLoadRef = useRef(true);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -324,6 +327,113 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     fetchStats();
     return () => controller.abort();
   }, [API_BASE_URL, myClub?.id, myClub?.clubId, showToast]);
+
+  // Polling để kiểm tra thay đổi trạng thái thanh toán realtime (mỗi 2 giây)
+  useEffect(() => {
+    const targetClubId = myClub?.id || myClub?.clubId;
+    if (!targetClubId) return;
+
+    const token = localStorage.getItem('authToken');
+    const controller = new AbortController();
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const url = `https://clubmanage.azurewebsites.net/api/registrations/club/${targetClubId}`;
+        
+        const res = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          signal: controller.signal
+        });
+        
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.code === 1000 || data.code === 0)) {
+          const mapped = (data.result || []).map(item => ({
+            subscriptionId: item.subscriptionId || item.id,
+            studentName: item.studentName || '',
+            isPaid: item.isPaid || false
+          }));
+          
+          // So sánh với trạng thái thanh toán trước đó
+          mapped.forEach((req) => {
+            const subscriptionId = req.subscriptionId;
+            const currentIsPaid = !!req.isPaid;
+            const previousIsPaid = previousPaymentStatusRef.current.has(subscriptionId)
+              ? !!previousPaymentStatusRef.current.get(subscriptionId)
+              : null; // null nếu chưa có trong map
+            
+            // Chỉ hiển thị toast khi có thay đổi từ chưa thanh toán sang đã thanh toán
+            // (không hiển thị nếu previousIsPaid là null vì đó là lần đầu thấy request này)
+            if (previousIsPaid !== null && currentIsPaid && previousIsPaid === false) {
+              const studentName = req.studentName || 'Sinh viên';
+              showToast(`💰 ${studentName} đã chuyển tiền thành công!`, 'success');
+            }
+            
+            // Cập nhật trạng thái thanh toán hiện tại
+            previousPaymentStatusRef.current.set(subscriptionId, currentIsPaid);
+          });
+          
+          // Lưu trạng thái vào localStorage để giữ lại khi reload
+          try {
+            const targetClubId = myClub?.id || myClub?.clubId;
+            if (targetClubId) {
+              const statusMap = Object.fromEntries(previousPaymentStatusRef.current);
+              localStorage.setItem(`paymentStatus_${targetClubId}`, JSON.stringify(statusMap));
+            }
+          } catch (err) {
+            console.error('Error saving payment status to localStorage:', err);
+          }
+          
+          // Đánh dấu đã hoàn thành lần load đầu tiên
+          if (isInitialLoadRef.current) {
+            isInitialLoadRef.current = false;
+          }
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Polling payment status error:', err);
+          // Không hiển thị lỗi khi polling để tránh spam
+        }
+      }
+    }, 2000); // Poll mỗi 2 giây để real-time hơn
+
+    return () => {
+      clearInterval(pollInterval);
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myClub?.id, myClub?.clubId]); // Chạy khi clubId thay đổi
+
+  // Load và reset trạng thái từ localStorage khi clubId thay đổi
+  useEffect(() => {
+    const targetClubId = myClub?.id || myClub?.clubId;
+    if (!targetClubId) return;
+    
+    // Load trạng thái đã lưu từ localStorage
+    try {
+      const savedKey = `paymentStatus_${targetClubId}`;
+      const saved = localStorage.getItem(savedKey);
+      if (saved) {
+        const savedMap = JSON.parse(saved);
+        previousPaymentStatusRef.current.clear();
+        Object.entries(savedMap).forEach(([key, value]) => {
+          previousPaymentStatusRef.current.set(key, value);
+        });
+        // Nếu đã có dữ liệu lưu, không phải lần đầu load
+        isInitialLoadRef.current = false;
+      } else {
+        // Nếu chưa có dữ liệu lưu, đây là lần đầu load
+        isInitialLoadRef.current = true;
+        previousPaymentStatusRef.current.clear();
+      }
+    } catch (err) {
+      console.error('Error loading payment status from localStorage:', err);
+      isInitialLoadRef.current = true;
+      previousPaymentStatusRef.current.clear();
+    }
+  }, [myClub?.id, myClub?.clubId]);
 
   // Get all requests for this leader's club (pending, approved, rejected)
   // Sắp xếp: pending trước, sau đó approved, cuối cùng rejected

@@ -13,6 +13,35 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   const [paymentLoadingId, setPaymentLoadingId] = useState(null);
   // Lưu trạng thái thanh toán trước đó để phát hiện thay đổi
   const previousPaymentStatusRef = useRef(new Map());
+  // Flag để đánh dấu đã load dữ liệu lần đầu (không hiển thị toast trong lần đầu)
+  const isInitialLoadRef = useRef(true);
+  
+  // Load trạng thái đã lưu từ localStorage khi clubId thay đổi
+  useEffect(() => {
+    if (!clubId) return;
+    
+    try {
+      const savedKey = `paymentStatus_${clubId}`;
+      const saved = localStorage.getItem(savedKey);
+      if (saved) {
+        const savedMap = JSON.parse(saved);
+        previousPaymentStatusRef.current.clear();
+        Object.entries(savedMap).forEach(([key, value]) => {
+          previousPaymentStatusRef.current.set(key, value);
+        });
+        // Nếu đã có dữ liệu lưu, không phải lần đầu load
+        isInitialLoadRef.current = false;
+      } else {
+        // Nếu chưa có dữ liệu lưu, đây là lần đầu load
+        isInitialLoadRef.current = true;
+        previousPaymentStatusRef.current.clear();
+      }
+    } catch (err) {
+      console.error('Error loading payment status from localStorage:', err);
+      isInitialLoadRef.current = true;
+      previousPaymentStatusRef.current.clear();
+    }
+  }, [clubId]);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState('');
   const [detailData, setDetailData] = useState(null);
@@ -88,10 +117,14 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           mapped.forEach((req) => {
             const subscriptionId = req.subscriptionId || req.id;
             const currentIsPaid = !!req.isPaid;
-            const previousIsPaid = !!previousPaymentStatusRef.current.get(subscriptionId);
+            const previousIsPaid = previousPaymentStatusRef.current.has(subscriptionId) 
+              ? !!previousPaymentStatusRef.current.get(subscriptionId)
+              : null; // null nếu chưa có trong map (lần đầu)
             
-            // Nếu lần đầu thấy đã thanh toán hoặc chuyển từ chưa thanh toán sang đã thanh toán
-            if (currentIsPaid && previousIsPaid !== currentIsPaid) {
+            // Chỉ hiển thị toast nếu:
+            // 1. Không phải lần đầu load (isInitialLoadRef.current === false)
+            // 2. Có thay đổi từ chưa thanh toán sang đã thanh toán
+            if (!isInitialLoadRef.current && currentIsPaid && previousIsPaid === false) {
               const studentName = req.studentName || 'Sinh viên';
               showToast(`💰 ${studentName} đã chuyển tiền thành công!`, 'success');
             }
@@ -99,6 +132,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             // Lưu trạng thái thanh toán hiện tại
             previousPaymentStatusRef.current.set(subscriptionId, currentIsPaid);
           });
+          
+          // Đánh dấu đã hoàn thành lần load đầu tiên
+          if (isInitialLoadRef.current) {
+            isInitialLoadRef.current = false;
+          }
           
           setApiRequests(mapped);
         } else {
@@ -119,7 +157,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     return () => controller.abort();
   }, [clubId, selectedStatus]);
 
-  // Polling để kiểm tra thay đổi trạng thái thanh toán realtime (mỗi 5 giây)
+  // Polling để kiểm tra thay đổi trạng thái thanh toán realtime (mỗi 2 giây)
   useEffect(() => {
     if (!clubId || loading) return;
 
@@ -177,10 +215,13 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           mapped.forEach((req) => {
             const subscriptionId = req.subscriptionId || req.id;
             const currentIsPaid = !!req.isPaid;
-            const previousIsPaid = !!previousPaymentStatusRef.current.get(subscriptionId);
+            const previousIsPaid = previousPaymentStatusRef.current.has(subscriptionId)
+              ? !!previousPaymentStatusRef.current.get(subscriptionId)
+              : null; // null nếu chưa có trong map
             
-            // Nếu lần đầu thấy đã thanh toán hoặc chuyển từ chưa thanh toán sang đã thanh toán
-            if (currentIsPaid && previousIsPaid !== currentIsPaid) {
+            // Chỉ hiển thị toast khi có thay đổi từ chưa thanh toán sang đã thanh toán
+            // (không hiển thị nếu previousIsPaid là null vì đó là lần đầu thấy request này)
+            if (previousIsPaid !== null && currentIsPaid && previousIsPaid === false) {
               const studentName = req.studentName || 'Sinh viên';
               showToast(`💰 ${studentName} đã chuyển tiền thành công!`, 'success');
             }
@@ -188,6 +229,14 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             // Cập nhật trạng thái thanh toán hiện tại
             previousPaymentStatusRef.current.set(subscriptionId, currentIsPaid);
           });
+          
+          // Lưu trạng thái vào localStorage để giữ lại khi reload
+          try {
+            const statusMap = Object.fromEntries(previousPaymentStatusRef.current);
+            localStorage.setItem(`paymentStatus_${clubId}`, JSON.stringify(statusMap));
+          } catch (err) {
+            console.error('Error saving payment status to localStorage:', err);
+          }
           
           // Cập nhật danh sách requests
           setApiRequests(mapped);
@@ -198,7 +247,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           // Không hiển thị lỗi khi polling để tránh spam
         }
       }
-    }, 5000); // Poll mỗi 5 giây
+    }, 2000); // Poll mỗi 2 giây để real-time hơn
 
     return () => {
       clearInterval(pollInterval);
