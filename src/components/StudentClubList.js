@@ -134,15 +134,18 @@ const StudentClubList = ({
                       Đã được chấp nhận
                     </span>
                   )}
-                  {requestStatus === 'rejected' && (
-                    <span className="px-4 py-2 text-center rounded-md text-sm font-semibold bg-red-500 text-white">
-                      Đã bị từ chối
-                    </span>
-                  )}
+                  {(requestStatus === 'rejected' || requestStatus === 'left') ? (
+                    <button 
+                      onClick={() => onJoinRequest(club)} 
+                      className="px-4 py-2 border-none rounded-md text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md hover:bg-gradient-to-l hover:-translate-y-0.5 hover:shadow-lg"
+                    >
+                      Gửi yêu cầu tham gia
+                    </button>
+                  ) : null}
                   {!requestStatus && (
                     <button 
                       onClick={() => onJoinRequest(club)} 
-                      className="px-4 py-2 border-none rounded-md text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md hover:bg-gradient-to-l hover:-translate-y-0.5 hover:shadow-lg"
+                      className="px-4 py-2 border-none rounded-md text-sm font-medium cursor-pointer transition-all bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md hover:bg-gradient-to-l hover:-translate-y-0.5 hover:shadow-lg"
                     >
                       Gửi yêu cầu tham gia
                     </button>

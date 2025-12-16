@@ -232,7 +232,14 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     }
 
     if (!formData.reason.trim()) {
-      newErrors.reason = 'Lý do gia nhập không được để trống';
+      newErrors.reason = 'Lý do gia nhập & kỹ năng không được để trống';
+    } else {
+      const reasonLength = formData.reason.trim().length;
+      if (reasonLength < 20) {
+        newErrors.reason = 'Lý do gia nhập & kỹ năng phải có ít nhất 20 ký tự';
+      } else if (reasonLength > 500) {
+        newErrors.reason = 'Lý do gia nhập & kỹ năng không được vượt quá 500 ký tự';
+      }
     }
 
     if (!formData.packageId) {
@@ -401,20 +408,39 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
             </div>
 
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Lý do gia nhập</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Lý do gia nhập & kỹ năng *</h3>
               <div className="flex flex-col">
                 <textarea
                   id="reason"
                   name="reason"
                   value={formData.reason}
                   onChange={handleChange}
-                  placeholder="Vui lòng nêu rõ lý do bạn muốn tham gia câu lạc bộ này..."
+                  placeholder="Vui lòng nêu rõ lý do bạn muốn tham gia câu lạc bộ này (tối thiểu 20 ký tự, tối đa 500 ký tự)..."
                   rows="4"
                   className={`w-full px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans resize-y min-h-[100px] focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
                     errors.reason ? 'border-red-500' : 'border-gray-200'
                   }`}
                 />
-                {errors.reason && <span className="text-red-500 text-xs mt-1">{errors.reason}</span>}
+                <div className="flex items-center justify-between mt-1">
+                  {errors.reason ? (
+                    <span className="text-red-500 text-xs">{errors.reason}</span>
+                  ) : (
+                    <span className="text-xs text-gray-500">
+                      {formData.reason.trim().length < 20 
+                        ? `Còn thiếu ${20 - formData.reason.trim().length} ký tự (tối thiểu 20 ký tự)`
+                        : formData.reason.trim().length > 500
+                        ? `Vượt quá ${formData.reason.trim().length - 500} ký tự (tối đa 500 ký tự)`
+                        : `${formData.reason.trim().length}/500 ký tự`}
+                    </span>
+                  )}
+                  <span className={`text-xs ${
+                    formData.reason.trim().length >= 20 && formData.reason.trim().length <= 500
+                      ? 'text-green-600'
+                      : 'text-gray-500'
+                  }`}>
+                    {formData.reason.trim().length}/500
+                  </span>
+                </div>
               </div>
             </div>
 

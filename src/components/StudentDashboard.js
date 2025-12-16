@@ -316,7 +316,7 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
       return;
     }
 
-    if (!selectedClub || !selectedClub.id) {
+    if (!selectedClub || !(selectedClub.id || selectedClub.clubId)) {
       showToast('Thông tin câu lạc bộ không hợp lệ.', 'error');
       return;
     }
@@ -327,9 +327,17 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     }
 
     // Chuẩn bị payload theo đúng format API yêu cầu
-    // API chỉ cần packageId trong body, không cần clubId (API tự lấy từ package)
+    // API cần packageId và joinReason trong body
+    const clubId = selectedClub.clubId || selectedClub.id;
     const payload = {
-      packageId: parseInt(formData.packageId)
+      clubId: typeof clubId === 'string' ? parseInt(clubId, 10) : clubId,
+      packageId: parseInt(formData.packageId, 10),
+      joinReason: formData.reason.trim(),
+      // Gửi kèm thông tin cơ bản để backend không bị thiếu trường
+      phone: formData.phone,
+      studentId: formData.studentId,
+      major: formData.major,
+      fullName: formData.fullName
     };
 
     // API endpoint: POST /api/registers
@@ -637,17 +645,42 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     const apiStatus = request.status;
     if (!apiStatus) return null;
     
-    // Map API status to local status
+    // Normalize status for flexible matching (case-insensitive, handles DaRoiCLB)
+    const normalized = apiStatus.toString().trim().toLowerCase();
     const statusMap = {
-      'ChoDuyet': 'pending',
-      'DaDuyet': 'approved',
-      'TuChoi': 'rejected',
-      'HoatDong': 'active',
-      'HetHan': 'expired'
+      'choduyet': 'pending',
+      'pending': 'pending',
+      'daduyet': 'approved',
+      'approved': 'approved',
+      'tuchoi': 'rejected',
+      'rejected': 'rejected',
+      'hoatdong': 'active',
+      'active': 'active',
+      'hethạn': 'expired',
+      'hethan': 'expired',
+      'expired': 'expired',
+      // Left / cancelled variants
+      'daroi': 'left',
+      'daroiclb': 'left',
+      'roi': 'left',
+      'left': 'left',
+      'leave': 'left',
+      'leaved': 'left',
+      'quit': 'left',
+      'canceled': 'left',
+      'cancelled': 'left',
+      'dahuy': 'left',
+      'huy': 'left',
+      'daroiclub': 'left'
     };
     
-    // Return mapped status or original if not in map
-    return statusMap[apiStatus] || apiStatus;
+    // Return mapped status if available
+    if (statusMap[normalized]) {
+      return statusMap[normalized];
+    }
+    
+    // Fallback to original status if no mapping found
+    return apiStatus;
   };
 
   const hasPayment = (clubId) => {
