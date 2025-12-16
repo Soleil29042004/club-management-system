@@ -13,6 +13,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   const [paymentLoadingId, setPaymentLoadingId] = useState(null);
   // Lưu trạng thái thanh toán trước đó để phát hiện thay đổi
   const previousPaymentStatusRef = useRef(new Map());
+  // Flag để đánh dấu đã load dữ liệu lần đầu (không hiển thị toast trong lần đầu)
+  const isInitialLoadRef = useRef(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState('');
   const [detailData, setDetailData] = useState(null);
@@ -32,6 +34,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 
   useEffect(() => {
     if (!clubId) return;
+    // Reset flag khi clubId thay đổi để đảm bảo logic đúng cho club mới
+    isInitialLoadRef.current = true;
     const controller = new AbortController();
     const token = localStorage.getItem('authToken');
 
@@ -88,10 +92,14 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           mapped.forEach((req) => {
             const subscriptionId = req.subscriptionId || req.id;
             const currentIsPaid = !!req.isPaid;
-            const previousIsPaid = !!previousPaymentStatusRef.current.get(subscriptionId);
+            const previousIsPaid = previousPaymentStatusRef.current.has(subscriptionId) 
+              ? !!previousPaymentStatusRef.current.get(subscriptionId)
+              : null; // null nếu chưa có trong map (lần đầu)
             
-            // Nếu lần đầu thấy đã thanh toán hoặc chuyển từ chưa thanh toán sang đã thanh toán
-            if (currentIsPaid && previousIsPaid !== currentIsPaid) {
+            // Chỉ hiển thị toast nếu:
+            // 1. Không phải lần đầu load (isInitialLoadRef.current === false)
+            // 2. Có thay đổi từ chưa thanh toán sang đã thanh toán
+            if (!isInitialLoadRef.current && currentIsPaid && previousIsPaid === false) {
               const studentName = req.studentName || 'Sinh viên';
               showToast(`💰 ${studentName} đã chuyển tiền thành công!`, 'success');
             }
@@ -99,6 +107,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             // Lưu trạng thái thanh toán hiện tại
             previousPaymentStatusRef.current.set(subscriptionId, currentIsPaid);
           });
+          
+          // Đánh dấu đã hoàn thành lần load đầu tiên
+          if (isInitialLoadRef.current) {
+            isInitialLoadRef.current = false;
+          }
           
           setApiRequests(mapped);
         } else {
@@ -119,7 +132,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     return () => controller.abort();
   }, [clubId, selectedStatus]);
 
-  // Polling để kiểm tra thay đổi trạng thái thanh toán realtime (mỗi 5 giây)
+  // Polling để kiểm tra thay đổi trạng thái thanh toán realtime (mỗi 2 giây)
   useEffect(() => {
     if (!clubId || loading) return;
 
@@ -177,10 +190,13 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           mapped.forEach((req) => {
             const subscriptionId = req.subscriptionId || req.id;
             const currentIsPaid = !!req.isPaid;
-            const previousIsPaid = !!previousPaymentStatusRef.current.get(subscriptionId);
+            const previousIsPaid = previousPaymentStatusRef.current.has(subscriptionId)
+              ? !!previousPaymentStatusRef.current.get(subscriptionId)
+              : null; // null nếu chưa có trong map
             
-            // Nếu lần đầu thấy đã thanh toán hoặc chuyển từ chưa thanh toán sang đã thanh toán
-            if (currentIsPaid && previousIsPaid !== currentIsPaid) {
+            // Chỉ hiển thị toast khi có thay đổi từ chưa thanh toán sang đã thanh toán
+            // (không hiển thị nếu previousIsPaid là null vì đó là lần đầu thấy request này)
+            if (previousIsPaid !== null && currentIsPaid && previousIsPaid === false) {
               const studentName = req.studentName || 'Sinh viên';
               showToast(`💰 ${studentName} đã chuyển tiền thành công!`, 'success');
             }
@@ -198,7 +214,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           // Không hiển thị lỗi khi polling để tránh spam
         }
       }
-    }, 5000); // Poll mỗi 5 giây
+    }, 2000); // Poll mỗi 2 giây để real-time hơn
 
     return () => {
       clearInterval(pollInterval);
