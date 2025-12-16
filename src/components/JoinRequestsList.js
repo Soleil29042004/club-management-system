@@ -87,11 +87,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           // Kiểm tra thay đổi trạng thái thanh toán để hiển thị toast
           mapped.forEach((req) => {
             const subscriptionId = req.subscriptionId || req.id;
-            const currentIsPaid = req.isPaid || false;
-            const previousIsPaid = previousPaymentStatusRef.current.get(subscriptionId);
+            const currentIsPaid = !!req.isPaid;
+            const previousIsPaid = !!previousPaymentStatusRef.current.get(subscriptionId);
             
-            // Nếu có thay đổi từ chưa thanh toán sang đã thanh toán, hiển thị toast
-            if (previousIsPaid === false && currentIsPaid === true) {
+            // Nếu lần đầu thấy đã thanh toán hoặc chuyển từ chưa thanh toán sang đã thanh toán
+            if (currentIsPaid && previousIsPaid !== currentIsPaid) {
               const studentName = req.studentName || 'Sinh viên';
               showToast(`💰 ${studentName} đã chuyển tiền thành công!`, 'success');
             }
@@ -176,11 +176,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
           // So sánh với trạng thái thanh toán trước đó
           mapped.forEach((req) => {
             const subscriptionId = req.subscriptionId || req.id;
-            const currentIsPaid = req.isPaid || false;
-            const previousIsPaid = previousPaymentStatusRef.current.get(subscriptionId);
+            const currentIsPaid = !!req.isPaid;
+            const previousIsPaid = !!previousPaymentStatusRef.current.get(subscriptionId);
             
-            // Nếu có thay đổi từ chưa thanh toán sang đã thanh toán, hiển thị toast
-            if (previousIsPaid === false && currentIsPaid === true) {
+            // Nếu lần đầu thấy đã thanh toán hoặc chuyển từ chưa thanh toán sang đã thanh toán
+            if (currentIsPaid && previousIsPaid !== currentIsPaid) {
               const studentName = req.studentName || 'Sinh viên';
               showToast(`💰 ${studentName} đã chuyển tiền thành công!`, 'success');
             }
