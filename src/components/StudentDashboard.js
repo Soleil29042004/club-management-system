@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from './Toast';
 import StudentClubList from './StudentClubList';
 import JoinRequestModal from './JoinRequestModal';
@@ -10,6 +10,9 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   const { showToast } = useToast();
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
   const [joinRequests, setJoinRequests] = useState([]);
+  // Lưu trạng thái trước đó để phát hiện thay đổi
+  const previousStatusesRef = useRef(new Map());
+  const isInitialLoadRef = useRef(true);
   const [payments, setPayments] = useState([]);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -124,6 +127,60 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
 
     fetchMyRegistrations();
   }, []);
+
+  // Polling để kiểm tra thay đổi trạng thái đăng ký realtime (mỗi 2 giây)
+  useEffect(() => {
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/registers/my-registrations`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json().catch(() => null);
+        
+        if (response.ok && data && data.code === 1000) {
+          const raw = data.result || [];
+          
+          // So sánh với trạng thái trước đó
+          raw.forEach((reg) => {
+            const subscriptionId = reg.subscriptionId;
+            const currentStatus = (reg.status || '').toLowerCase();
+            const previousStatus = previousStatusesRef.current.has(subscriptionId)
+              ? (previousStatusesRef.current.get(subscriptionId) || '').toLowerCase()
+              : null; // null nếu chưa có trong map
+            
+            const isApproved = currentStatus === 'daduyet' || currentStatus === 'approved';
+            // Chỉ hiển thị toast khi có thay đổi từ trạng thái khác sang đã duyệt
+            // (không hiển thị nếu previousStatus là null vì đó là lần đầu thấy request này)
+            if (previousStatus !== null && isApproved && previousStatus !== currentStatus) {
+              const clubName = reg.clubName || 'CLB';
+              showToast(`🎉 Đơn đăng ký tham gia ${clubName} đã được duyệt!`, 'success');
+            }
+            
+            // Cập nhật trạng thái hiện tại
+            previousStatusesRef.current.set(subscriptionId, currentStatus);
+          });
+          
+          // Đánh dấu đã hoàn thành lần load đầu tiên
+          if (isInitialLoadRef.current) {
+            isInitialLoadRef.current = false;
+          }
+        }
+      } catch (err) {
+        console.error('Polling registration status error:', err);
+        // Không hiển thị lỗi khi polling để tránh spam
+      }
+    }, 2000); // Poll mỗi 2 giây để real-time hơn
+
+    return () => clearInterval(pollInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Chỉ chạy một lần khi mount
 
   // Load other data from localStorage on mount
   useEffect(() => {
