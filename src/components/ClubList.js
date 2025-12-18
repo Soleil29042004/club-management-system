@@ -10,7 +10,8 @@ const ClubList = ({
   searchTerm: externalSearchTerm = '',
   onSearchChange,
   filterCategory: externalFilterCategory = 'all',
-  onCategoryChange
+  onCategoryChange,
+  deleteLoadingId = null
 }) => {
   // Use external search and filter if provided, otherwise use internal state
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
@@ -118,7 +119,7 @@ const ClubList = ({
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
                           {club.category ? (clubCategoryLabels[club.category] || club.category) : 'Chưa cập nhật'}
                         </span>
@@ -132,18 +133,25 @@ const ClubList = ({
                       <td className="px-6 py-4 text-gray-800">
                         {club.location || '—'}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase text-white ${getStatusBadgeClass(club.status)}`}>
                           {club.status}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center gap-2">
                           <button 
                             onClick={() => onView(club)} 
-                            className="px-4 py-2 bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white rounded-lg text-sm font-medium hover:bg-gradient-to-l transition-all shadow-md hover:shadow-lg"
+                            className="px-2 py-1 bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white rounded text-xs font-medium hover:bg-gradient-to-l transition-all shadow-sm hover:shadow-md"
                           >
                             Chi tiết
+                          </button>
+                          <button 
+                            onClick={() => onDelete(club.id)} 
+                            disabled={deleteLoadingId === club.id}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {deleteLoadingId === club.id ? 'Đang xóa...' : 'Xóa'}
                           </button>
                         </div>
                       </td>

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import ClubList from './ClubList';
 import ClubForm from './ClubForm';
 import { clubCategoryLabels } from '../data/constants';
+import { useToast } from './Toast';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
 const ClubManagement = ({ clubs, setClubs }) => {
+  const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingClub, setEditingClub] = useState(null);
   const [viewingClub, setViewingClub] = useState(null);
@@ -13,6 +15,7 @@ const ClubManagement = ({ clubs, setClubs }) => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
 
   const handleAdd = () => {
     setEditingClub(null);
@@ -24,9 +27,64 @@ const ClubManagement = ({ clubs, setClubs }) => {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa câu lạc bộ này?')) {
-      setClubs(clubs.filter(club => club.id !== id));
+  const handleDelete = async (clubId) => {
+    const club = clubs.find(c => c.id === clubId);
+    if (!club) {
+      showToast('Không tìm thấy câu lạc bộ.', 'error');
+      return;
+    }
+
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa câu lạc bộ "${club.name}"?\n\nLưu ý: Chủ tịch sẽ được chuyển về Sinh viên và tất cả đăng ký sẽ bị xóa.`)) {
+      return;
+    }
+
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
+      return;
+    }
+
+    setDeleteLoadingId(clubId);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/clubs/${clubId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.status === 401) {
+        showToast('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
+        setDeleteLoadingId(null);
+        return;
+      }
+
+      if (!response.ok || !data || (data.code !== 0 && data.code !== 1000)) {
+        const errorMessage = data?.message || `Không thể xóa câu lạc bộ (mã ${response.status}).`;
+        setError(errorMessage);
+        showToast(errorMessage, 'error');
+        setDeleteLoadingId(null);
+        return;
+      }
+
+      // Remove club from local state
+      setClubs(clubs.filter(c => c.id !== clubId));
+      showToast(`Đã xóa câu lạc bộ "${club.name}" thành công.`, 'success');
+      
+      // Refresh clubs list to ensure consistency
+      fetchClubs(filterCategory, searchTerm);
+    } catch (error) {
+      console.error('Delete club error:', error);
+      const errorMessage = 'Đã xảy ra lỗi khi xóa câu lạc bộ. Vui lòng thử lại.';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+    } finally {
+      setDeleteLoadingId(null);
     }
   };
 
@@ -194,6 +252,7 @@ const ClubManagement = ({ clubs, setClubs }) => {
         onSearchChange={handleSearchChange}
         filterCategory={filterCategory}
         onCategoryChange={handleCategoryChange}
+        deleteLoadingId={deleteLoadingId}
       />
 
       {showForm && (

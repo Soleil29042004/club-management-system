@@ -212,12 +212,12 @@ const Home = ({ onNavigateToLogin, onNavigateToRegister }) => {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>Hệ thống quản lý Câu lạc bộ</li>
                 <li>Dành cho sinh viên và quản lý</li>
-                <li>© 2024 ClubHub</li>
+                <li>© 2025 ClubHub</li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-700 pt-8 text-center text-sm text-gray-400">
-            <p className="m-0">© 2024 ClubHub - Hệ thống quản lý Câu lạc bộ Sinh viên. All rights reserved.</p>
+            <p className="m-0">© 2025 ClubHub - Hệ thống quản lý Câu lạc bộ Sinh viên. All rights reserved.</p>
           </div>
         </div>
       </footer>
