@@ -1,6 +1,23 @@
+/**
+ * Profile Component
+ * 
+ * Component hiển thị và quản lý thông tin cá nhân:
+ * - Tab thông tin cá nhân: xem và chỉnh sửa profile
+ * - Tab đổi mật khẩu: thay đổi password
+ * - Tab câu lạc bộ của tôi (student): danh sách clubs đã tham gia
+ * - Tab câu lạc bộ quản lý (club_leader): thông tin club đang quản lý
+ * - Fetch và sync thông tin từ API với localStorage
+ * 
+ * @param {Object} props
+ * @param {string} props.userRole - Role của user: 'admin', 'student', hoặc 'club_leader'
+ * @param {Array} props.clubs - Danh sách clubs
+ * @param {Array} props.members - Danh sách members
+ */
+
 import React, { useState, useEffect } from 'react';
 import SubscriptionDetailModal from './SubscriptionDetailModal';
 import { clubCategoryLabels } from '../data/constants';
+import { API_BASE_URL, apiRequest } from '../utils/api';
 
 const Profile = ({ userRole, clubs, members }) => {
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';

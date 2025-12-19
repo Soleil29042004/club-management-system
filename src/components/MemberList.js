@@ -1,3 +1,20 @@
+/**
+ * MemberList Component
+ * 
+ * Component hiển thị danh sách members dưới dạng table:
+ * - Search theo tên, MSSV, email
+ * - Filter theo club, role, status
+ * - Hiển thị thông tin: tên, email, MSSV, role, status, club
+ * - Actions: edit, delete member
+ * 
+ * @param {Object} props
+ * @param {Array} props.members - Danh sách members cần hiển thị
+ * @param {Array} props.clubs - Danh sách clubs (để filter)
+ * @param {Function} props.onEdit - Callback khi click edit (không dùng trong component này)
+ * @param {Function} props.onDelete - Callback khi click xóa member
+ * @param {string|number} props.deleteLoadingId - ID của member đang được xóa
+ */
+
 import React, { useState } from 'react';
 
 const MemberList = ({ members, clubs, onEdit, onDelete, deleteLoadingId }) => {
@@ -6,19 +23,32 @@ const MemberList = ({ members, clubs, onEdit, onDelete, deleteLoadingId }) => {
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
 
+  /**
+   * Filter members theo search term và các filters
+   */
   const filteredMembers = members.filter(member => {
+    // Search theo tên, MSSV, email
     const matchesSearch = member.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          member.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchTerm.toLowerCase());
+    // Filter theo club
     const matchesClub = filterClub === 'all' || member.clubId === parseInt(filterClub);
+    // Filter theo role
     const matchesRole = filterRole === 'all' || member.role === filterRole;
+    // Filter theo status
     const matchesStatus = filterStatus === 'all' || member.status === filterStatus;
     return matchesSearch && matchesClub && matchesRole && matchesStatus;
   });
 
+  // Lấy danh sách unique roles và statuses từ members để hiển thị trong dropdown
   const roles = [...new Set(members.map(member => member.role))];
   const statuses = [...new Set(members.map(member => member.status))];
 
+  /**
+   * Lấy CSS class cho role badge
+   * @param {string} role - Role của member
+   * @returns {string} - Tailwind CSS classes
+   */
   const getRoleBadgeClass = (role) => {
     const roleLower = role.toLowerCase().replace(/\s+/g, '-');
     if (roleLower.includes('chủ-tịch')) return 'bg-pink-100 text-pink-700';
@@ -28,6 +58,11 @@ const MemberList = ({ members, clubs, onEdit, onDelete, deleteLoadingId }) => {
     return 'bg-gray-100 text-gray-700';
   };
 
+  /**
+   * Lấy CSS class cho status badge
+   * @param {string} status - Trạng thái của member
+   * @returns {string} - Tailwind CSS classes
+   */
   const getStatusBadgeClass = (status) => {
     const statusLower = status.toLowerCase();
     if (statusLower.includes('hoạt động')) return 'bg-green-500 text-white';

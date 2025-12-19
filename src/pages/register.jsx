@@ -1,5 +1,20 @@
+/**
+ * Register Page Component
+ * 
+ * Component trang đăng ký tài khoản:
+ * - Form đăng ký với validation
+ * - Gửi request đến API để tạo tài khoản mới
+ * - Sau khi đăng ký thành công, chuyển về trang chủ để user đăng nhập
+ * 
+ * @param {Object} props
+ * @param {Function} props.onRegisterSuccess - Callback khi đăng ký thành công (không dùng, chỉ để tương thích)
+ * @param {Function} props.onSwitchToLogin - Callback để chuyển sang trang đăng nhập
+ * @param {Function} props.onNavigateToHome - Callback để về trang chủ
+ */
+
 import React, { useState } from 'react';
 import { useToast } from '../components/Toast';
+import { API_BASE_URL, apiRequest } from '../utils/api';
 
 const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
   const { showToast } = useToast();
@@ -19,8 +34,6 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -35,33 +48,42 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
     }
   };
 
+  /**
+   * Validate form data trước khi submit
+   * @returns {boolean} - true nếu form hợp lệ, false nếu có lỗi
+   */
   const validateForm = () => {
     const newErrors = {};
     
+    // Validate họ tên
     if (!formData.fullName.trim()) {
       newErrors.fullName = 'Họ tên không được để trống';
     } else if (formData.fullName.trim().length < 2) {
       newErrors.fullName = 'Họ tên phải có ít nhất 2 ký tự';
     }
     
+    // Validate email
     if (!formData.email.trim()) {
       newErrors.email = 'Email không được để trống';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email không hợp lệ';
     }
     
+    // Validate password
     if (!formData.password) {
       newErrors.password = 'Mật khẩu không được để trống';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
     
+    // Validate confirm password
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
     }
 
+    // Validate student-specific fields
     if (formData.role === 'student') {
       if (!formData.studentId.trim()) {
         newErrors.studentId = 'Mã sinh viên không được để trống';
@@ -71,6 +93,7 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
       }
     }
 
+    // Validate phone
     if (!formData.phone.trim()) {
       newErrors.phone = 'Số điện thoại không được để trống';
     } else if (!/^[0-9]{10,11}$/.test(formData.phone)) {
@@ -92,29 +115,19 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
     setErrors(prev => ({ ...prev, submit: '' }));
     
     try {
-      // Swagger: POST /users with studentCode, fullName, email, password, phoneNumber, major
-      const response = await fetch(`${API_BASE_URL}/users`, {
+      // Gọi API đăng ký user mới
+      // API endpoint: POST /users
+      await apiRequest('/users', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+        body: {
           studentCode: formData.studentId.trim(),
           fullName: formData.fullName.trim(),
           email: formData.email.trim(),
           password: formData.password,
           phoneNumber: formData.phone.trim(),
           major: formData.major.trim()
-        })
+        }
       });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const message = data.message || data.error || 'Đăng ký thất bại. Vui lòng thử lại!';
-        setErrors({ submit: message });
-        return;
-      }
 
       // Không lưu token và user data để đảm bảo về trang home chưa đăng nhập
       // User sẽ cần đăng nhập lại sau khi đăng ký thành công
@@ -129,7 +142,8 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
       }, 1000); // Delay 1 giây để user thấy thông báo thành công
     } catch (error) {
       console.error('Register error:', error);
-      setErrors({ submit: 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.' });
+      const errorMessage = error.data?.message || error.message || 'Đăng ký thất bại. Vui lòng thử lại!';
+      setErrors({ submit: errorMessage });
     } finally {
       setLoading(false);
     }

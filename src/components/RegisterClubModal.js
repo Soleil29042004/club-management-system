@@ -1,3 +1,16 @@
+/**
+ * RegisterClubModal Component
+ * 
+ * Modal form để student đăng ký mở club mới:
+ * - Form điền thông tin club: tên, mô tả, danh mục, email, địa điểm, phí tham gia, mục tiêu
+ * - Validation đầy đủ cho tất cả các trường
+ * - Gửi yêu cầu đến admin để duyệt
+ * 
+ * @param {Object} props
+ * @param {Function} props.onClose - Callback khi đóng modal
+ * @param {Function} props.onSubmit - Callback khi submit form với clubRequest data
+ */
+
 import React, { useState } from 'react';
 import { clubCategories, clubCategoryLabels } from '../data/constants';
 
@@ -14,12 +27,17 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
 
   const [errors, setErrors] = useState({});
 
+  /**
+   * Xử lý khi input thay đổi
+   * @param {Event} e - Input change event
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    // Xóa error khi user bắt đầu nhập
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -28,35 +46,45 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
     }
   };
 
+  /**
+   * Validate form trước khi submit
+   * @returns {boolean} - true nếu form hợp lệ
+   */
   const validateForm = () => {
     const newErrors = {};
 
+    // Validate tên club (bắt buộc)
     if (!formData.name.trim()) {
       newErrors.name = 'Tên câu lạc bộ là bắt buộc';
     }
 
+    // Validate mô tả (bắt buộc, tối thiểu 20 ký tự)
     if (!formData.description.trim()) {
       newErrors.description = 'Mô tả là bắt buộc';
     } else if (formData.description.trim().length < 20) {
       newErrors.description = 'Mô tả phải có ít nhất 20 ký tự';
     }
 
+    // Validate email (bắt buộc, format hợp lệ)
     if (!formData.email.trim()) {
       newErrors.email = 'Email là bắt buộc';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email không hợp lệ';
     }
 
+    // Validate địa điểm (bắt buộc)
     if (!formData.location.trim()) {
       newErrors.location = 'Địa điểm là bắt buộc';
     }
 
+    // Validate phí tham gia (nếu có, phải là số >= 0)
     if (formData.participationFee && isNaN(formData.participationFee)) {
       newErrors.participationFee = 'Phí tham gia phải là số';
     } else if (formData.participationFee && parseFloat(formData.participationFee) < 0) {
       newErrors.participationFee = 'Phí tham gia phải >= 0';
     }
 
+    // Validate mục tiêu hoạt động (bắt buộc, tối thiểu 10 ký tự)
     if (!formData.goals.trim()) {
       newErrors.goals = 'Mục tiêu hoạt động là bắt buộc';
     } else if (formData.goals.trim().length < 10) {
@@ -67,10 +95,17 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * Xử lý khi submit form
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
+      // Lấy thông tin user từ localStorage
       const user = JSON.parse(localStorage.getItem('user'));
+      
+      // Tạo club request object
       const clubRequest = {
         ...formData,
         participationFee: formData.participationFee ? parseFloat(formData.participationFee) : 0,
@@ -79,6 +114,7 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
         status: 'pending',
         requestDate: new Date().toISOString().split('T')[0]
       };
+      
       onSubmit(clubRequest);
     }
   };

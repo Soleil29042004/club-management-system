@@ -1,10 +1,29 @@
+/**
+ * ClubRequestsManagement Component
+ * 
+ * Component quản lý yêu cầu đăng ký mở club cho admin:
+ * - Hiển thị danh sách yêu cầu đăng ký mở club từ students
+ * - Filter theo trạng thái (tất cả, chờ duyệt, đã duyệt, đã từ chối)
+ * - Xem chi tiết yêu cầu
+ * - Duyệt yêu cầu (tự động tạo club mới)
+ * - Từ chối yêu cầu (có thể nhập lý do)
+ * - Hiển thị thống kê: tổng yêu cầu, chờ duyệt, đã duyệt, đã từ chối
+ * 
+ * @param {Object} props
+ * @param {Array} props.clubs - Danh sách clubs (để update sau khi duyệt)
+ * @param {Function} props.setClubs - Callback để update clubs state
+ */
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
 import { clubCategoryLabels } from '../data/constants';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
-// Map status từ API sang status local
+/**
+ * Map status từ API format (DangCho, ChapThuan, TuChoi) sang local format (pending, approved, rejected)
+ * @param {string} apiStatus - Status từ API
+ * @returns {string} - Status local
+ */
 const mapApiStatusToLocal = (apiStatus) => {
   const statusMap = {
     'DangCho': 'pending',

@@ -1,9 +1,24 @@
+/**
+ * MemberManagement Component
+ * 
+ * Component quản lý members/users cho admin:
+ * - Hiển thị danh sách users với pagination
+ * - Sort theo các trường khác nhau (tên, email, mã sinh viên, ngày tạo)
+ * - Xem thông tin chi tiết user (tên, email, phone, mã sinh viên, clubs tham gia)
+ * - Deactivate user (soft delete)
+ * - Map clubIds với club names để hiển thị
+ * 
+ * @param {Object} props
+ * @param {Array} props.members - Danh sách members/users
+ * @param {Function} props.setMembers - Callback để update members state
+ * @param {Array} props.clubs - Danh sách clubs (để map với clubIds)
+ */
+
 import React, { useEffect, useState, useRef } from 'react';
 import MemberList from './MemberList';
 import MemberForm from './MemberForm';
 import { useToast } from './Toast';
-
-const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+import { API_BASE_URL, apiRequest } from '../utils/api';
 
 const MemberManagement = ({ members, setMembers, clubs }) => {
   const { showToast } = useToast();

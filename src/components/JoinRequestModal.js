@@ -1,3 +1,19 @@
+/**
+ * JoinRequestModal Component
+ * 
+ * Modal form để student gửi yêu cầu tham gia club:
+ * - Hiển thị thông tin chi tiết của club
+ * - Form điền thông tin cá nhân (tự động điền từ API)
+ * - Chọn gói membership (packages)
+ * - Nhập lý do gia nhập & kỹ năng (validation: 20-500 ký tự)
+ * - Validation đầy đủ cho tất cả các trường
+ * 
+ * @param {Object} props
+ * @param {Object} props.club - Club object mà student muốn tham gia
+ * @param {Function} props.onClose - Callback khi đóng modal
+ * @param {Function} props.onSubmit - Callback khi submit form với formData
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
 import { clubCategoryLabels } from '../data/constants';
@@ -24,7 +40,10 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
 
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
-  // Fetch user info để tự điền vào form
+  /**
+   * Fetch thông tin user từ API để tự điền vào form
+   * Ưu tiên dữ liệu từ API, fallback về localStorage nếu API chưa load
+   */
   useEffect(() => {
     const fetchUserInfo = async () => {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -62,7 +81,10 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     fetchUserInfo();
   }, []); // Chỉ chạy một lần khi modal mở
 
-  // Fetch club detail & packages khi club thay đổi
+  /**
+   * Fetch chi tiết club và packages khi club thay đổi
+   * Sử dụng AbortController để cancel request khi component unmount
+   */
   useEffect(() => {
     if (!club || !club.id) return;
 
@@ -146,6 +168,11 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [club?.id]); // Chỉ phụ thuộc vào club.id
 
+  /**
+   * Format date sang định dạng tiếng Việt
+   * @param {string|Date} value - Date value cần format
+   * @returns {string} - Formatted date string
+   */
   const formatDate = (value) => {
     if (!value) return 'Chưa cập nhật';
     const d = new Date(value);
@@ -153,10 +180,13 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     return d.toLocaleDateString('vi-VN');
   };
 
+  /**
+   * Load user data từ localStorage làm fallback
+   * Chỉ chạy nếu API chưa load xong để không ghi đè dữ liệu từ API
+   */
   useEffect(() => {
-    // Load user data from localStorage (profile info) - chỉ dùng làm fallback nếu API chưa load xong
-    // Chỉ set các field nếu API chưa load hoặc field chưa có giá trị (để không ghi đè API data)
-    if (userInfoLoaded) return; // Nếu API đã load xong, không dùng localStorage
+    // Nếu API đã load xong, không dùng localStorage
+    if (userInfoLoaded) return;
 
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -210,39 +240,52 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
 
   if (!club) return null;
 
+  /**
+   * Xử lý khi input thay đổi
+   * @param {Event} e - Input change event
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
+    // Xóa error khi user bắt đầu nhập
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
+  /**
+   * Validate form trước khi submit
+   * @returns {boolean} - true nếu form hợp lệ
+   */
   const validateForm = () => {
     const newErrors = {};
 
+    // Validate họ và tên (bắt buộc)
     if (!formData.fullName.trim()) {
       newErrors.fullName = 'Họ và tên không được để trống';
     }
 
+    // Validate số điện thoại (bắt buộc, format: 10-11 số)
     if (!formData.phone.trim()) {
       newErrors.phone = 'Số điện thoại không được để trống';
     } else if (!/^[0-9]{10,11}$/.test(formData.phone)) {
       newErrors.phone = 'Số điện thoại không hợp lệ';
     }
 
+    // Validate mã sinh viên (bắt buộc)
     if (!formData.studentId.trim()) {
       newErrors.studentId = 'Mã sinh viên không được để trống';
     }
 
+    // Validate chuyên ngành (bắt buộc)
     if (!formData.major.trim()) {
       newErrors.major = 'Chuyên ngành không được để trống';
     }
 
+    // Validate lý do gia nhập (bắt buộc, 20-500 ký tự)
     if (!formData.reason.trim()) {
       newErrors.reason = 'Lý do gia nhập & kỹ năng không được để trống';
     } else {
@@ -254,6 +297,7 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
       }
     }
 
+    // Validate package (bắt buộc phải chọn)
     if (!formData.packageId) {
       newErrors.packageId = 'Vui lòng chọn gói thành viên';
     }
@@ -262,6 +306,10 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * Xử lý khi submit form
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {

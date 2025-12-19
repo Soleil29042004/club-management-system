@@ -1,8 +1,26 @@
+/**
+ * SubscriptionDetailModal Component
+ * 
+ * Modal component hiển thị chi tiết đăng ký CLB:
+ * - Thông tin đăng ký: mã đăng ký, ngày đăng ký
+ * - Thông tin CLB: tên, mã, logo
+ * - Thông tin sinh viên: họ tên, MSSV, email, vai trò
+ * - Thông tin gói thành viên: mã gói, tên, thời hạn, giá
+ * - Trạng thái và thông tin khác: trạng thái, đã thanh toán, phương thức thanh toán, người duyệt, các ngày liên quan
+ * - Fetch dữ liệu từ API khi subscriptionId thay đổi
+ * 
+ * @param {Object} props
+ * @param {number|string} props.subscriptionId - ID của subscription cần xem chi tiết
+ * @param {Function} props.onClose - Callback khi đóng modal
+ */
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
+/**
+ * Map trạng thái từ API sang text và màu sắc hiển thị
+ */
 const statusMap = {
   ChoDuyet: { text: 'Chờ duyệt', color: 'bg-amber-100 text-amber-700' },
   DaDuyet: { text: 'Đã duyệt', color: 'bg-green-100 text-green-700' },
@@ -17,6 +35,10 @@ const SubscriptionDetailModal = ({ subscriptionId, onClose }) => {
   const [subscription, setSubscription] = useState(null);
   const [error, setError] = useState('');
 
+  /**
+   * Fetch chi tiết subscription từ API khi subscriptionId thay đổi
+   * Sử dụng isMounted flag để tránh setState sau khi component unmount
+   */
   useEffect(() => {
     if (!subscriptionId) return;
 
@@ -105,6 +127,11 @@ const SubscriptionDetailModal = ({ subscriptionId, onClose }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subscriptionId]);
 
+  /**
+   * Format date string sang định dạng tiếng Việt với giờ
+   * @param {string} dateString - Date string cần format
+   * @returns {string} - Formatted date hoặc '—' nếu không hợp lệ
+   */
   const formatDate = (dateString) => {
     if (!dateString) return '—';
     try {
@@ -121,6 +148,11 @@ const SubscriptionDetailModal = ({ subscriptionId, onClose }) => {
     }
   };
 
+  /**
+   * Render status badge với màu sắc tương ứng
+   * @param {string} status - Trạng thái từ API
+   * @returns {JSX.Element} Status badge component
+   */
   const renderStatus = (status) => {
     const info = statusMap[status] || { text: status || 'Không xác định', color: 'bg-gray-100 text-gray-700' };
     return (

@@ -1,3 +1,19 @@
+/**
+ * StudentDashboard Component
+ * 
+ * Component dashboard chính cho student role:
+ * - Hiển thị danh sách clubs để student có thể tham gia
+ * - Quản lý join requests (đơn đăng ký tham gia CLB)
+ * - Xử lý payment cho membership
+ * - Đăng ký mở CLB mới
+ * - Real-time polling để cập nhật trạng thái đơn đăng ký
+ * 
+ * @param {Object} props
+ * @param {Array} props.clubs - Danh sách clubs
+ * @param {string} props.currentPage - Trang hiện tại ('clubs', 'my-requests', etc.)
+ * @param {Function} props.setClubs - Callback để update clubs state
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from './Toast';
 import StudentClubList from './StudentClubList';

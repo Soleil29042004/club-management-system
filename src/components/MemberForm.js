@@ -1,3 +1,17 @@
+/**
+ * MemberForm Component
+ * 
+ * Form component để admin thêm hoặc chỉnh sửa thành viên:
+ * - Thêm thành viên mới vào club
+ * - Chỉnh sửa thông tin thành viên đã có
+ * - Validate: MSSV (format SE150001), email, phone (10 số, bắt đầu bằng 0), các trường required
+ * 
+ * @param {Object} props
+ * @param {Object|null} props.member - Member object nếu đang edit, null nếu đang thêm mới
+ * @param {Array} props.clubs - Danh sách clubs để chọn
+ * @param {Function} props.onSubmit - Callback khi submit form (formData)
+ * @param {Function} props.onCancel - Callback khi cancel
+ */
 import React, { useState, useEffect } from 'react';
 import { memberRoles, statusOptions } from '../data/constants';
 
@@ -17,6 +31,9 @@ const MemberForm = ({ member, clubs, onSubmit, onCancel }) => {
 
   const [errors, setErrors] = useState({});
 
+  /**
+   * Load member data vào form khi component mount hoặc member prop thay đổi
+   */
   useEffect(() => {
     if (member) {
       setFormData(member);
@@ -44,6 +61,11 @@ const MemberForm = ({ member, clubs, onSubmit, onCancel }) => {
     }
   };
 
+  /**
+   * Validate form data trước khi submit
+   * Kiểm tra: MSSV format, email format, phone format, các trường required
+   * @returns {boolean} - true nếu hợp lệ, false nếu có lỗi
+   */
   const validateForm = () => {
     const newErrors = {};
 

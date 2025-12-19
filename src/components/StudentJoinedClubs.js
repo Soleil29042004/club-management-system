@@ -1,9 +1,25 @@
+/**
+ * StudentJoinedClubs Component
+ * 
+ * Component hiển thị danh sách CLB mà student đã tham gia:
+ * - Hiển thị thông tin: tên CLB, danh mục, mô tả, vai trò, gói thành viên, ngày tham gia, ngày hết hạn
+ * - Hiển thị trạng thái membership (Đang hiệu lực / Hết hạn)
+ * - Gia hạn membership khi đã hết hạn (nếu canRenew = true)
+ * - Rời khỏi CLB (chỉ thành viên đang hoạt động, không phải Chủ tịch)
+ * - Resolve userId từ JWT token hoặc localStorage
+ * 
+ * @returns {JSX.Element} Component hiển thị danh sách CLB đã tham gia
+ */
 import React, { useEffect, useState } from 'react';
 import { useToast } from './Toast';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
-// Helper to parse JWT (best-effort)
+/**
+ * Helper function để parse JWT token (best-effort)
+ * @param {string} token - JWT token string
+ * @returns {Object|null} - Decoded payload hoặc null nếu không parse được
+ */
 const parseJWT = (token) => {
   try {
     const parts = token.split('.');
@@ -25,6 +41,12 @@ const StudentJoinedClubs = () => {
   const [leavingId, setLeavingId] = useState(null);
   const [renewLoadingId, setRenewLoadingId] = useState(null);
 
+  /**
+   * Resolve userId từ JWT token hoặc localStorage
+   * Ưu tiên lấy từ token, fallback về localStorage
+   * Chỉ trả về giá trị không phải email (không chứa @)
+   * @returns {string|null} - userId hoặc null nếu không tìm thấy
+   */
   const resolveUserId = () => {
     // Ưu tiên lấy userId từ token trước (đảm bảo là userId, không phải email)
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -61,6 +83,10 @@ const StudentJoinedClubs = () => {
     return null;
   };
 
+  /**
+   * Fetch danh sách CLB đã tham gia từ API
+   * Retry nếu chưa có userId (fetch từ /users/my-info)
+   */
   useEffect(() => {
     const fetchJoinedClubs = async (retryCount = 0) => {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -167,6 +193,11 @@ const StudentJoinedClubs = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Render trạng thái membership (Đang hiệu lực / Hết hạn)
+   * @param {Object} club - Club object
+   * @returns {JSX.Element} Status badge
+   */
   const renderStatus = (club) => {
     const now = new Date();
     const end = club.endDate ? new Date(club.endDate) : null;
@@ -183,20 +214,45 @@ const StudentJoinedClubs = () => {
     );
   };
 
+  /**
+   * Normalize string về lowercase, trim
+   * @param {any} value - Giá trị cần normalize
+   * @returns {string} - Normalized string
+   */
   const normalize = (value) => (value || '').toString().trim().toLowerCase();
 
+  /**
+   * Kiểm tra role có phải là Chủ tịch không
+   * @param {string} role - Role cần kiểm tra
+   * @returns {boolean} - true nếu là Chủ tịch
+   */
   const isLeaderRole = (role) => normalize(role) === 'chutich';
 
+  /**
+   * Kiểm tra status có phải là đã duyệt không
+   * @param {string} status - Status cần kiểm tra
+   * @returns {boolean} - true nếu đã duyệt
+   */
   const isApprovedStatus = (status) => {
     const normalized = normalize(status);
     return normalized === 'daduyet' || normalized === 'approved' || normalized === 'active';
   };
 
+  /**
+   * Kiểm tra membership đã thanh toán chưa
+   * @param {Object} club - Club object
+   * @returns {boolean} - true nếu đã thanh toán hoặc không có thông tin
+   */
   const isPaidMembership = (club) => {
     if (club.isPaid === undefined || club.isPaid === null) return true;
     return !!club.isPaid;
   };
 
+  /**
+   * Kiểm tra membership còn hiệu lực không
+   * @param {Object} club - Club object
+   * @returns {boolean} - true nếu còn hiệu lực
+   */
   const isActiveMembership = (club) => {
     const now = new Date();
     const end = club.endDate ? new Date(club.endDate) : null;
@@ -206,6 +262,12 @@ const StudentJoinedClubs = () => {
     return apiActive && !expiredFlag && inTime;
   };
 
+  /**
+   * Kiểm tra student có thể rời CLB không
+   * Chỉ cho phép nếu: không phải Chủ tịch, đã duyệt, đã thanh toán, đang hoạt động hoặc đã hết hạn
+   * @param {Object} club - Club object
+   * @returns {boolean} - true nếu có thể rời
+   */
   const canLeaveClub = (club) => {
     if (!club) return false;
     if (isLeaderRole(club.clubRole || club.role)) return false; // Chủ tịch không thể tự rời
@@ -218,6 +280,11 @@ const StudentJoinedClubs = () => {
     return approved && isPaidMembership(club) && (isActiveMembership(club) || expiredFlag);
   };
 
+  /**
+   * Xử lý rời khỏi CLB
+   * Gọi API để đánh dấu status = DaRoiCLB
+   * @param {Object} club - Club object cần rời
+   */
   const handleLeaveClub = async (club) => {
     if (!club) return;
     if (!canLeaveClub(club)) {
@@ -259,6 +326,11 @@ const StudentJoinedClubs = () => {
     }
   };
 
+  /**
+   * Gia hạn membership cho CLB đã hết hạn
+   * Gửi yêu cầu gia hạn, trạng thái chuyển về chờ duyệt, cần thanh toán lại
+   * @param {Object} club - Club object cần gia hạn
+   */
   const handleRenewClub = async (club) => {
     if (!club?.subscriptionId) {
       showToast('Không tìm thấy subscription để gia hạn.', 'error');

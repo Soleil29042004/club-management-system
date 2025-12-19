@@ -1,3 +1,21 @@
+/**
+ * JoinRequestsList Component
+ * 
+ * Component hiển thị danh sách yêu cầu tham gia club cho club leader:
+ * - Fetch và hiển thị requests từ API
+ * - Filter theo trạng thái (pending, approved, rejected)
+ * - Duyệt/từ chối yêu cầu
+ * - Xem chi tiết request và subscription
+ * - Real-time polling để cập nhật trạng thái thanh toán
+ * - Hiển thị thông tin thanh toán và xác nhận thanh toán
+ * 
+ * @param {Object} props
+ * @param {Array} props.requests - Danh sách requests từ props (fallback)
+ * @param {string|number} props.clubId - ID của club
+ * @param {Function} props.onApprove - Callback khi duyệt request
+ * @param {Function} props.onReject - Callback khi từ chối request
+ */
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useToast } from './Toast';
 

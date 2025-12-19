@@ -1,3 +1,21 @@
+/**
+ * ClubInfo Component
+ * 
+ * Component hiển thị thông tin club cho club leader:
+ * - Hiển thị thông tin: tên, danh mục, mô tả, địa điểm, email, ngày thành lập, số thành viên
+ * - Button để chỉnh sửa thông tin
+ * - Toggle giữa view mode và edit mode (sử dụng ClubInfoForm)
+ * 
+ * @param {Object} props
+ * @param {Object} props.club - Club object cần hiển thị
+ * @param {Function} props.onEdit - Callback khi click button chỉnh sửa
+ * @param {boolean} props.showEditForm - Flag để toggle edit mode
+ * @param {Object} props.formData - Form data cho edit mode
+ * @param {Function} props.onFormChange - Callback khi form input thay đổi
+ * @param {Function} props.onFormSubmit - Callback khi submit form
+ * @param {Function} props.onFormCancel - Callback khi cancel edit
+ */
+
 import React from 'react';
 import ClubInfoForm from './ClubInfoForm';
 import { clubCategoryLabels } from '../data/constants';
@@ -16,6 +34,11 @@ const ClubInfo = ({ club, onEdit, showEditForm, formData, onFormChange, onFormSu
     );
   }
 
+  /**
+   * Lấy CSS class cho status badge
+   * @param {string} status - Trạng thái của club
+   * @returns {string} - Tailwind CSS classes
+   */
   const getStatusBadgeClass = (status) => {
     const statusLower = status.toLowerCase();
     if (statusLower.includes('hoạt động')) return 'bg-green-500 text-white';
