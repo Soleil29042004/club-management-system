@@ -1,7 +1,29 @@
+/**
+ * MembersList Component
+ * 
+ * Component hiển thị danh sách thành viên của club cho club leader:
+ * - Hiển thị thông tin: tên, MSSV, SĐT, chuyên ngành, ngày tham gia, tình trạng, vai trò
+ * - Cho phép cập nhật vai trò thành viên (dropdown)
+ * - Cho phép xóa thành viên khỏi club
+ * - Tính toán và hiển thị tình trạng membership (còn hiệu lực, sắp hết hạn, hết hạn)
+ * 
+ * @param {Object} props
+ * @param {Array} props.members - Danh sách members
+ * @param {Object} props.club - Club object (để lấy membershipDuration)
+ * @param {Function} props.onUpdateRole - Callback khi cập nhật vai trò (memberId, newRole)
+ * @param {Function} props.onDeleteMember - Callback khi xóa thành viên (memberId)
+ * @param {number|string} props.deleteLoadingId - ID của member đang được xóa (để hiển thị loading)
+ * @param {number|string} props.roleLoadingId - ID của member đang được cập nhật vai trò (để hiển thị loading)
+ */
 import React from 'react';
 import { memberRoles } from '../data/constants';
 
 const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadingId, roleLoadingId }) => {
+  /**
+   * Parse date từ nhiều format khác nhau (string, Date object, DD/MM/YYYY)
+   * @param {any} value - Giá trị date cần parse
+   * @returns {Date|null} - Date object hoặc null nếu không parse được
+   */
   const parseDate = (value) => {
     if (!value) return null;
     if (typeof value === 'string' && value.includes('/')) {
@@ -18,12 +40,23 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadin
     return Number.isNaN(d.getTime()) ? null : d;
   };
 
+  /**
+   * Format date sang định dạng tiếng Việt (DD/MM/YYYY)
+   * @param {Date|string} date - Date cần format
+   * @returns {string} - Date string hoặc '-' nếu không hợp lệ
+   */
   const formatDate = (date) => {
     const d = date instanceof Date ? date : parseDate(date);
     if (!d) return '-';
     return d.toLocaleDateString('vi-VN');
   };
 
+  /**
+   * Tính toán thông tin membership (ngày hết hạn, trạng thái, badge class)
+   * Dựa vào joinDate và membershipDuration của club
+   * @param {Object} member - Member object
+   * @returns {Object} - Object chứa expiryDate, status, badgeClass
+   */
   const getMembershipInfo = (member) => {
     const statusText = member.status ? member.status.toLowerCase() : '';
 

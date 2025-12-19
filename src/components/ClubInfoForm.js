@@ -1,3 +1,17 @@
+/**
+ * ClubInfoForm Component
+ * 
+ * Form component để club leader chỉnh sửa thông tin cơ bản của club:
+ * - Mô tả (description) - required
+ * - Địa điểm (location) - required
+ * - Logo URL (logo) - optional
+ * 
+ * @param {Object} props
+ * @param {Object} props.formData - Form data object chứa description, location, logo
+ * @param {Function} props.onFormChange - Callback khi input thay đổi
+ * @param {Function} props.onFormSubmit - Callback khi submit form
+ * @param {Function} props.onFormCancel - Callback khi cancel edit
+ */
 import React from 'react';
 
 const ClubInfoForm = ({ formData, onFormChange, onFormSubmit, onFormCancel }) => {

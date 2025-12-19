@@ -1,3 +1,16 @@
+/**
+ * StudentStats Component
+ * 
+ * Component hiển thị thống kê cho student:
+ * - Số yêu cầu đã gửi (join requests)
+ * - Số đã nộp phí (payments)
+ * - Số CLB đang hoạt động (joined clubs)
+ * 
+ * @param {Object} props
+ * @param {number} props.requestsCount - Số yêu cầu đã gửi
+ * @param {number} props.paymentsCount - Số đã nộp phí
+ * @param {number} props.clubsCount - Số CLB đang hoạt động
+ */
 import React from 'react';
 
 const StudentStats = ({ requestsCount, paymentsCount, clubsCount }) => {

@@ -1,10 +1,23 @@
+/**
+ * ClubManagement Component
+ * 
+ * Component quản lý clubs cho admin:
+ * - Hiển thị danh sách clubs với search và filter
+ * - Thêm, sửa, xóa clubs
+ * - Xem chi tiết club
+ * 
+ * @param {Object} props
+ * @param {Array} props.clubs - Danh sách clubs
+ * @param {Function} props.setClubs - Callback để update clubs state
+ */
+
 import React, { useState, useEffect } from 'react';
 import ClubList from './ClubList';
 import ClubForm from './ClubForm';
 import { clubCategoryLabels } from '../data/constants';
 import { useToast } from './Toast';
-
-const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+import { API_BASE_URL, apiRequest } from '../utils/api';
+import { mapApiClubToComponent } from '../utils/clubMapper';
 
 const ClubManagement = ({ clubs, setClubs }) => {
   const { showToast } = useToast();
@@ -27,6 +40,10 @@ const ClubManagement = ({ clubs, setClubs }) => {
     setShowForm(true);
   };
 
+  /**
+   * Xóa club
+   * @param {string|number} clubId - ID của club cần xóa
+   */
   const handleDelete = async (clubId) => {
     const club = clubs.find(c => c.id === clubId);
     if (!club) {
@@ -34,6 +51,7 @@ const ClubManagement = ({ clubs, setClubs }) => {
       return;
     }
 
+    // Xác nhận trước khi xóa
     if (!window.confirm(`Bạn có chắc chắn muốn xóa câu lạc bộ "${club.name}"?\n\nLưu ý: Chủ tịch sẽ được chuyển về Sinh viên và tất cả đăng ký sẽ bị xóa.`)) {
       return;
     }
@@ -48,41 +66,26 @@ const ClubManagement = ({ clubs, setClubs }) => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/clubs/${clubId}`, {
+      const data = await apiRequest(`/clubs/${clubId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        token
       });
 
-      const data = await response.json().catch(() => null);
-
-      if (response.status === 401) {
-        showToast('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
-        setDeleteLoadingId(null);
-        return;
-      }
-
-      if (!response.ok || !data || (data.code !== 0 && data.code !== 1000)) {
-        const errorMessage = data?.message || `Không thể xóa câu lạc bộ (mã ${response.status}).`;
-        setError(errorMessage);
-        showToast(errorMessage, 'error');
-        setDeleteLoadingId(null);
-        return;
-      }
-
-      // Remove club from local state
+      // Xóa club khỏi local state
       setClubs(clubs.filter(c => c.id !== clubId));
       showToast(`Đã xóa câu lạc bộ "${club.name}" thành công.`, 'success');
       
-      // Refresh clubs list to ensure consistency
+      // Refresh clubs list để đảm bảo consistency
       fetchClubs(filterCategory, searchTerm);
     } catch (error) {
-      console.error('Delete club error:', error);
-      const errorMessage = 'Đã xảy ra lỗi khi xóa câu lạc bộ. Vui lòng thử lại.';
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
+      if (error.status === 401) {
+        showToast('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
+      } else {
+        console.error('Delete club error:', error);
+        const errorMessage = error.data?.message || 'Đã xảy ra lỗi khi xóa câu lạc bộ. Vui lòng thử lại.';
+        setError(errorMessage);
+        showToast(errorMessage, 'error');
+      }
     } finally {
       setDeleteLoadingId(null);
     }
@@ -118,27 +121,12 @@ const ClubManagement = ({ clubs, setClubs }) => {
     setViewingClub(null);
   };
 
-  // Map API data to component format
-  const mapApiDataToClub = (apiClub) => {
-    return {
-      id: apiClub.clubId,
-      name: apiClub.clubName,
-      description: apiClub.description || '',
-      category: clubCategoryLabels[apiClub.category] || apiClub.category,
-      categoryCode: apiClub.category, // Keep original category code
-      foundedDate: apiClub.establishedDate,
-      president: apiClub.founderName || '',
-      memberCount: apiClub.totalMembers || 0, // Sử dụng totalMembers từ API
-      status: apiClub.isActive ? 'Hoạt động' : 'Ngừng hoạt động',
-      email: apiClub.email || '',
-      location: apiClub.location || '',
-      logo: apiClub.logo,
-      founderId: apiClub.founderId,
-      founderStudentCode: apiClub.founderStudentCode
-    };
-  };
 
-  // Fetch clubs from API với search và filter
+  /**
+   * Fetch clubs từ API với search và filter
+   * @param {string} category - Category filter (optional)
+   * @param {string} searchName - Search term (optional)
+   */
   const fetchClubs = async (category = null, searchName = '') => {
     setLoading(true);
     setError(null);
@@ -151,8 +139,8 @@ const ClubManagement = ({ clubs, setClubs }) => {
         return;
       }
 
-      // Build URL with optional category filter and search
-      let url = `${API_BASE_URL}/clubs`;
+      // Build URL với query parameters cho filter và search
+      let endpoint = '/clubs';
       const params = new URLSearchParams();
       if (category && category !== 'all') {
         params.append('category', category);
@@ -161,48 +149,37 @@ const ClubManagement = ({ clubs, setClubs }) => {
         params.append('name', searchName.trim());
       }
       if (params.toString()) {
-        url += `?${params.toString()}`;
+        endpoint += `?${params.toString()}`;
       }
 
-      const response = await fetch(url, {
+      const data = await apiRequest(endpoint, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        token
       });
 
-      const data = await response.json().catch(() => null);
-
-      if (response.status === 401) {
-        setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
-        setLoading(false);
-        return;
-      }
-
-      if (!response.ok || !data || (data.code !== 0 && data.code !== 1000)) {
-        const errorMessage = data?.message || `Không thể tải danh sách câu lạc bộ (mã ${response.status}).`;
-        setError(errorMessage);
-        setLoading(false);
-        return;
-      }
-
-      // Map API data to component format
-      const mappedClubs = (data.result || []).map(mapApiDataToClub);
+      // Map API data sang component format
+      const mappedClubs = (data.result || []).map(mapApiClubToComponent);
       setClubs(mappedClubs);
     } catch (error) {
-      console.error('Fetch clubs error:', error);
-      setError('Đã xảy ra lỗi khi tải danh sách câu lạc bộ. Vui lòng thử lại.');
+      if (error.status === 401) {
+        setError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      } else {
+        console.error('Fetch clubs error:', error);
+        setError(error.data?.message || 'Đã xảy ra lỗi khi tải danh sách câu lạc bộ. Vui lòng thử lại.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch clubs khi component mounts hoặc khi filter/search thay đổi (với debounce cho search)
+  /**
+   * Fetch clubs khi component mount hoặc khi filter/search thay đổi
+   * Sử dụng debounce cho search để tránh gọi API quá nhiều
+   */
   useEffect(() => {
     let timeoutId;
     
-    // Nếu searchTerm thay đổi, debounce 500ms
+    // Debounce search: nếu có searchTerm, đợi 500ms trước khi fetch
     // Nếu chỉ filterCategory thay đổi, fetch ngay
     if (searchTerm) {
       timeoutId = setTimeout(() => {

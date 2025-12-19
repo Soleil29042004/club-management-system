@@ -1,9 +1,24 @@
+/**
+ * ClubActivities Component
+ * 
+ * Component quản lý hoạt động của club:
+ * - Hiển thị danh sách các hoạt động đã tổ chức
+ * - Thêm, sửa, xóa hoạt động
+ * - Mỗi hoạt động có: tên, mô tả, ngày tổ chức, địa điểm
+ * 
+ * @param {Object} props
+ * @param {Object} props.club - Club object chứa thông tin club và activities
+ * @param {Function} props.onUpdateActivities - Callback khi activities được cập nhật
+ */
+
 import React, { useState, useEffect } from 'react';
 
 const ClubActivities = ({ club, onUpdateActivities }) => {
   const [activities, setActivities] = useState(club?.activities || []);
 
-  // Update activities when club changes
+  /**
+   * Cập nhật activities khi club thay đổi
+   */
   useEffect(() => {
     if (club?.activities) {
       setActivities(club.activities);
@@ -19,24 +34,35 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
   });
   const [errors, setErrors] = useState({});
 
+  /**
+   * Xử lý khi input thay đổi
+   * @param {Event} e - Input change event
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    // Xóa error khi user bắt đầu nhập
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
+  /**
+   * Validate form trước khi submit
+   * @returns {boolean} - true nếu form hợp lệ
+   */
   const validateForm = () => {
     const newErrors = {};
 
+    // Validate tên hoạt động (bắt buộc)
     if (!formData.title.trim()) {
       newErrors.title = 'Tên hoạt động không được để trống';
     }
 
+    // Validate ngày tổ chức (bắt buộc)
     if (!formData.date) {
       newErrors.date = 'Ngày tổ chức không được để trống';
     }
@@ -45,6 +71,10 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * Xử lý khi submit form (thêm hoặc sửa hoạt động)
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
@@ -53,29 +83,42 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
         id: editingIndex !== null ? activities[editingIndex].id : Date.now()
       };
 
+      // Cập nhật hoặc thêm mới activity
       let updatedActivities;
       if (editingIndex !== null) {
+        // Edit mode: thay thế activity tại index
         updatedActivities = activities.map((act, idx) => 
           idx === editingIndex ? newActivity : act
         );
       } else {
+        // Add mode: thêm activity mới
         updatedActivities = [...activities, newActivity];
       }
 
       setActivities(updatedActivities);
       onUpdateActivities(updatedActivities);
+      
+      // Reset form
       setFormData({ title: '', description: '', date: '', location: '' });
       setShowAddForm(false);
       setEditingIndex(null);
     }
   };
 
+  /**
+   * Xử lý khi click edit activity
+   * @param {number} index - Index của activity trong mảng
+   */
   const handleEdit = (index) => {
     setFormData(activities[index]);
     setEditingIndex(index);
     setShowAddForm(true);
   };
 
+  /**
+   * Xử lý khi xóa activity
+   * @param {number} index - Index của activity cần xóa
+   */
   const handleDelete = (index) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa hoạt động này?')) {
       const updatedActivities = activities.filter((_, idx) => idx !== index);
@@ -84,6 +127,9 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
     }
   };
 
+  /**
+   * Xử lý khi cancel form (hủy thêm/sửa)
+   */
   const handleCancel = () => {
     setFormData({ title: '', description: '', date: '', location: '' });
     setShowAddForm(false);

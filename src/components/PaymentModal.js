@@ -1,3 +1,17 @@
+/**
+ * PaymentModal Component
+ * 
+ * Modal để nộp phí tham gia club:
+ * - Hiển thị thông tin club và số tiền cần thanh toán
+ * - Tạo QR code chứa thông tin thanh toán
+ * - Xác nhận đã thanh toán (sau khi quét QR và chuyển tiền)
+ * 
+ * @param {Object} props
+ * @param {Object} props.club - Club object cần nộp phí
+ * @param {Function} props.onClose - Callback khi đóng modal
+ * @param {Function} props.onSubmit - Callback khi xác nhận đã thanh toán
+ */
+
 import React from 'react';
 import { useToast } from './Toast';
 import { QRCodeSVG } from 'qrcode.react';
@@ -11,7 +25,10 @@ const PaymentModal = ({ club, onClose, onSubmit }) => {
   // Tự động lấy phí tham gia từ club
   const paymentAmount = club.participationFee || 0;
 
-  // Tạo nội dung QR code (có thể là URL hoặc text chứa thông tin thanh toán)
+  /**
+   * Tạo nội dung QR code chứa thông tin thanh toán
+   * QR code này có thể được quét bởi app ngân hàng/ví điện tử
+   */
   const qrCodeValue = JSON.stringify({
     clubId: club.id,
     clubName: club.name,
@@ -19,6 +36,10 @@ const PaymentModal = ({ club, onClose, onSubmit }) => {
     type: 'club_fee_payment'
   });
 
+  /**
+   * Xử lý khi xác nhận đã thanh toán
+   * Validate số tiền trước khi submit
+   */
   const handleSubmit = () => {
     if (paymentAmount <= 0) {
       showToast('Phí tham gia không hợp lệ!', 'error');

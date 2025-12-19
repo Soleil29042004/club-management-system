@@ -1,3 +1,23 @@
+/**
+ * StudentClubList Component
+ * 
+ * Component hiển thị danh sách clubs cho student:
+ * - Grid layout với card cho mỗi club
+ * - Search và filter theo category
+ * - Hiển thị trạng thái request (pending, approved, rejected)
+ * - Button để xem chi tiết hoặc gửi yêu cầu tham gia
+ * - Hiển thị thông tin: tên, mô tả, danh mục, chủ tịch, số thành viên, phí tham gia
+ * 
+ * @param {Object} props
+ * @param {Array} props.clubs - Danh sách clubs cần hiển thị
+ * @param {Array} props.joinRequests - Danh sách join requests của student
+ * @param {Array} props.payments - Danh sách payments của student
+ * @param {Function} props.onJoinRequest - Callback khi click gửi yêu cầu tham gia
+ * @param {Function} props.getRequestStatus - Function để lấy trạng thái request cho club
+ * @param {Function} props.hasPayment - Function để kiểm tra đã nộp phí chưa
+ * @param {Function} props.onViewDetails - Callback khi click xem chi tiết
+ */
+
 import React, { useState } from 'react';
 import { clubCategoryLabels } from '../data/constants';
 

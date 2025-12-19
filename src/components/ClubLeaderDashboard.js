@@ -1,3 +1,22 @@
+/**
+ * ClubLeaderDashboard Component
+ * 
+ * Component dashboard chính cho club leader role:
+ * - Quản lý thông tin club (chỉnh sửa mô tả, địa điểm, logo)
+ * - Duyệt yêu cầu tham gia club từ students
+ * - Quản lý thành viên (xem danh sách, cập nhật role, xóa thành viên)
+ * - Quản lý phí thành viên và thời hạn
+ * - Xem thống kê club (số thành viên, doanh thu, danh sách chưa đóng phí)
+ * - Real-time polling để cập nhật trạng thái thanh toán
+ * 
+ * @param {Object} props
+ * @param {Array} props.clubs - Danh sách clubs
+ * @param {Function} props.setClubs - Callback để update clubs state
+ * @param {Array} props.members - Danh sách members
+ * @param {Function} props.setMembers - Callback để update members state
+ * @param {string} props.currentPage - Trang hiện tại ('manage', 'requests', 'members', 'fee')
+ */
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useToast } from './Toast';
 import LeaderStats from './LeaderStats';
