@@ -72,6 +72,9 @@ const Profile = ({ userRole, clubs, members }) => {
       }
 
       try {
+        // ========== API CALL: GET /users/my-info - Get User Info (Fallback) ==========
+        // Mục đích: Fallback để lấy thông tin user nếu không có trong localStorage
+        // Response: User object với đầy đủ thông tin
         const response = await fetch('https://clubmanage.azurewebsites.net/api/users/my-info', {
           headers: {
             'Content-Type': 'application/json',
@@ -280,6 +283,10 @@ const Profile = ({ userRole, clubs, members }) => {
         avatarUrl: formData.avatar.trim()
       };
 
+      // ========== API CALL: PUT /users/my-info - Update User Profile ==========
+      // Mục đích: Cập nhật thông tin profile (fullName, phoneNumber, studentCode, major, avatarUrl)
+      // Request body: { fullName, phoneNumber, studentCode, major, avatarUrl }
+      // Response: Updated user object
       const response = await fetch(`${API_BASE_URL}/users/my-info`, {
         method: 'PUT',
         headers: {
@@ -394,6 +401,10 @@ const Profile = ({ userRole, clubs, members }) => {
         newPassword: passwordData.newPassword
       };
 
+      // ========== API CALL: POST /users/change-password - Change Password ==========
+      // Mục đích: Đổi mật khẩu của user
+      // Request body: { oldPassword, newPassword }
+      // Response: Success message
       const response = await fetch(`${API_BASE_URL}/users/change-password`, {
         method: 'POST',
         headers: {

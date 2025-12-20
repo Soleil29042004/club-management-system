@@ -51,6 +51,9 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
 
       setUserInfoLoading(true);
       try {
+        // ========== API CALL: GET /users/my-info - Get User Info for Auto-fill ==========
+        // Mục đích: Lấy thông tin user để tự động điền vào form (fullName, phone, studentId, major)
+        // Response: User object với fullName, phoneNumber, studentCode, major
         const res = await fetch(`${API_BASE_URL}/users/my-info`, {
           headers: {
             'Content-Type': 'application/json',
@@ -95,6 +98,9 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
       setClubDetailLoading(true);
       setClubDetailError('');
       try {
+        // ========== API CALL: GET /clubs/{id} - Get Club Detail ==========
+        // Mục đích: Lấy thông tin chi tiết CLB để hiển thị trong modal (name, description, location, etc.)
+        // Response: Club object với đầy đủ thông tin
         const res = await fetch(`https://clubmanage.azurewebsites.net/api/clubs/${club.id}`, {
           headers: {
             'Content-Type': 'application/json',
@@ -123,6 +129,9 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
       setLoadingPackages(true);
       setPackagesError('');
       try {
+        // ========== API CALL: GET /packages/club/{clubId} - Get Club Packages ==========
+        // Mục đích: Lấy danh sách gói membership của CLB để user chọn khi đăng ký
+        // Response: Array of package objects với id, name, price, term, description
         const res = await fetch(
           `https://clubmanage.azurewebsites.net/api/packages/club/${club.id}`,
           {

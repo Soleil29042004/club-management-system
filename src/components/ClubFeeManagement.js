@@ -46,6 +46,9 @@ const ClubFeeManagement = ({ club }) => {
       setLoadingPackages(true);
       setPackagesError('');
       try {
+        // ========== API CALL: GET /packages/club/{clubId} - Get Club Packages ==========
+        // Mục đích: Leader xem danh sách gói membership của CLB để quản lý
+        // Response: Array of package objects
         const res = await fetch(`${API_BASE_URL}/packages/club/${targetClubId}`, {
           headers: {
             'Content-Type': 'application/json',
@@ -85,6 +88,9 @@ const ClubFeeManagement = ({ club }) => {
     const controller = new AbortController();
     const token = localStorage.getItem('authToken');
     try {
+      // ========== API CALL: GET /packages/{packageId} - Get Package Detail ==========
+      // Mục đích: Lấy thông tin chi tiết gói để hiển thị trong modal xem/ chỉnh sửa
+      // Response: Package object với đầy đủ thông tin
       const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -127,6 +133,9 @@ const ClubFeeManagement = ({ club }) => {
     setEditLoading(true);
 
     try {
+      // ========== API CALL: GET /packages/{packageId} - Get Package for Edit ==========
+      // Mục đích: Lấy thông tin gói để điền vào form chỉnh sửa
+      // Response: Package object
       const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -252,6 +261,10 @@ const ClubFeeManagement = ({ club }) => {
 
       console.log('Updating package:', { packageId, payload });
 
+      // ========== API CALL: PUT /packages/{packageId} - Update Package ==========
+      // Mục đích: Leader cập nhật thông tin gói membership (name, price, term, description)
+      // Request body: { packageName, price, term, description }
+      // Response: Updated package object
       const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
         method: 'PUT',
         headers: {

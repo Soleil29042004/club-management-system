@@ -101,6 +101,9 @@ const StudentJoinedClubs = () => {
       // Nếu chưa có userId, thử fetch từ API /users/my-info
       if (!userId) {
         try {
+          // ========== API CALL: GET /users/my-info - Get User ID ==========
+          // Mục đích: Lấy userId từ API nếu không có trong token/localStorage
+          // Response: User object với userId
           const userInfoRes = await fetch(`${API_BASE_URL}/users/my-info`, {
             headers: {
               'Content-Type': 'application/json',
@@ -140,6 +143,9 @@ const StudentJoinedClubs = () => {
       }
 
       try {
+        // ========== API CALL: GET /clubs/user/{userId}/joined - Get Joined Clubs ==========
+        // Mục đích: Lấy danh sách CLB mà user đã tham gia (đã được duyệt và đã thanh toán)
+        // Response: Array of club objects với clubRole, packageName, startDate, endDate, etc.
         const res = await fetch(`${API_BASE_URL}/clubs/user/${userId}/joined`, {
           headers: {
             'Content-Type': 'application/json',
@@ -178,7 +184,18 @@ const StudentJoinedClubs = () => {
           ...item
         }));
 
-        setClubs(mapped);
+        // Ẩn các membership đã rời CLB (status = DaRoiCLB / DaRoi / tương tự)
+        const filtered = mapped.filter((club) => {
+          const rawStatus =
+            club.status ||
+            club.registerStatus ||
+            club.registrationStatus ||
+            club.membershipStatus;
+          const s = (rawStatus || '').toString().trim().toLowerCase();
+          return s !== 'daroi' && s !== 'daroi clb' && s !== 'daroiclb';
+        });
+
+        setClubs(filtered);
       } catch (err) {
         console.error('Fetch joined clubs error:', err);
         const message = err.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
@@ -302,6 +319,10 @@ const StudentJoinedClubs = () => {
     }
 
     try {
+      // ========== API CALL: POST /registers/{clubId}/leave - Leave Club ==========
+      // Mục đích: Sinh viên rời khỏi CLB mà mình đang tham gia
+      // Điều kiện: Phải là thành viên active (DaDuyet + đã thanh toán), không phải ChuTich
+      // Response: { code, message, result }
       setLeavingId(club.clubId);
       const res = await fetch(`${API_BASE_URL}/registers/${club.clubId}/leave`, {
         method: 'POST',
@@ -344,6 +365,10 @@ const StudentJoinedClubs = () => {
     }
 
     try {
+      // ========== API CALL: POST /registers/{subscriptionId}/renew - Renew Subscription ==========
+      // Mục đích: Gia hạn membership của CLB
+      // Request body: {} (không truyền packageId để giữ nguyên gói hiện tại)
+      // Response: Updated registration object
       setRenewLoadingId(club.subscriptionId);
       const res = await fetch(`${API_BASE_URL}/registers/${club.subscriptionId}/renew`, {
         method: 'POST',

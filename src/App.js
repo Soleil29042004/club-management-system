@@ -274,6 +274,9 @@ function AppContent() {
     // Nếu API không tồn tại hoặc lỗi, không ảnh hưởng đến việc logout
     const token = getAuthToken();
     if (token) {
+      // ========== API CALL: POST /auth/logout - Logout ==========
+      // Mục đích: Gọi API logout để invalidate token ở backend (optional, không block logout)
+      // Response: Success message (không quan trọng, chỉ để cleanup ở backend)
       apiRequest('/auth/logout', {
         method: 'POST',
         token
@@ -406,7 +409,7 @@ function AppContent() {
         />
 
         {/* Main Content */}
-        <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'ml-0 lg:ml-64' : 'ml-0'}`}>
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
           <header className="bg-white shadow-md px-6 py-4 sticky top-0 z-40">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-4">
@@ -473,7 +476,7 @@ function AppContent() {
         />
 
         {/* Main Content */}
-        <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'ml-0 lg:ml-64' : 'ml-0'}`}>
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
           <header className="bg-white shadow-md px-6 py-4 sticky top-0 z-40">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-4">
@@ -520,7 +523,7 @@ function AppContent() {
       />
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
         <header className="bg-white shadow-md px-6 py-4 sticky top-0 z-40">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
