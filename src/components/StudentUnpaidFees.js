@@ -1,12 +1,37 @@
+/**
+ * StudentUnpaidFees Component
+ * 
+ * Component hiển thị danh sách phí chưa nộp của student:
+ * - Hiển thị thông tin CLB: tên, danh mục, mô tả, chủ tịch, địa điểm
+ * - Tính toán và hiển thị ngày bắt đầu và ngày hết hạn dựa vào membershipDuration
+ * - Button để nộp phí ngay
+ * - Hiển thị empty state nếu không có phí nào cần nộp
+ * 
+ * @param {Object} props
+ * @param {Array} props.unpaidFees - Danh sách phí chưa nộp (mỗi item có club, clubName, requestDate)
+ * @param {Function} props.onPayment - Callback khi click button nộp phí (club)
+ */
 import React from 'react';
 
 const StudentUnpaidFees = ({ unpaidFees, onPayment }) => {
+  /**
+   * Format date string sang định dạng tiếng Việt (DD/MM/YYYY)
+   * @param {string} dateString - Date string cần format
+   * @returns {string} - Formatted date hoặc '-' nếu không hợp lệ
+   */
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN');
   };
 
+  /**
+   * Tính toán ngày bắt đầu và ngày hết hạn dựa vào requestDate và membershipDuration
+   * Nếu không có requestDate, dùng ngày hiện tại làm ngày bắt đầu
+   * @param {string|null} requestDate - Ngày yêu cầu (có thể null)
+   * @param {number} membershipDuration - Thời hạn membership (tháng, mặc định 6)
+   * @returns {Object} - Object chứa startDate và expiryDate (ISO string)
+   */
   const calculateStartAndExpiryDate = (requestDate, membershipDuration) => {
     if (!requestDate) {
       const today = new Date();

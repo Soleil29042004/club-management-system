@@ -1,9 +1,24 @@
+/**
+ * MemberManagement Component
+ * 
+ * Component quản lý members/users cho admin:
+ * - Hiển thị danh sách users với pagination
+ * - Sort theo các trường khác nhau (tên, email, mã sinh viên, ngày tạo)
+ * - Xem thông tin chi tiết user (tên, email, phone, mã sinh viên, clubs tham gia)
+ * - Deactivate user (soft delete)
+ * - Map clubIds với club names để hiển thị
+ * 
+ * @param {Object} props
+ * @param {Array} props.members - Danh sách members/users
+ * @param {Function} props.setMembers - Callback để update members state
+ * @param {Array} props.clubs - Danh sách clubs (để map với clubIds)
+ */
+
 import React, { useEffect, useState, useRef } from 'react';
 import MemberList from './MemberList';
 import MemberForm from './MemberForm';
 import { useToast } from './Toast';
-
-const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+import { API_BASE_URL, apiRequest } from '../utils/api';
 
 const MemberManagement = ({ members, setMembers, clubs }) => {
   const { showToast } = useToast();
@@ -32,6 +47,9 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
 
     const fetchClubs = async () => {
       try {
+        // ========== API CALL: GET /clubs - List All Clubs ==========
+        // Mục đích: Admin lấy danh sách tất cả CLB để quản lý thành viên
+        // Response: Array of club objects
         const res = await fetch(`${API_BASE_URL}/clubs`, {
           headers: {
             'Content-Type': 'application/json',
@@ -84,6 +102,10 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
       try {
         const sortParam = `${sortBy},${sortDirection}`;
         const url = `${API_BASE_URL}/users?page=${page}&size=${size}&sort=${encodeURIComponent(sortParam)}`;
+        // ========== API CALL: GET /users - List Users (Paginated) ==========
+        // Mục đích: Admin lấy danh sách users với pagination và sorting
+        // Query: ?page={page}&size={size}&sort={sortBy},{sortDirection}
+        // Response: Paginated users array
         const res = await fetch(url, {
           headers: {
             'Content-Type': 'application/json',
@@ -253,6 +275,9 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
     setError('');
 
     try {
+      // ========== API CALL: DELETE /users/{id} - Delete User ==========
+      // Mục đích: Admin xóa user khỏi hệ thống
+      // Response: Success message
       const res = await fetch(`${API_BASE_URL}/users/${member.id}`, {
         method: 'DELETE',
         headers: {

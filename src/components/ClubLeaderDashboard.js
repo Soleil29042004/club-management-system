@@ -1,3 +1,22 @@
+/**
+ * ClubLeaderDashboard Component
+ * 
+ * Component dashboard chính cho club leader role:
+ * - Quản lý thông tin club (chỉnh sửa mô tả, địa điểm, logo)
+ * - Duyệt yêu cầu tham gia club từ students
+ * - Quản lý thành viên (xem danh sách, cập nhật role, xóa thành viên)
+ * - Quản lý phí thành viên và thời hạn
+ * - Xem thống kê club (số thành viên, doanh thu, danh sách chưa đóng phí)
+ * - Real-time polling để cập nhật trạng thái thanh toán
+ * 
+ * @param {Object} props
+ * @param {Array} props.clubs - Danh sách clubs
+ * @param {Function} props.setClubs - Callback để update clubs state
+ * @param {Array} props.members - Danh sách members
+ * @param {Function} props.setMembers - Callback để update members state
+ * @param {string} props.currentPage - Trang hiện tại ('manage', 'requests', 'members', 'fee')
+ */
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useToast } from './Toast';
 import LeaderStats from './LeaderStats';
@@ -149,6 +168,9 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       setClubLoading(true);
       setClubError('');
       try {
+        // ========== API CALL: GET /clubs/{id} - Get Club Detail (Leader) ==========
+        // Mục đích: Lấy thông tin chi tiết CLB mà leader quản lý
+        // Response: Club object với đầy đủ thông tin để hiển thị và edit
         console.log('[ClubLeaderDashboard] Fetch club detail', {
           targetClubId,
           tokenExists: !!token,
@@ -239,6 +261,9 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       setMembersLoading(true);
       setMembersError('');
       try {
+        // ========== API CALL: GET /clubs/{id}/members - Get Club Members ==========
+        // Mục đích: Lấy danh sách thành viên của CLB để leader quản lý
+        // Response: Array of member objects với role, status, joinDate, etc.
         const res = await fetch(`${API_BASE_URL}/clubs/${targetClubId}/members`, {
           headers: {
             'Content-Type': 'application/json',
@@ -293,6 +318,9 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       setStatsLoading(true);
       setStatsError('');
       try {
+        // ========== API CALL: GET /clubs/{id}/stats - Get Club Statistics ==========
+        // Mục đích: Lấy thống kê CLB (số thành viên, số đơn đang chờ, etc.)
+        // Response: Stats object với các metrics
         const res = await fetch(`${API_BASE_URL}/clubs/${targetClubId}/stats`, {
           headers: {
             'Content-Type': 'application/json',
@@ -538,6 +566,10 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
     const doUpdate = async () => {
       try {
+        // ========== API CALL: PUT /clubs/{id} - Update Club Info ==========
+        // Mục đích: Leader cập nhật thông tin CLB (logo, description, location)
+        // Request body: { logo, description, location }
+        // Response: Updated club object
         const res = await fetch(`${API_BASE_URL}/clubs/${myClub.id || myClub.clubId}`, {
           method: 'PUT',
           headers: {
@@ -611,6 +643,9 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
     setDeleteLoadingId(memberId);
     try {
+      // ========== API CALL: DELETE /registrations/club/{clubId}/user/{userId} - Remove Member ==========
+      // Mục đích: Leader xóa thành viên khỏi CLB (đánh dấu DaRoiCLB)
+      // Response: Success message
       const res = await fetch(`${API_BASE_URL}/registrations/club/${clubId}/user/${userId}`, {
         method: 'DELETE',
         headers: {
@@ -683,6 +718,10 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
     setRoleLoadingId(memberId);
     try {
+      // ========== API CALL: PUT /registrations/club/{clubId}/user/{userId}/role - Update Member Role ==========
+      // Mục đích: Leader thay đổi vai trò của thành viên (ChuTich, PhoChuTich, ThuKy, ThuQuy, ThanhVien)
+      // Request body: { newRole } (role code từ UI)
+      // Response: Updated member object
       const res = await fetch(`${API_BASE_URL}/registrations/club/${clubId}/user/${userId}/role`, {
         method: 'PUT',
         headers: {

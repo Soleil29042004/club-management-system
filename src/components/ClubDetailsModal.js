@@ -1,8 +1,23 @@
+/**
+ * ClubDetailsModal Component
+ * 
+ * Modal hiển thị chi tiết thông tin club:
+ * - Fetch và hiển thị thông tin chi tiết từ API
+ * - Hiển thị packages (gói membership) của club
+ * - Hiển thị trạng thái request nếu student đã gửi đơn
+ * - Button để gửi yêu cầu tham gia (nếu chưa gửi hoặc đã bị từ chối)
+ * 
+ * @param {Object} props
+ * @param {Object} props.club - Club object cần hiển thị chi tiết
+ * @param {Function} props.onClose - Callback khi đóng modal
+ * @param {Function} props.onJoinRequest - Callback khi click button tham gia
+ * @param {Function} props.getRequestStatus - Function để lấy trạng thái request của student
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
 import { clubCategoryLabels } from '../data/constants';
-
-const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+import { API_BASE_URL, apiRequest } from '../utils/api';
 
 const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) => {
   const { showToast } = useToast();
@@ -11,6 +26,9 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  /**
+   * Fetch chi tiết club và packages khi component mount hoặc club thay đổi
+   */
   useEffect(() => {
     if (!club || !club.id) {
       setLoading(false);
@@ -24,60 +42,48 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
       const token = localStorage.getItem('authToken');
       
       try {
-        const response = await fetch(`${API_BASE_URL}/clubs/${club.id}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
-          }
+        const data = await apiRequest(`/clubs/${club.id}`, {
+          method: 'GET',
+          token
         });
 
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok || !data || data.code !== 1000) {
-          const message = data?.message || 'Không thể tải thông tin CLB.';
-          setError(message);
-          // Fallback to passed club data if API fails
-          setClubDetail(null);
-        } else {
-          // Map API response to local format
-          const result = data.result || {};
-          const clubId = result.clubId || club.id || club.clubId;
-          setClubDetail({
-            clubId: clubId,
-            clubName: result.clubName || club.name,
-            category: result.category || club.category,
-            logo: result.logo,
-            location: result.location || club.location,
-            description: result.description || club.description,
-            email: result.email || club.email,
-            isActive: result.isActive !== undefined ? result.isActive : true,
-            establishedDate: result.establishedDate || club.foundedDate,
-            founderId: result.founderId,
-            founderName: result.founderName || club.president,
-            founderStudentCode: result.founderStudentCode,
-            memberCount: result.memberCount || result.totalMembers || 0, // Số thành viên từ API
-            activityTime: result.activityTime || club.activityTime
-          });
-          
-          // Fetch packages for this club
-          if (clubId) {
-            try {
-              const packagesRes = await fetch(`${API_BASE_URL}/packages/club/${clubId}`, {
-                headers: { 'Content-Type': 'application/json' }
-              });
-              const packagesData = await packagesRes.json().catch(() => ({}));
-              if (packagesRes.ok && (packagesData.code === 1000 || packagesData.code === 0)) {
-                setPackages(Array.isArray(packagesData.result) ? packagesData.result : []);
-              }
-            } catch (err) {
-              console.warn('Failed to fetch packages:', err);
+        // Map API response sang local format
+        const result = data.result || {};
+        const clubId = result.clubId || club.id || club.clubId;
+        setClubDetail({
+          clubId: clubId,
+          clubName: result.clubName || club.name,
+          category: result.category || club.category,
+          logo: result.logo,
+          location: result.location || club.location,
+          description: result.description || club.description,
+          email: result.email || club.email,
+          isActive: result.isActive !== undefined ? result.isActive : true,
+          establishedDate: result.establishedDate || club.foundedDate,
+          founderId: result.founderId,
+          founderName: result.founderName || club.president,
+          founderStudentCode: result.founderStudentCode,
+          memberCount: result.memberCount || result.totalMembers || 0,
+          activityTime: result.activityTime || club.activityTime
+        });
+        
+        // Fetch packages cho club này
+        if (clubId) {
+          try {
+            const packagesData = await apiRequest(`/packages/club/${clubId}`, {
+              method: 'GET'
+            });
+            if (packagesData.code === 1000 || packagesData.code === 0) {
+              setPackages(Array.isArray(packagesData.result) ? packagesData.result : []);
             }
+          } catch (err) {
+            console.warn('Failed to fetch packages:', err);
           }
         }
       } catch (err) {
         console.error('Error fetching club detail:', err);
-        setError('Không thể tải thông tin CLB.');
-        // Fallback to passed club data
+        setError(err.data?.message || 'Không thể tải thông tin CLB.');
+        // Fallback về club data từ props
         setClubDetail(null);
       } finally {
         setLoading(false);
@@ -96,6 +102,11 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
   const displayClub = clubDetail || club;
   const joinableClub = { ...displayClub, id: displayClub.id || displayClub.clubId };
 
+  /**
+   * Lấy CSS class cho status badge
+   * @param {string} status - Trạng thái của club
+   * @returns {string} - Tailwind CSS classes
+   */
   const getStatusBadgeClass = (status) => {
     const statusLower = status.toLowerCase();
     if (statusLower.includes('hoạt động')) return 'bg-green-500 text-white';

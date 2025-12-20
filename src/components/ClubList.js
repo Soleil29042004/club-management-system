@@ -1,3 +1,25 @@
+/**
+ * ClubList Component
+ * 
+ * Component hiển thị danh sách clubs dưới dạng table:
+ * - Search và filter theo category
+ * - Hiển thị thông tin clubs: tên, danh mục, chủ tịch, số thành viên, địa điểm, trạng thái
+ * - Actions: xem chi tiết, xóa club
+ * - Hỗ trợ controlled/uncontrolled mode cho search và filter
+ * 
+ * @param {Object} props
+ * @param {Array} props.clubs - Danh sách clubs cần hiển thị
+ * @param {Function} props.onEdit - Callback khi click edit (không dùng trong component này)
+ * @param {Function} props.onDelete - Callback khi click xóa club
+ * @param {Function} props.onView - Callback khi click xem chi tiết
+ * @param {boolean} props.loading - Trạng thái loading
+ * @param {string} props.searchTerm - Search term từ parent (controlled mode)
+ * @param {Function} props.onSearchChange - Callback khi search thay đổi
+ * @param {string} props.filterCategory - Category filter từ parent (controlled mode)
+ * @param {Function} props.onCategoryChange - Callback khi category filter thay đổi
+ * @param {string|number} props.deleteLoadingId - ID của club đang được xóa
+ */
+
 import React, { useState } from 'react';
 import { clubCategories, clubCategoryLabels } from '../data/constants';
 
@@ -10,37 +32,60 @@ const ClubList = ({
   searchTerm: externalSearchTerm = '',
   onSearchChange,
   filterCategory: externalFilterCategory = 'all',
-  onCategoryChange
+  onCategoryChange,
+  deleteLoadingId = null
 }) => {
-  // Use external search and filter if provided, otherwise use internal state
+  // Hỗ trợ cả controlled và uncontrolled mode
+  // Nếu parent truyền searchTerm/filterCategory, dùng controlled mode
+  // Nếu không, dùng internal state (uncontrolled mode)
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [internalFilterCategory, setInternalFilterCategory] = useState('all');
 
+  // Sử dụng external values nếu có, nếu không dùng internal state
   const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
   const filterCategory = externalFilterCategory !== undefined ? externalFilterCategory : internalFilterCategory;
 
+  /**
+   * Xử lý khi search term thay đổi
+   * @param {string} value - Search term mới
+   */
   const handleSearchChange = (value) => {
     if (onSearchChange) {
+      // Controlled mode: gọi callback của parent
       onSearchChange(value);
     } else {
+      // Uncontrolled mode: cập nhật internal state
       setInternalSearchTerm(value);
     }
   };
 
+  /**
+   * Xử lý khi category filter thay đổi
+   * @param {string} value - Category mới
+   */
   const handleCategoryChange = (value) => {
     if (onCategoryChange) {
+      // Controlled mode: gọi callback của parent
       onCategoryChange(value);
     } else {
+      // Uncontrolled mode: cập nhật internal state
       setInternalFilterCategory(value);
     }
   };
 
-  // Không cần filter nữa vì search và category đã được filter ở server
+  // Không cần filter ở client vì search và category đã được filter ở server
+  // Server trả về danh sách đã được filter rồi
   const filteredClubs = clubs;
 
-  // Luôn sử dụng danh sách categories từ constants để dropdown không bị mất options khi filter
+  // Luôn sử dụng danh sách categories từ constants
+  // Để dropdown không bị mất options khi filter
   const categories = clubCategories;
 
+  /**
+   * Lấy CSS class cho status badge dựa trên trạng thái
+   * @param {string} status - Trạng thái của club
+   * @returns {string} - Tailwind CSS classes
+   */
   const getStatusBadgeClass = (status) => {
     const statusLower = status.toLowerCase();
     if (statusLower.includes('hoạt động')) {
@@ -118,7 +163,7 @@ const ClubList = ({
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
                           {club.category ? (clubCategoryLabels[club.category] || club.category) : 'Chưa cập nhật'}
                         </span>
@@ -132,18 +177,25 @@ const ClubList = ({
                       <td className="px-6 py-4 text-gray-800">
                         {club.location || '—'}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase text-white ${getStatusBadgeClass(club.status)}`}>
                           {club.status}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center gap-2">
                           <button 
                             onClick={() => onView(club)} 
-                            className="px-4 py-2 bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white rounded-lg text-sm font-medium hover:bg-gradient-to-l transition-all shadow-md hover:shadow-lg"
+                            className="px-2 py-1 bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white rounded text-xs font-medium hover:bg-gradient-to-l transition-all shadow-sm hover:shadow-md"
                           >
                             Chi tiết
+                          </button>
+                          <button 
+                            onClick={() => onDelete(club.id)} 
+                            disabled={deleteLoadingId === club.id}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {deleteLoadingId === club.id ? 'Đang xóa...' : 'Xóa'}
                           </button>
                         </div>
                       </td>

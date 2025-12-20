@@ -1,7 +1,21 @@
+/**
+ * Toast Component - Notification System
+ * 
+ * Component hiển thị thông báo toast cho user:
+ * - Success, error, warning, info notifications
+ * - Auto-dismiss sau 3 giây
+ * - Hỗ trợ multiple toasts cùng lúc
+ * - Context API để sử dụng từ bất kỳ component nào
+ */
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const ToastContext = createContext();
 
+/**
+ * Hook để sử dụng toast từ bất kỳ component nào
+ * @returns {Object} - Object chứa showToast function
+ */
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
@@ -10,21 +24,35 @@ export const useToast = () => {
   return context;
 };
 
+/**
+ * ToastProvider - Context Provider cho toast system
+ * @param {Object} props
+ * @param {ReactNode} props.children - Child components
+ */
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
+  /**
+   * Hiển thị toast notification
+   * @param {string} message - Nội dung thông báo
+   * @param {string} type - Loại toast: 'success', 'error', 'warning', 'info'
+   */
   const showToast = (message, type = 'success') => {
     const id = Date.now() + Math.random();
     const newToast = { id, message, type };
     
     setToasts(prev => [...prev, newToast]);
     
-    // Auto remove after 3 seconds
+    // Tự động xóa sau 3 giây
     setTimeout(() => {
       removeToast(id);
     }, 3000);
   };
 
+  /**
+   * Xóa toast khỏi danh sách
+   * @param {string|number} id - ID của toast cần xóa
+   */
   const removeToast = (id) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
@@ -37,6 +65,12 @@ export const ToastProvider = ({ children }) => {
   );
 };
 
+/**
+ * ToastContainer - Container hiển thị tất cả toasts
+ * @param {Object} props
+ * @param {Array} props.toasts - Danh sách toasts
+ * @param {Function} props.removeToast - Callback để xóa toast
+ */
 const ToastContainer = ({ toasts, removeToast }) => {
   return (
     <div className="fixed top-20 right-5 z-[9999] flex flex-col gap-3">
@@ -47,16 +81,28 @@ const ToastContainer = ({ toasts, removeToast }) => {
   );
 };
 
+/**
+ * ToastItem - Component hiển thị một toast notification
+ * @param {Object} props
+ * @param {Object} props.toast - Toast object { id, message, type }
+ * @param {Function} props.onClose - Callback khi toast đóng
+ */
 const ToastItem = ({ toast, onClose }) => {
   const [isExiting, setIsExiting] = useState(false);
 
+  /**
+   * Xử lý đóng toast với animation
+   */
   const handleClose = useCallback(() => {
     setIsExiting(true);
     setTimeout(() => {
       onClose();
-    }, 300);
+    }, 300); // Delay để animation hoàn thành
   }, [onClose]);
 
+  /**
+   * Tự động đóng toast sau 3 giây
+   */
   useEffect(() => {
     const timer = setTimeout(() => {
       handleClose();
@@ -65,6 +111,10 @@ const ToastItem = ({ toast, onClose }) => {
     return () => clearTimeout(timer);
   }, [handleClose]);
 
+  /**
+   * Lấy icon tương ứng với type của toast
+   * @returns {string} - Icon emoji
+   */
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
@@ -80,6 +130,10 @@ const ToastItem = ({ toast, onClose }) => {
     }
   };
 
+  /**
+   * Lấy CSS classes tương ứng với type của toast
+   * @returns {string} - Tailwind CSS classes
+   */
   const getToastStyles = () => {
     switch (toast.type) {
       case 'success':

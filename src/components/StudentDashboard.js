@@ -1,3 +1,19 @@
+/**
+ * StudentDashboard Component
+ * 
+ * Component dashboard chính cho student role:
+ * - Hiển thị danh sách clubs để student có thể tham gia
+ * - Quản lý join requests (đơn đăng ký tham gia CLB)
+ * - Xử lý payment cho membership
+ * - Đăng ký mở CLB mới
+ * - Real-time polling để cập nhật trạng thái đơn đăng ký
+ * 
+ * @param {Object} props
+ * @param {Array} props.clubs - Danh sách clubs
+ * @param {string} props.currentPage - Trang hiện tại ('clubs', 'my-requests', etc.)
+ * @param {Function} props.setClubs - Callback để update clubs state
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from './Toast';
 import StudentClubList from './StudentClubList';
@@ -153,6 +169,9 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
 
     const pollInterval = setInterval(async () => {
       try {
+        // ========== API CALL: GET /registers/my-registrations - Polling ==========
+        // Mục đích: Polling để kiểm tra thay đổi trạng thái đăng ký realtime (mỗi 2 giây)
+        // Response: Array of registration objects
         const response = await fetch(`${API_BASE_URL}/registers/my-registrations`, {
           headers: {
             'Content-Type': 'application/json',
@@ -281,6 +300,9 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
           if (!clubId) return null;
           
           try {
+            // ========== API CALL: GET /packages/club/{clubId} - Get Club Packages ==========
+            // Mục đích: Lấy danh sách gói membership của CLB để hiển thị giá và thời hạn
+            // Response: Array of package objects với price, term, description
             const res = await fetch(`${API_BASE_URL}/packages/club/${clubId}`, {
               headers: { 'Content-Type': 'application/json' }
             });
@@ -335,6 +357,9 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
+        // ========== API CALL: GET /clubs - List All Clubs ==========
+        // Mục đích: Lấy danh sách tất cả CLB để hiển thị cho sinh viên
+        // Response: Array of club objects với name, description, category, etc.
         const response = await fetch(`${API_BASE_URL}/clubs`, {
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal
@@ -423,8 +448,10 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
       fullName: formData.fullName
     };
 
-    // API endpoint: POST /api/registers
-    // Chỉ gửi packageId trong body, không cần query parameter
+    // ========== API CALL: POST /registers - Create Join Request ==========
+    // Mục đích: Gửi yêu cầu tham gia CLB với package đã chọn
+    // Request body: { packageId, joinReason, fullName, phone, studentId, major }
+    // Response: Registration object với subscriptionId, status, etc.
     const url = `${API_BASE_URL}/registers`;
 
     try {
@@ -522,7 +549,9 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
       setShowJoinModal(false);
       setSelectedClub(null);
       
-      // Refresh registrations from API to ensure sync
+      // ========== API CALL: GET /registers/my-registrations - Refresh After Submit ==========
+      // Mục đích: Refresh danh sách đăng ký sau khi submit thành công để đảm bảo sync
+      // Response: Array of registration objects
       try {
         const refreshResponse = await fetch(`${API_BASE_URL}/registers/my-registrations`, {
           headers: {
@@ -636,6 +665,10 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     };
 
     try {
+      // ========== API CALL: POST /club-requests - Create Club Request ==========
+      // Mục đích: Gửi yêu cầu đăng ký mở CLB mới
+      // Request body: { proposedName, purpose, category, location, email, defaultMembershipFee }
+      // Response: Club request object với requestId, status
       const response = await fetch(`${API_BASE_URL}/club-requests`, {
         method: 'POST',
         headers: {

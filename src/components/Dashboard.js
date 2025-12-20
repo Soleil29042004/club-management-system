@@ -1,7 +1,21 @@
+/**
+ * Dashboard Component
+ * 
+ * Component hiển thị tổng quan hệ thống cho admin:
+ * - Thống kê tổng số clubs, members, students
+ * - Phân tích clubs theo category
+ * - Phân tích members theo role
+ * - Top 5 clubs có nhiều thành viên nhất
+ * - Clubs mới trong tháng
+ * 
+ * @param {Object} props
+ * @param {Array} props.clubs - Danh sách clubs (fallback data)
+ * @param {Array} props.members - Danh sách members (fallback data)
+ */
+
 import React, { useEffect, useState } from 'react';
 import { clubCategoryLabels } from '../data/constants';
-
-const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
+import { API_BASE_URL, apiRequest } from '../utils/api';
 
 const Dashboard = ({ clubs = [], members = [] }) => {
   const [dashboardData, setDashboardData] = useState({
@@ -16,6 +30,10 @@ const Dashboard = ({ clubs = [], members = [] }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  /**
+   * Fetch dashboard data từ API khi component mount
+   * Sử dụng fallback data từ props nếu API không trả về đầy đủ
+   */
   useEffect(() => {
     const controller = new AbortController();
     const token = localStorage.getItem('authToken');
@@ -30,18 +48,16 @@ const Dashboard = ({ clubs = [], members = [] }) => {
       setError('');
 
       try {
-        const res = await fetch(`${API_BASE_URL}/admin/dashboard`, {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
+        const data = await apiRequest('/admin/dashboard', {
+          method: 'GET',
+          token,
           signal: controller.signal
         });
 
-        const data = await res.json().catch(() => ({}));
-
-        if (res.ok && (data.code === 1000 || data.code === 0) && data.result) {
-          const result = data.result;
+        if (data.code === 1000 || data.code === 0) {
+          const result = data.result || {};
+          
+          // Map và normalize data từ API
           setDashboardData({
             totalClubs: result.totalClubs ?? clubs.length,
             totalMembers: result.totalMembers ?? members.length,
@@ -86,21 +102,25 @@ const Dashboard = ({ clubs = [], members = [] }) => {
     return () => controller.abort();
   }, [clubs.length, members.length]);
 
+  // Tính toán fallback data từ props nếu API không trả về
   const activeClubs = clubs.filter(club => club.status === 'Hoạt động').length;
   const activeMembers = members.filter(member => member.status === 'Hoạt động').length;
 
+  // Tính clubs theo category từ local data (fallback)
   const fallbackClubsByCategory = clubs.reduce((acc, club) => {
     if (!club.category) return acc;
     acc[club.category] = (acc[club.category] || 0) + 1;
     return acc;
   }, {});
 
+  // Tính members theo role từ local data (fallback)
   const fallbackMembersByRole = members.reduce((acc, member) => {
     if (!member.role) return acc;
     acc[member.role] = (acc[member.role] || 0) + 1;
     return acc;
   }, {});
 
+  // Top 5 clubs từ local data (fallback)
   const fallbackTopClubs = [...clubs]
     .sort((a, b) => (b.memberCount || 0) - (a.memberCount || 0))
     .slice(0, 5)

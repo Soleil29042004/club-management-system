@@ -1,7 +1,23 @@
+/**
+ * StudentMyClubRequests Component
+ * 
+ * Component hiển thị danh sách đăng ký tham gia CLB của student:
+ * - Hiển thị tất cả đăng ký đã gửi (trừ các đơn đã rời CLB)
+ * - Hiển thị trạng thái: Chờ duyệt, Đã duyệt, Từ chối
+ * - Thanh toán cho đơn đã duyệt nhưng chưa thanh toán
+ * - Hủy đơn đang chờ duyệt
+ * - Real-time polling để phát hiện khi đơn được duyệt (hiển thị toast)
+ * - Lưu trạng thái vào localStorage để tránh spam toast khi reload
+ * 
+ * @returns {JSX.Element} Component hiển thị danh sách đăng ký
+ */
 import React, { useEffect, useState, useRef } from 'react';
 import { useToast } from './Toast';
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
+/**
+ * Map trạng thái từ API sang text và màu sắc hiển thị
+ */
 const statusMap = {
   ChoDuyet: { text: 'Chờ duyệt', color: 'bg-amber-100 text-amber-700' },
   DaDuyet: { text: 'Đã duyệt', color: 'bg-green-100 text-green-700' },
@@ -21,7 +37,10 @@ const StudentMyClubRequests = () => {
   // Flag để đánh dấu đã load dữ liệu lần đầu (không hiển thị toast trong lần đầu)
   const isInitialLoadRef = useRef(true);
 
-  // Load trạng thái đã lưu từ localStorage khi component mount
+  /**
+   * Load trạng thái đã lưu từ localStorage khi component mount
+   * Để tránh hiển thị toast khi reload trang
+   */
   useEffect(() => {
     try {
       const saved = localStorage.getItem('myRegistrationStatus');
@@ -39,6 +58,10 @@ const StudentMyClubRequests = () => {
     }
   }, []);
 
+  /**
+   * Fetch danh sách đăng ký từ API khi component mount
+   * Kiểm tra thay đổi trạng thái và hiển thị toast khi đơn được duyệt
+   */
   useEffect(() => {
     let isMounted = true; // Flag để tránh setState sau khi component unmount
     
@@ -150,13 +173,19 @@ const StudentMyClubRequests = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Chỉ chạy một lần khi component mount, không phụ thuộc vào showToast
 
-  // Polling để kiểm tra thay đổi trạng thái realtime (mỗi 2 giây)
+  /**
+   * Polling để kiểm tra thay đổi trạng thái realtime (mỗi 2 giây)
+   * Phát hiện khi đơn chuyển từ trạng thái khác sang "Đã duyệt" và hiển thị toast
+   */
   useEffect(() => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (!token || loading) return;
 
     const pollInterval = setInterval(async () => {
       try {
+        // ========== API CALL: GET /registers/my-registrations - Polling ==========
+        // Mục đích: Polling để kiểm tra thay đổi trạng thái đăng ký realtime (mỗi 3 giây)
+        // Response: Array of registration objects
         const response = await fetch(`${API_BASE_URL}/registers/my-registrations`, {
           method: 'GET',
           headers: {
@@ -220,6 +249,11 @@ const StudentMyClubRequests = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]); // Chỉ chạy khi loading thay đổi
 
+  /**
+   * Render status badge với màu sắc tương ứng
+   * @param {string} status - Trạng thái từ API (ChoDuyet, DaDuyet, TuChoi, etc.)
+   * @returns {JSX.Element} Status badge component
+   */
   const renderStatus = (status) => {
     const info = statusMap[status] || { text: status || 'Không xác định', color: 'bg-gray-100 text-gray-700' };
     return (
@@ -229,7 +263,11 @@ const StudentMyClubRequests = () => {
     );
   };
 
-  // Tạo link thanh toán PayOS cho đăng ký CLB
+  /**
+   * Tạo link thanh toán PayOS cho đăng ký CLB
+   * Mở link trong tab mới hoặc hiển thị QR code
+   * @param {Object} reg - Registration object cần thanh toán
+   */
   const handlePayment = async (reg) => {
     const subscriptionId = reg.subscriptionId;
     if (!subscriptionId) {
@@ -245,6 +283,10 @@ const StudentMyClubRequests = () => {
 
     setPayingId(subscriptionId);
     try {
+      // ========== API CALL: POST /payments/create-link - Create Payment Link ==========
+      // Mục đích: Tạo link thanh toán cho đơn đăng ký đã được duyệt
+      // Request body: { subscriptionId }
+      // Response: Payment link URL để redirect user đến trang thanh toán
       const res = await fetch(`${API_BASE_URL}/payments/create-link`, {
         method: 'POST',
         headers: {
@@ -278,6 +320,11 @@ const StudentMyClubRequests = () => {
     }
   };
 
+  /**
+   * Hủy đơn đăng ký đang chờ duyệt
+   * Chỉ cho phép hủy khi status là ChoDuyet hoặc pending
+   * @param {Object} reg - Registration object cần hủy
+   */
   const handleCancel = async (reg) => {
     const subscriptionId = reg.subscriptionId;
     if (!subscriptionId) {
@@ -300,6 +347,9 @@ const StudentMyClubRequests = () => {
 
     setCancellingId(subscriptionId);
     try {
+      // ========== API CALL: DELETE /registers/{subscriptionId} - Cancel Registration ==========
+      // Mục đích: Sinh viên hủy đơn đăng ký đang ở trạng thái ChoDuyet
+      // Response: Success message
       const res = await fetch(`${API_BASE_URL}/registers/${subscriptionId}`, {
         method: 'DELETE',
         headers: {

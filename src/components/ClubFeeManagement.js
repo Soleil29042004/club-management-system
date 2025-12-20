@@ -1,3 +1,15 @@
+/**
+ * ClubFeeManagement Component
+ * 
+ * Component quản lý phí thành viên và thời hạn cho club leader:
+ * - Hiển thị danh sách các gói thành viên (packages) của club
+ * - Xem chi tiết từng gói thành viên
+ * - Cập nhật thông tin gói thành viên (tên, thời hạn, giá, mô tả)
+ * - Highlight gói đầu tiên trong danh sách
+ * 
+ * @param {Object} props
+ * @param {Object} props.club - Club object cần quản lý phí
+ */
 import React, { useEffect, useState } from 'react';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
@@ -20,6 +32,10 @@ const ClubFeeManagement = ({ club }) => {
   const [editError, setEditError] = useState('');
   const [editLoading, setEditLoading] = useState(false);
 
+  /**
+   * Fetch danh sách packages từ API khi club thay đổi
+   * Sử dụng AbortController để hủy request khi component unmount
+   */
   useEffect(() => {
     if (!club?.id && !club?.clubId) return;
     const controller = new AbortController();
@@ -30,6 +46,9 @@ const ClubFeeManagement = ({ club }) => {
       setLoadingPackages(true);
       setPackagesError('');
       try {
+        // ========== API CALL: GET /packages/club/{clubId} - Get Club Packages ==========
+        // Mục đích: Leader xem danh sách gói membership của CLB để quản lý
+        // Response: Array of package objects
         const res = await fetch(`${API_BASE_URL}/packages/club/${targetClubId}`, {
           headers: {
             'Content-Type': 'application/json',
@@ -57,6 +76,10 @@ const ClubFeeManagement = ({ club }) => {
     return () => controller.abort();
   }, [club?.id, club?.clubId]);
 
+  /**
+   * Xem chi tiết một package cụ thể
+   * @param {number|string} packageId - ID của package cần xem chi tiết
+   */
   const handleViewDetail = async (packageId) => {
     if (!packageId) return;
     setDetail(null);
@@ -65,6 +88,9 @@ const ClubFeeManagement = ({ club }) => {
     const controller = new AbortController();
     const token = localStorage.getItem('authToken');
     try {
+      // ========== API CALL: GET /packages/{packageId} - Get Package Detail ==========
+      // Mục đích: Lấy thông tin chi tiết gói để hiển thị trong modal xem/ chỉnh sửa
+      // Response: Package object với đầy đủ thông tin
       const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -89,6 +115,11 @@ const ClubFeeManagement = ({ club }) => {
     return () => controller.abort();
   };
 
+  /**
+   * Mở modal chỉnh sửa package
+   * Fetch chi tiết package từ API để có đầy đủ thông tin, fallback về dữ liệu từ list nếu API fail
+   * @param {Object} pkg - Package object cần chỉnh sửa
+   */
   const openEdit = async (pkg) => {
     const packageId = pkg?.packageId || pkg?.id;
     if (!packageId) {
@@ -102,6 +133,9 @@ const ClubFeeManagement = ({ club }) => {
     setEditLoading(true);
 
     try {
+      // ========== API CALL: GET /packages/{packageId} - Get Package for Edit ==========
+      // Mục đích: Lấy thông tin gói để điền vào form chỉnh sửa
+      // Response: Package object
       const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -166,6 +200,10 @@ const ClubFeeManagement = ({ club }) => {
     }
   };
 
+  /**
+   * Xử lý thay đổi input trong form edit
+   * @param {Event} e - Event object từ input change
+   */
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditData(prev => ({
@@ -174,6 +212,11 @@ const ClubFeeManagement = ({ club }) => {
     }));
   };
 
+  /**
+   * Cập nhật thông tin package lên API
+   * Validate dữ liệu trước khi gửi (tên, thời hạn, giá)
+   * @param {number|string} packageId - ID của package cần cập nhật
+   */
   const handleUpdatePackage = async (packageId) => {
     if (!packageId) {
       setEditError('Không tìm thấy ID gói thành viên.');
@@ -218,6 +261,10 @@ const ClubFeeManagement = ({ club }) => {
 
       console.log('Updating package:', { packageId, payload });
 
+      // ========== API CALL: PUT /packages/{packageId} - Update Package ==========
+      // Mục đích: Leader cập nhật thông tin gói membership (name, price, term, description)
+      // Request body: { packageName, price, term, description }
+      // Response: Updated package object
       const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
         method: 'PUT',
         headers: {

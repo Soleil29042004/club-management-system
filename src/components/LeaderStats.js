@@ -1,3 +1,23 @@
+/**
+ * LeaderStats Component
+ * 
+ * Component hiển thị thống kê cho club leader:
+ * - Số thành viên
+ * - Số yêu cầu chờ duyệt
+ * - Danh mục club
+ * - Địa điểm
+ * - Tổng doanh thu (nếu có)
+ * - Số thành viên chưa đóng phí (nếu có)
+ * 
+ * @param {Object} props
+ * @param {number} props.memberCount - Số thành viên hiện tại
+ * @param {number} props.pendingRequestsCount - Số yêu cầu chờ duyệt
+ * @param {string} props.category - Danh mục của club
+ * @param {string} props.location - Địa điểm của club
+ * @param {number} props.totalRevenue - Tổng doanh thu (optional)
+ * @param {number} props.unpaidCount - Số thành viên chưa đóng phí (optional)
+ */
+
 import React from 'react';
 import { clubCategoryLabels } from '../data/constants';
 

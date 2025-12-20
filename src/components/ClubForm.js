@@ -1,3 +1,17 @@
+/**
+ * ClubForm Component
+ * 
+ * Component form để thêm/sửa thông tin club:
+ * - Form modal để chỉnh sửa mô tả, địa điểm, logo
+ * - Validation cho các trường bắt buộc
+ * - Hỗ trợ cả add và edit mode
+ * 
+ * @param {Object} props
+ * @param {Object|null} props.club - Club object cần edit (null nếu là add mode)
+ * @param {Function} props.onSubmit - Callback khi submit form
+ * @param {Function} props.onCancel - Callback khi cancel/hủy form
+ */
+
 import React, { useState, useEffect } from 'react';
 
 const ClubForm = ({ club, onSubmit, onCancel }) => {
@@ -9,6 +23,9 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
 
   const [errors, setErrors] = useState({});
 
+  /**
+   * Load dữ liệu club vào form khi edit mode
+   */
   useEffect(() => {
     if (club) {
       setFormData({
@@ -19,25 +36,35 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
     }
   }, [club]);
 
+  /**
+   * Xử lý khi input thay đổi
+   * @param {Event} e - Input change event
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
+    // Xóa error khi user bắt đầu nhập
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
+  /**
+   * Validate form trước khi submit
+   * @returns {boolean} - true nếu form hợp lệ
+   */
   const validateForm = () => {
     const newErrors = {};
 
+    // Validate mô tả (bắt buộc)
     if (!formData.description.trim()) {
       newErrors.description = 'Mô tả là bắt buộc';
     }
 
+    // Validate địa điểm (bắt buộc)
     if (!formData.location.trim()) {
       newErrors.location = 'Địa điểm là bắt buộc';
     }
@@ -46,6 +73,10 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * Xử lý khi submit form
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {

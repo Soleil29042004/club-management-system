@@ -1,5 +1,22 @@
+/**
+ * Login Page Component
+ * 
+ * Component trang đăng nhập:
+ * - Form đăng nhập với email và password
+ * - Xử lý authentication với API
+ * - Parse JWT token và lưu vào localStorage
+ * - Hỗ trợ quên mật khẩu
+ * 
+ * @param {Object} props
+ * @param {Function} props.onLoginSuccess - Callback khi đăng nhập thành công
+ * @param {Function} props.onSwitchToRegister - Callback để chuyển sang trang đăng ký
+ * @param {Function} props.onNavigateToHome - Callback để về trang chủ
+ */
+
 import React, { useState } from 'react';
 import { useToast } from '../components/Toast';
+import { parseJWTToken, mapScopeToRole, extractUserIdFromToken, extractClubIdFromToken, extractClubIdsFromToken, extractScopeFromToken } from '../utils/auth';
+import { API_BASE_URL, extractTokenFromResponse } from '../utils/api';
 
 const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
   const { showToast } = useToast();
@@ -29,68 +46,6 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
     'admin@gmail.com': { password: '123456', role: 'admin', name: 'Admin' }
   };
 
-  const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
-
-  const extractToken = (data) => {
-    return (
-      data?.token ||
-      data?.accessToken ||
-      data?.access_token ||
-      data?.jwt ||
-      data?.jwtToken ||
-      data?.data?.token ||
-      data?.data?.accessToken ||
-      data?.result?.token || // response format: { code, message, result: { token, authenticated } }
-      data?.result?.accessToken ||
-      data?.result?.access_token
-    );
-  };
-
-  // Parse JWT token để lấy role từ scope
-  const parseJWTToken = (token) => {
-    try {
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        return null;
-      }
-      
-      // Decode payload (phần thứ 2)
-      const payload = parts[1];
-      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      
-      const decoded = JSON.parse(jsonPayload);
-      return decoded;
-    } catch (error) {
-      console.error('Error parsing JWT token:', error);
-      return null;
-    }
-  };
-
-  // Map scope từ JWT thành role cho app
-  const mapScopeToRole = (scope) => {
-    if (!scope) return 'student';
-    
-    const scopeLower = scope.toLowerCase();
-    
-    // QuanTriVien -> admin
-    if (scopeLower === 'quantrivien' || scopeLower === 'admin') {
-      return 'admin';
-    }
-    
-    // SinhVien -> student
-    if (scopeLower === 'sinhvien' || scopeLower === 'student') {
-      return 'student';
-    }
-    
-    // Các scope khác -> club_leader
-    return 'club_leader';
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -136,6 +91,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
     setErrors(prev => ({ ...prev, submit: '' }));
     
     try {
+      // ========== API CALL: POST /auth/token - Login ==========
+      // Mục đích: Đăng nhập và nhận JWT token
+      // Request body: { email, password }
+      // Response: JWT token trong data.token hoặc data.result.token
       const response = await fetch(`${API_BASE_URL}/auth/token`, {
         method: 'POST',
         headers: {
@@ -155,7 +114,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
         return;
       }
 
-      const token = extractToken(data);
+      // Extract token từ response (hỗ trợ nhiều format)
+      const token = extractTokenFromResponse(data);
       if (!token) {
         setErrors({ submit: 'Không nhận được token từ máy chủ. Vui lòng thử lại.' });
         return;
@@ -168,21 +128,15 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
       
       let clubIdFromToken = null;
       let clubIdsFromToken = [];
+      
       if (tokenPayload) {
         // Lấy role từ scope trong JWT token
-        const scope = tokenPayload.scope || tokenPayload.role || tokenPayload.Roles;
+        const scope = extractScopeFromToken(tokenPayload);
         role = mapScopeToRole(scope);
-        clubIdsFromToken = Array.isArray(tokenPayload.clubIds || tokenPayload.clubIDs || tokenPayload.ClubIds || tokenPayload.ClubIDs)
-          ? (tokenPayload.clubIds || tokenPayload.clubIDs || tokenPayload.ClubIds || tokenPayload.ClubIDs)
-          : [];
-        clubIdFromToken =
-          tokenPayload.clubId ||
-          tokenPayload.clubID ||
-          tokenPayload.ClubId ||
-          tokenPayload.ClubID ||
-          tokenPayload.club?.clubId ||
-          clubIdsFromToken?.[0] ||
-          null;
+        
+        // Extract club IDs và club ID từ token
+        clubIdsFromToken = extractClubIdsFromToken(tokenPayload);
+        clubIdFromToken = extractClubIdFromToken(tokenPayload);
         
         // Lấy name từ token hoặc response
         name = tokenPayload.sub?.split('@')[0] || 
@@ -192,12 +146,13 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                data.user?.name || 
                formData.email.split('@')[0];
       } else {
-        // Fallback: thử lấy từ response body
+        // Fallback: thử lấy từ response body nếu không parse được token
         role = data.role || data.userRole || data.user?.role || 'student';
         name = data.fullName || data.name || data.user?.fullName || data.user?.name || formData.email.split('@')[0];
       }
 
-      const userId = tokenPayload?.sub || tokenPayload?.nameid || tokenPayload?.userId || tokenPayload?.UserId;
+      // Extract user ID từ token
+      const userId = extractUserIdFromToken(tokenPayload);
 
       const userData = {
         email: formData.email.trim(),
@@ -478,6 +433,9 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                         setForgotPasswordMessage('');
 
                         try {
+                          // ========== API CALL: POST /users/forgot-password - Forgot Password ==========
+                          // Mục đích: Gửi yêu cầu reset mật khẩu qua email
+                          // Request body: { email }
                           const res = await fetch(`${API_BASE_URL}/users/forgot-password`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
