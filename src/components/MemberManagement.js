@@ -47,6 +47,9 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
 
     const fetchClubs = async () => {
       try {
+        // ========== API CALL: GET /clubs - List All Clubs ==========
+        // Mục đích: Admin lấy danh sách tất cả CLB để quản lý thành viên
+        // Response: Array of club objects
         const res = await fetch(`${API_BASE_URL}/clubs`, {
           headers: {
             'Content-Type': 'application/json',
@@ -99,6 +102,10 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
       try {
         const sortParam = `${sortBy},${sortDirection}`;
         const url = `${API_BASE_URL}/users?page=${page}&size=${size}&sort=${encodeURIComponent(sortParam)}`;
+        // ========== API CALL: GET /users - List Users (Paginated) ==========
+        // Mục đích: Admin lấy danh sách users với pagination và sorting
+        // Query: ?page={page}&size={size}&sort={sortBy},{sortDirection}
+        // Response: Paginated users array
         const res = await fetch(url, {
           headers: {
             'Content-Type': 'application/json',
@@ -268,6 +275,9 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
     setError('');
 
     try {
+      // ========== API CALL: DELETE /users/{id} - Delete User ==========
+      // Mục đích: Admin xóa user khỏi hệ thống
+      // Response: Success message
       const res = await fetch(`${API_BASE_URL}/users/${member.id}`, {
         method: 'DELETE',
         headers: {

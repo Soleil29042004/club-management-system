@@ -65,10 +65,10 @@ const Sidebar = ({ userRole, currentPage, onPageChange, onLogout, isOpen, onClos
       )}
       
       {/* Sidebar */}
-      <aside className={`w-64 bg-gradient-to-b from-fpt-blue to-fpt-blue-light text-white shadow-xl flex-shrink-0 fixed h-full overflow-y-auto z-50 transition-all duration-300 ${
+      <aside className={`w-64 bg-gradient-to-b from-fpt-blue to-fpt-blue-light text-white shadow-xl flex-shrink-0 fixed left-0 top-0 h-screen overflow-y-auto z-50 transition-all duration-300 ${
         isOpen 
           ? 'translate-x-0 opacity-100 pointer-events-auto' 
-          : '-translate-x-full opacity-0 pointer-events-none lg:translate-x-0 lg:opacity-100 lg:pointer-events-auto'
+          : '-translate-x-full opacity-0 pointer-events-none'
       }`}>
         {/* Header */}
         <div className="p-6 border-b border-white/20">

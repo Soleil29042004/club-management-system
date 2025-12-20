@@ -183,6 +183,9 @@ const StudentMyClubRequests = () => {
 
     const pollInterval = setInterval(async () => {
       try {
+        // ========== API CALL: GET /registers/my-registrations - Polling ==========
+        // Mục đích: Polling để kiểm tra thay đổi trạng thái đăng ký realtime (mỗi 3 giây)
+        // Response: Array of registration objects
         const response = await fetch(`${API_BASE_URL}/registers/my-registrations`, {
           method: 'GET',
           headers: {
@@ -280,6 +283,10 @@ const StudentMyClubRequests = () => {
 
     setPayingId(subscriptionId);
     try {
+      // ========== API CALL: POST /payments/create-link - Create Payment Link ==========
+      // Mục đích: Tạo link thanh toán cho đơn đăng ký đã được duyệt
+      // Request body: { subscriptionId }
+      // Response: Payment link URL để redirect user đến trang thanh toán
       const res = await fetch(`${API_BASE_URL}/payments/create-link`, {
         method: 'POST',
         headers: {
@@ -340,6 +347,9 @@ const StudentMyClubRequests = () => {
 
     setCancellingId(subscriptionId);
     try {
+      // ========== API CALL: DELETE /registers/{subscriptionId} - Cancel Registration ==========
+      // Mục đích: Sinh viên hủy đơn đăng ký đang ở trạng thái ChoDuyet
+      // Response: Success message
       const res = await fetch(`${API_BASE_URL}/registers/${subscriptionId}`, {
         method: 'DELETE',
         headers: {

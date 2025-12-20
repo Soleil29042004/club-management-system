@@ -78,6 +78,10 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
           url += `?status=${filterStatus}`;
         }
 
+        // ========== API CALL: GET /club-requests - List Club Requests ==========
+        // Mục đích: Admin xem danh sách yêu cầu đăng ký mở CLB mới (có thể filter theo status)
+        // Query: Optional ?status={status} để filter
+        // Response: Array of club request objects
         const response = await fetch(url, {
           headers: {
             'Content-Type': 'application/json',
@@ -163,6 +167,10 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
         url += `?status=${filterStatus}`;
       }
 
+      // ========== API CALL: GET /club-requests - Polling Club Requests ==========
+      // Mục đích: Polling để kiểm tra yêu cầu mới hoặc thay đổi trạng thái (mỗi 10 giây)
+      // Query: Optional ?status={status} để filter
+      // Response: Array of club request objects
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',

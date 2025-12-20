@@ -55,6 +55,9 @@ const SubscriptionDetailModal = ({ subscriptionId, onClose }) => {
       }
 
       try {
+        // ========== API CALL: GET /registers/{subscriptionId} - Get Subscription Detail ==========
+        // Mục đích: Lấy chi tiết subscription để hiển thị trong modal
+        // Response: Registration object với đầy đủ thông tin (package, payment, dates, etc.)
         const response = await fetch(`${API_BASE_URL}/registers/${subscriptionId}`, {
           headers: {
             'Content-Type': 'application/json',

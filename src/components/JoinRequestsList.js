@@ -66,6 +66,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   // Lưu filter state vào localStorage để giữ lại khi chuyển trang
   const [selectedStatus, setSelectedStatus] = useState(() => {
     const saved = localStorage.getItem('joinRequestsFilter');
+    // Nếu filter đã lưu là "DaRoiCLB" (đã bị xóa), reset về "all"
+    if (saved === 'DaRoiCLB') {
+      localStorage.setItem('joinRequestsFilter', 'all');
+      return 'all';
+    }
     return saved || 'all';
   });
 
@@ -73,8 +78,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     { value: 'all', label: 'Tất cả' },
     { value: 'ChoDuyet', label: 'Chờ duyệt' },
     { value: 'DaDuyet', label: 'Đã duyệt' },
-    { value: 'TuChoi', label: 'Từ chối' },
-    { value: 'DaRoiCLB', label: 'Đã rời CLB' }
+    { value: 'TuChoi', label: 'Từ chối' }
   ];
 
   useEffect(() => {
@@ -87,6 +91,10 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
       setError('');
       try {
         // Nếu chọn "Tất cả", gọi API không có status filter
+        // ========== API CALL: GET /registrations/club/{clubId} - Get Join Requests ==========
+        // Mục đích: Leader lấy danh sách yêu cầu tham gia CLB (có thể filter theo status)
+        // Query: Optional ?status={status} để filter (ChoDuyet, DaDuyet, TuChoi, etc.)
+        // Response: Array of registration objects
         const url = selectedStatus === 'all'
           ? `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`
           : `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}/status/${selectedStatus}`;
@@ -99,8 +107,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && (data.code === 1000 || data.code === 0)) {
-          // Ẩn các yêu cầu đã rời CLB (DaRoiCLB)
+          // Chỉ ẩn các yêu cầu đã rời CLB nếu không phải đang filter theo trạng thái đó
           const filtered = (data.result || []).filter(item => {
+            if (selectedStatus === 'DaRoiCLB' || selectedStatus === 'all') {
+              return true; // Hiển thị tất cả khi filter "all" hoặc "DaRoiCLB"
+            }
             const st = (item.status || '').toLowerCase();
             return st !== 'daroi' && st !== 'daroi clb' && st !== 'daroiclb';
           });
@@ -190,8 +201,14 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 
     const pollInterval = setInterval(async () => {
       try {
-        // Luôn poll tất cả requests để không bỏ sót thông báo thanh toán
-        const url = `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`;
+        // ========== API CALL: GET /registrations/club/{clubId} - Polling Join Requests ==========
+        // Mục đích: Polling để kiểm tra yêu cầu mới hoặc thay đổi trạng thái (mỗi 5 giây)
+        // Query: Optional ?status={status} để filter
+        // Response: Array of registration objects
+        // Poll theo filter hiện tại để không ghi đè kết quả đã lọc
+        const url = selectedStatus === 'all'
+          ? `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}`
+          : `https://clubmanage.azurewebsites.net/api/registrations/club/${clubId}/status/${selectedStatus}`;
         
         const res = await fetch(url, {
           headers: {
@@ -203,8 +220,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
         
         const data = await res.json().catch(() => ({}));
         if (res.ok && (data.code === 1000 || data.code === 0)) {
-          // Ẩn các yêu cầu đã rời CLB (DaRoiCLB)
+          // Chỉ ẩn các yêu cầu đã rời CLB nếu không phải đang filter theo trạng thái đó
           const filtered = (data.result || []).filter(item => {
+            if (selectedStatus === 'DaRoiCLB' || selectedStatus === 'all') {
+              return true; // Hiển thị tất cả khi filter "all" hoặc "DaRoiCLB"
+            }
             const st = (item.status || '').toLowerCase();
             return st !== 'daroi' && st !== 'daroi clb' && st !== 'daroiclb';
           });
@@ -226,7 +246,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
               if (st === 'daroi') return 'left';
               return st || 'pending';
             })(),
-            reason: item.reason || '',
+            reason: item.joinReason || item.reason || '',
             message: item.message || '',
             packageName: item.packageName,
             price: item.price,
@@ -268,7 +288,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             console.error('Error saving payment status to localStorage:', err);
           }
           
-          // Cập nhật danh sách requests
+          // Cập nhật danh sách requests theo filter hiện tại
           setApiRequests(mapped);
         }
       } catch (err) {
@@ -300,6 +320,10 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     if (!subscriptionId) return;
     setActionLoadingId(subscriptionId);
     setActionError('');
+    // ========== API CALL: PUT /registrations/approve - Approve Join Request ==========
+    // Mục đích: Leader duyệt yêu cầu tham gia CLB (chuyển status từ ChoDuyet → DaDuyet)
+    // Request body: { subscriptionId, status }
+    // Response: Updated registration object với status = 'DaDuyet'
     const controller = new AbortController();
     const token = localStorage.getItem('authToken');
     try {
@@ -355,6 +379,10 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     if (!subscriptionId) return;
     setPaymentLoadingId(subscriptionId);
     setActionError('');
+    // ========== API CALL: PUT /registrations/confirm-payment - Confirm Payment ==========
+    // Mục đích: Leader xác nhận đã thu phí từ thành viên (set isPaid = true)
+    // Request body: { subscriptionId, paymentMethod }
+    // Response: Updated registration object với isPaid = true
     const controller = new AbortController();
     const token = localStorage.getItem('authToken');
     try {
@@ -412,6 +440,10 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     const token = localStorage.getItem('authToken');
 
     try {
+      // ========== API CALL: GET /registers/{subscriptionId} - Get Registration Detail ==========
+      // Mục đích: Lấy chi tiết đăng ký để hiển thị trong modal (studentName, joinReason, etc.)
+      // Response: Registration object với đầy đủ thông tin
+      // Lưu ý: Có thể bị 403 nếu không có quyền, có retry logic
       const res = await fetch(`https://clubmanage.azurewebsites.net/api/registers/${subscriptionId}`, {
         headers: {
           'Content-Type': 'application/json',

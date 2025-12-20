@@ -91,6 +91,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
     setErrors(prev => ({ ...prev, submit: '' }));
     
     try {
+      // ========== API CALL: POST /auth/token - Login ==========
+      // Mục đích: Đăng nhập và nhận JWT token
+      // Request body: { email, password }
+      // Response: JWT token trong data.token hoặc data.result.token
       const response = await fetch(`${API_BASE_URL}/auth/token`, {
         method: 'POST',
         headers: {
@@ -429,6 +433,9 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
                         setForgotPasswordMessage('');
 
                         try {
+                          // ========== API CALL: POST /users/forgot-password - Forgot Password ==========
+                          // Mục đích: Gửi yêu cầu reset mật khẩu qua email
+                          // Request body: { email }
                           const res = await fetch(`${API_BASE_URL}/users/forgot-password`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
