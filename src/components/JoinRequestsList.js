@@ -81,6 +81,20 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     { value: 'TuChoi', label: 'Từ chối' }
   ];
 
+  const isLeftStatus = (status = '') => {
+    const st = status.toLowerCase();
+    return st === 'daroi' || st === 'daroi clb' || st === 'daroiclb' || st === 'daroiclub';
+  };
+
+  const mapStatus = (status = '') => {
+    const st = status.toLowerCase();
+    if (st === 'choduyet' || st === 'pending') return 'pending';
+    if (st === 'daduyet' || st === 'approved') return 'approved';
+    if (st === 'tuchoi' || st === 'rejected') return 'rejected';
+    if (isLeftStatus(st)) return 'left';
+    return 'unknown';
+  };
+
   useEffect(() => {
     if (!clubId) return;
     const controller = new AbortController();
@@ -107,14 +121,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && (data.code === 1000 || data.code === 0)) {
-          // Chỉ ẩn các yêu cầu đã rời CLB nếu không phải đang filter theo trạng thái đó
-          const filtered = (data.result || []).filter(item => {
-            if (selectedStatus === 'DaRoiCLB' || selectedStatus === 'all') {
-              return true; // Hiển thị tất cả khi filter "all" hoặc "DaRoiCLB"
-            }
-            const st = (item.status || '').toLowerCase();
-            return st !== 'daroi' && st !== 'daroi clb' && st !== 'daroiclb';
-          });
+          // Ẩn hoàn toàn các yêu cầu đã rời CLB
+          const filtered = (data.result || []).filter(item => !isLeftStatus(item.status));
 
           const mapped = filtered.map(item => ({
             id: item.subscriptionId || item.id,
@@ -125,14 +133,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             phone: item.phone || '',
             major: item.major || '',
             requestDate: item.createdAt || item.joinDate || new Date().toISOString(),
-            status: (() => {
-              const st = (item.status || '').toLowerCase();
-              if (st === 'choduyet') return 'pending';
-              if (st === 'daduyet') return 'approved';
-              if (st === 'tuchoi') return 'rejected';
-              if (st === 'daroi') return 'left';
-              return st || 'pending';
-            })(),
+            status: mapStatus(item.status),
             reason: item.joinReason || item.reason || '',
             message: item.message || '',
             packageName: item.packageName,
@@ -220,14 +221,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
         
         const data = await res.json().catch(() => ({}));
         if (res.ok && (data.code === 1000 || data.code === 0)) {
-          // Chỉ ẩn các yêu cầu đã rời CLB nếu không phải đang filter theo trạng thái đó
-          const filtered = (data.result || []).filter(item => {
-            if (selectedStatus === 'DaRoiCLB' || selectedStatus === 'all') {
-              return true; // Hiển thị tất cả khi filter "all" hoặc "DaRoiCLB"
-            }
-            const st = (item.status || '').toLowerCase();
-            return st !== 'daroi' && st !== 'daroi clb' && st !== 'daroiclb';
-          });
+          // Ẩn hoàn toàn các yêu cầu đã rời CLB
+          const filtered = (data.result || []).filter(item => !isLeftStatus(item.status));
 
           const mapped = filtered.map(item => ({
             id: item.subscriptionId || item.id,
@@ -238,14 +233,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
             phone: item.phone || '',
             major: item.major || '',
             requestDate: item.createdAt || item.joinDate || new Date().toISOString(),
-            status: (() => {
-              const st = (item.status || '').toLowerCase();
-              if (st === 'choduyet') return 'pending';
-              if (st === 'daduyet') return 'approved';
-              if (st === 'tuchoi') return 'rejected';
-              if (st === 'daroi') return 'left';
-              return st || 'pending';
-            })(),
+            status: mapStatus(item.status),
             reason: item.joinReason || item.reason || '',
             message: item.message || '',
             packageName: item.packageName,
@@ -312,7 +300,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     const st = (statusRaw || '').toLowerCase();
     if (st === 'daduyet' || st === 'approved') return 'approved';
     if (st === 'tuchoi' || st === 'rejected') return 'rejected';
-    return 'pending';
+    if (st === 'daroi' || st === 'daroiclb' || st === 'daroi clb') return 'left';
+    return 'unknown';
   };
 
   const updateStatus = async (request, statusValue) => {
@@ -504,10 +493,11 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
       pending: { bg: 'bg-amber-500', text: 'Chờ duyệt' },
       approved: { bg: 'bg-green-500', text: 'Đã chấp nhận' },
       rejected: { bg: 'bg-red-500', text: 'Đã từ chối' },
-      left: { bg: 'bg-gray-500', text: 'Đã rời CLB' }
+      left: { bg: 'bg-gray-500', text: 'Đã rời CLB' },
+      unknown: { bg: 'bg-gray-400', text: 'Không xác định' }
     };
 
-    const config = statusConfig[status] || statusConfig.pending;
+    const config = statusConfig[status] || statusConfig.unknown;
     return (
       <span className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase text-white whitespace-nowrap inline-block ${config.bg}`}>
         {config.text}
