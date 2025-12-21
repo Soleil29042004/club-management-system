@@ -42,9 +42,15 @@ const StudentJoinedClubs = () => {
   const [renewLoadingId, setRenewLoadingId] = useState(null);
 
   /**
-   * Resolve userId từ JWT token hoặc localStorage
-   * Ưu tiên lấy từ token, fallback về localStorage
-   * Chỉ trả về giá trị không phải email (không chứa @)
+   * FUNCTION: RESOLVE USER ID
+   * 
+   * MỤC ĐÍCH: Resolve userId từ JWT token hoặc localStorage
+   * 
+   * LOGIC:
+   * 1. Ưu tiên lấy từ JWT token (parse payload)
+   * 2. Fallback về localStorage nếu token không có userId
+   * 3. Chỉ trả về giá trị không phải email (không chứa @)
+   * 
    * @returns {string|null} - userId hoặc null nếu không tìm thấy
    */
   const resolveUserId = () => {
@@ -84,8 +90,21 @@ const StudentJoinedClubs = () => {
   };
 
   /**
-   * Fetch danh sách CLB đã tham gia từ API
-   * Retry nếu chưa có userId (fetch từ /users/my-info)
+   * USE EFFECT: FETCH JOINED CLUBS
+   * 
+   * KHI NÀO CHẠY: Khi component mount
+   * 
+   * MỤC ĐÍCH: Fetch danh sách CLB đã tham gia từ API
+   * 
+   * FLOW:
+   * 1. RESOLVE USER ID: Lấy userId từ token hoặc localStorage
+   * 2. RETRY: Nếu chưa có userId, fetch từ GET /users/my-info (tối đa 2 lần)
+   * 3. CALL API: GET /clubs/user/{userId}/joined
+   * 4. FILTER: Ẩn các membership đã rời CLB (status = DaRoiCLB)
+   * 5. MAP DATA: Map API response sang local format
+   * 6. UPDATE STATE: Set clubs với danh sách đã filter
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần)
    */
   useEffect(() => {
     const fetchJoinedClubs = async (retryCount = 0) => {
@@ -211,7 +230,15 @@ const StudentJoinedClubs = () => {
   }, []);
 
   /**
-   * Render trạng thái membership (Đang hiệu lực / Hết hạn)
+   * FUNCTION: RENDER STATUS
+   * 
+   * MỤC ĐÍCH: Render trạng thái membership (Đang hiệu lực / Hết hạn)
+   * 
+   * LOGIC:
+   * - Kiểm tra isExpired flag hoặc so sánh endDate với ngày hiện tại
+   * - isActive !== false và không expired → "Đang hiệu lực"
+   * - Ngược lại → "Hết hạn"
+   * 
    * @param {Object} club - Club object
    * @returns {JSX.Element} Status badge
    */
@@ -232,23 +259,32 @@ const StudentJoinedClubs = () => {
   };
 
   /**
-   * Normalize string về lowercase, trim
+   * FUNCTION: NORMALIZE
+   * 
+   * MỤC ĐÍCH: Normalize string về lowercase, trim
+   * 
    * @param {any} value - Giá trị cần normalize
    * @returns {string} - Normalized string
    */
   const normalize = (value) => (value || '').toString().trim().toLowerCase();
 
   /**
-   * Kiểm tra role có phải là Chủ tịch không
+   * FUNCTION: IS LEADER ROLE
+   * 
+   * MỤC ĐÍCH: Kiểm tra role có phải là Chủ tịch không
+   * 
    * @param {string} role - Role cần kiểm tra
    * @returns {boolean} - true nếu là Chủ tịch
    */
   const isLeaderRole = (role) => normalize(role) === 'chutich';
 
   /**
-   * Kiểm tra status có phải là đã duyệt không
+   * FUNCTION: IS APPROVED STATUS
+   * 
+   * MỤC ĐÍCH: Kiểm tra status có phải là đã duyệt không
+   * 
    * @param {string} status - Status cần kiểm tra
-   * @returns {boolean} - true nếu đã duyệt
+   * @returns {boolean} - true nếu đã duyệt (DaDuyet, Approved, Active)
    */
   const isApprovedStatus = (status) => {
     const normalized = normalize(status);
@@ -256,7 +292,12 @@ const StudentJoinedClubs = () => {
   };
 
   /**
-   * Kiểm tra membership đã thanh toán chưa
+   * FUNCTION: IS PAID MEMBERSHIP
+   * 
+   * MỤC ĐÍCH: Kiểm tra membership đã thanh toán chưa
+   * 
+   * LOGIC: Nếu isPaid === undefined/null → coi như đã thanh toán (tránh hiển thị sai)
+   * 
    * @param {Object} club - Club object
    * @returns {boolean} - true nếu đã thanh toán hoặc không có thông tin
    */
@@ -266,7 +307,14 @@ const StudentJoinedClubs = () => {
   };
 
   /**
-   * Kiểm tra membership còn hiệu lực không
+   * FUNCTION: IS ACTIVE MEMBERSHIP
+   * 
+   * MỤC ĐÍCH: Kiểm tra membership còn hiệu lực không
+   * 
+   * LOGIC:
+   * - Kiểm tra isExpired flag hoặc so sánh endDate với ngày hiện tại
+   * - isActive !== false và không expired và endDate >= now → còn hiệu lực
+   * 
    * @param {Object} club - Club object
    * @returns {boolean} - true nếu còn hiệu lực
    */
@@ -280,8 +328,16 @@ const StudentJoinedClubs = () => {
   };
 
   /**
-   * Kiểm tra student có thể rời CLB không
-   * Chỉ cho phép nếu: không phải Chủ tịch, đã duyệt, đã thanh toán, đang hoạt động hoặc đã hết hạn
+   * FUNCTION: CAN LEAVE CLUB
+   * 
+   * MỤC ĐÍCH: Kiểm tra student có thể rời CLB không
+   * 
+   * ĐIỀU KIỆN:
+   * - Không phải Chủ tịch (isLeaderRole = false)
+   * - Đã duyệt (isApprovedStatus = true)
+   * - Đã thanh toán (isPaidMembership = true)
+   * - Đang hoạt động HOẶC đã hết hạn (isActiveMembership = true HOẶC expired = true)
+   * 
    * @param {Object} club - Club object
    * @returns {boolean} - true nếu có thể rời
    */
@@ -298,8 +354,17 @@ const StudentJoinedClubs = () => {
   };
 
   /**
-   * Xử lý rời khỏi CLB
-   * Gọi API để đánh dấu status = DaRoiCLB
+   * FUNCTION: HANDLE LEAVE CLUB
+   * 
+   * MỤC ĐÍCH: Xử lý rời khỏi CLB (đánh dấu status = DaRoiCLB)
+   * 
+   * FLOW:
+   * 1. VALIDATE: Kiểm tra canLeaveClub (không phải Chủ tịch, đã duyệt, đã thanh toán)
+   * 2. CONFIRM: Xác nhận với user
+   * 3. CALL API: POST /registers/{clubId}/leave
+   * 4. UPDATE UI: Remove khỏi danh sách sau khi thành công
+   * 5. SHOW TOAST: Thông báo kết quả
+   * 
    * @param {Object} club - Club object cần rời
    */
   const handleLeaveClub = async (club) => {
@@ -348,8 +413,18 @@ const StudentJoinedClubs = () => {
   };
 
   /**
-   * Gia hạn membership cho CLB đã hết hạn
-   * Gửi yêu cầu gia hạn, trạng thái chuyển về chờ duyệt, cần thanh toán lại
+   * FUNCTION: HANDLE RENEW CLUB
+   * 
+   * MỤC ĐÍCH: Gia hạn membership cho CLB đã hết hạn
+   * 
+   * FLOW:
+   * 1. VALIDATE: Kiểm tra subscriptionId
+   * 2. CALL API: POST /registers/{subscriptionId}/renew (body: {})
+   * 3. UPDATE UI: Cập nhật club với status = ChoDuyet, isPaid = false
+   * 4. SHOW TOAST: Thông báo cần thanh toán lại
+   * 
+   * LƯU Ý: Sau khi gia hạn, trạng thái chuyển về "Chờ duyệt" và cần thanh toán lại
+   * 
    * @param {Object} club - Club object cần gia hạn
    */
   const handleRenewClub = async (club) => {

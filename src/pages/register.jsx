@@ -34,6 +34,17 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  /**
+   * FUNCTION: HANDLE CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi input trong form thay đổi
+   * 
+   * LOGIC:
+   * - Cập nhật formData state với giá trị mới
+   * - Xóa error message của field đó nếu có
+   * 
+   * @param {Event} e - Input change event
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -49,7 +60,18 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
   };
 
   /**
-   * Validate form data trước khi submit
+   * FUNCTION: VALIDATE FORM
+   * 
+   * MỤC ĐÍCH: Validate form data trước khi submit
+   * 
+   * VALIDATION RULES:
+   * - fullName: Bắt buộc, tối thiểu 2 ký tự
+   * - email: Bắt buộc, format hợp lệ
+   * - password: Bắt buộc, tối thiểu 6 ký tự
+   * - confirmPassword: Bắt buộc, phải khớp với password
+   * - studentId, major: Bắt buộc nếu role === 'student'
+   * - phone: Bắt buộc, format 10-11 số
+   * 
    * @returns {boolean} - true nếu form hợp lệ, false nếu có lỗi
    */
   const validateForm = () => {
@@ -104,6 +126,19 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * FUNCTION: HANDLE SUBMIT
+   * 
+   * MỤC ĐÍCH: Xử lý khi submit form đăng ký
+   * 
+   * FLOW:
+   * 1. Validate form
+   * 2. Gọi API POST /users để tạo tài khoản mới
+   * 3. Hiển thị toast thành công
+   * 4. Chuyển về trang home sau 1 giây (user cần đăng nhập lại)
+   * 
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -115,8 +150,10 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {
     setErrors(prev => ({ ...prev, submit: '' }));
     
     try {
-      // Gọi API đăng ký user mới
-      // API endpoint: POST /users
+      // ========== API CALL: POST /users - Register New User ==========
+      // Mục đích: Đăng ký tài khoản mới
+      // Request body: { studentCode, fullName, email, password, phoneNumber, major }
+      // Response: Success message
       await apiRequest('/users', {
         method: 'POST',
         body: {

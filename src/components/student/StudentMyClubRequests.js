@@ -38,8 +38,18 @@ const StudentMyClubRequests = () => {
   const isInitialLoadRef = useRef(true);
 
   /**
-   * Load trạng thái đã lưu từ localStorage khi component mount
-   * Để tránh hiển thị toast khi reload trang
+   * USE EFFECT 1: LOAD STATUS FROM LOCALSTORAGE
+   * 
+   * KHI NÀO CHẠY: Khi component mount
+   * 
+   * MỤC ĐÍCH: Load trạng thái đã lưu từ localStorage để tránh hiển thị toast khi reload trang
+   * 
+   * FLOW:
+   * 1. Load từ localStorage key 'myRegistrationStatus'
+   * 2. Khôi phục vào previousStatusesRef (Map)
+   * 3. Set isInitialLoadRef = false nếu có dữ liệu đã lưu
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần)
    */
   useEffect(() => {
     try {
@@ -59,8 +69,21 @@ const StudentMyClubRequests = () => {
   }, []);
 
   /**
-   * Fetch danh sách đăng ký từ API khi component mount
-   * Kiểm tra thay đổi trạng thái và hiển thị toast khi đơn được duyệt
+   * USE EFFECT 2: FETCH MY REGISTRATIONS
+   * 
+   * KHI NÀO CHẠY: Khi component mount
+   * 
+   * MỤC ĐÍCH: Fetch danh sách đăng ký từ API và phát hiện thay đổi trạng thái
+   * 
+   * FLOW:
+   * 1. CALL API: GET /registers/my-registrations
+   * 2. FILTER: Ẩn các đơn đã rời CLB (status = DaRoiCLB)
+   * 3. SORT: Sắp xếp mới nhất trước
+   * 4. CHECK STATUS CHANGE: So sánh với previousStatusesRef để phát hiện thay đổi
+   * 5. SHOW TOAST: Hiển thị toast khi đơn chuyển sang "Đã duyệt" (nếu không phải lần đầu load)
+   * 6. SAVE STATUS: Lưu trạng thái vào previousStatusesRef
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần)
    */
   useEffect(() => {
     let isMounted = true; // Flag để tránh setState sau khi component unmount
@@ -174,8 +197,22 @@ const StudentMyClubRequests = () => {
   }, []); // Chỉ chạy một lần khi component mount, không phụ thuộc vào showToast
 
   /**
-   * Polling để kiểm tra thay đổi trạng thái realtime (mỗi 2 giây)
-   * Phát hiện khi đơn chuyển từ trạng thái khác sang "Đã duyệt" và hiển thị toast
+   * USE EFFECT 3: POLLING REGISTRATION STATUS
+   * 
+   * KHI NÀO CHẠY: Sau khi loading === false
+   * 
+   * MỤC ĐÍCH: Polling để kiểm tra thay đổi trạng thái realtime (mỗi 2 giây)
+   * 
+   * FLOW:
+   * 1. SETUP INTERVAL: Chạy mỗi 2 giây
+   * 2. CALL API: GET /registers/my-registrations
+   * 3. CHECK STATUS CHANGE: So sánh với previousStatusesRef
+   * 4. SHOW TOAST: Hiển thị toast khi đơn chuyển sang "Đã duyệt"
+   * 5. UPDATE STATE: Cập nhật danh sách registrations
+   * 6. SAVE TO LOCALSTORAGE: Lưu trạng thái để persist khi reload
+   * 7. CLEANUP: Clear interval khi component unmount
+   * 
+   * DEPENDENCIES: [loading]
    */
   useEffect(() => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -250,7 +287,10 @@ const StudentMyClubRequests = () => {
   }, [loading]); // Chỉ chạy khi loading thay đổi
 
   /**
-   * Render status badge với màu sắc tương ứng
+   * FUNCTION: RENDER STATUS BADGE
+   * 
+   * MỤC ĐÍCH: Render status badge với màu sắc tương ứng từ statusMap
+   * 
    * @param {string} status - Trạng thái từ API (ChoDuyet, DaDuyet, TuChoi, etc.)
    * @returns {JSX.Element} Status badge component
    */
@@ -264,8 +304,16 @@ const StudentMyClubRequests = () => {
   };
 
   /**
-   * Tạo link thanh toán PayOS cho đăng ký CLB
-   * Mở link trong tab mới hoặc hiển thị QR code
+   * FUNCTION: HANDLE PAYMENT
+   * 
+   * MỤC ĐÍCH: Tạo link thanh toán PayOS cho đăng ký CLB đã được duyệt
+   * 
+   * FLOW:
+   * 1. VALIDATE: Kiểm tra subscriptionId và token
+   * 2. CALL API: POST /payments/create-link với subscriptionId
+   * 3. HANDLE RESPONSE: Mở paymentLink trong tab mới hoặc hiển thị QR code
+   * 4. SHOW TOAST: Thông báo kết quả
+   * 
    * @param {Object} reg - Registration object cần thanh toán
    */
   const handlePayment = async (reg) => {
@@ -321,8 +369,17 @@ const StudentMyClubRequests = () => {
   };
 
   /**
-   * Hủy đơn đăng ký đang chờ duyệt
-   * Chỉ cho phép hủy khi status là ChoDuyet hoặc pending
+   * FUNCTION: HANDLE CANCEL REGISTRATION
+   * 
+   * MỤC ĐÍCH: Hủy đơn đăng ký đang chờ duyệt
+   * 
+   * FLOW:
+   * 1. VALIDATE: Kiểm tra subscriptionId và status (chỉ ChoDuyet/pending mới hủy được)
+   * 2. CONFIRM: Xác nhận với user
+   * 3. CALL API: DELETE /registers/{subscriptionId}
+   * 4. UPDATE UI: Remove khỏi danh sách sau khi hủy thành công
+   * 5. SHOW TOAST: Thông báo kết quả
+   * 
    * @param {Object} reg - Registration object cần hủy
    */
   const handleCancel = async (reg) => {

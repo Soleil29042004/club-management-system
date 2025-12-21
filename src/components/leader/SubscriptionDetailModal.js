@@ -36,8 +36,20 @@ const SubscriptionDetailModal = ({ subscriptionId, onClose }) => {
   const [error, setError] = useState('');
 
   /**
-   * Fetch chi tiết subscription từ API khi subscriptionId thay đổi
-   * Sử dụng isMounted flag để tránh setState sau khi component unmount
+   * USE EFFECT: FETCH CHI TIẾT SUBSCRIPTION
+   * 
+   * KHI NÀO CHẠY: Khi subscriptionId thay đổi hoặc component mount
+   * 
+   * MỤC ĐÍCH: Lấy chi tiết subscription từ API để hiển thị trong modal
+   * 
+   * FLOW:
+   * 1. VALIDATE: Kiểm tra subscriptionId và token
+   * 2. CALL API: GET /registers/{subscriptionId}
+   * 3. HANDLE RESPONSE: Map dữ liệu và set vào state
+   * 4. HANDLE ERROR: Xử lý lỗi 401, 404, network error
+   * 5. CLEANUP: Set isMounted = false khi component unmount
+   * 
+   * DEPENDENCIES: [subscriptionId]
    */
   useEffect(() => {
     if (!subscriptionId) return;
@@ -131,7 +143,10 @@ const SubscriptionDetailModal = ({ subscriptionId, onClose }) => {
   }, [subscriptionId]);
 
   /**
-   * Format date string sang định dạng tiếng Việt với giờ
+   * FUNCTION: FORMAT DATE
+   * 
+   * MỤC ĐÍCH: Format date string sang định dạng tiếng Việt với giờ
+   * 
    * @param {string} dateString - Date string cần format
    * @returns {string} - Formatted date hoặc '—' nếu không hợp lệ
    */
@@ -152,8 +167,11 @@ const SubscriptionDetailModal = ({ subscriptionId, onClose }) => {
   };
 
   /**
-   * Render status badge với màu sắc tương ứng
-   * @param {string} status - Trạng thái từ API
+   * FUNCTION: RENDER STATUS BADGE
+   * 
+   * MỤC ĐÍCH: Render status badge với màu sắc tương ứng từ statusMap
+   * 
+   * @param {string} status - Trạng thái từ API (ChoDuyet, DaDuyet, TuChoi, etc.)
    * @returns {JSX.Element} Status badge component
    */
   const renderStatus = (status) => {

@@ -4,7 +4,6 @@
  * Component dashboard chính cho student role:
  * - Hiển thị danh sách clubs để student có thể tham gia
  * - Quản lý join requests (đơn đăng ký tham gia CLB)
- * - Xử lý payment cho membership
  * - Đăng ký mở CLB mới
  * - Real-time polling để cập nhật trạng thái đơn đăng ký
  * 
@@ -18,7 +17,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '../shared/Toast';
 import StudentClubList from './StudentClubList';
 import JoinRequestModal from './JoinRequestModal';
-import PaymentModal from './PaymentModal';
 import ClubDetailsModal from './ClubDetailsModal';
 import RegisterClubModal from './RegisterClubModal';
 
@@ -31,14 +29,25 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   const isInitialLoadRef = useRef(true);
   const [payments, setPayments] = useState([]);
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showRegisterClubModal, setShowRegisterClubModal] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
   const [clubRequests, setClubRequests] = useState([]);
   const [loadingClubs, setLoadingClubs] = useState(false);
 
-  // Fetch my registrations from API
+  /**
+   * USE EFFECT 1: FETCH MY REGISTRATIONS
+   * 
+   * KHI NÀO CHẠY: Khi component mount lần đầu
+   * 
+   * MỤC ĐÍCH: Lấy danh sách đơn đăng ký tham gia CLB của student hiện tại
+   * 
+   * FLOW:
+   * 1. Gọi API GET /registers/my-registrations
+   * 2. Map dữ liệu từ API format sang UI format
+   * 3. Lưu vào joinRequests state
+   * 4. Fallback về localStorage nếu API fail hoặc không có token
+   */
   useEffect(() => {
     const fetchMyRegistrations = async () => {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -144,7 +153,13 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     fetchMyRegistrations();
   }, []);
 
-  // Load trạng thái đã lưu từ localStorage khi component mount
+  /**
+   * USE EFFECT 2: LOAD TRẠNG THÁI ĐĂNG KÝ TỪ LOCALSTORAGE
+   * 
+   * KHI NÀO CHẠY: Khi component mount lần đầu
+   * 
+   * MỤC ĐÍCH: Khôi phục trạng thái đăng ký đã lưu để tiếp tục theo dõi thay đổi
+   */
   useEffect(() => {
     try {
       const saved = localStorage.getItem('registrationStatus');
@@ -162,7 +177,19 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     }
   }, []);
 
-  // Polling để kiểm tra thay đổi trạng thái đăng ký realtime (mỗi 2 giây)
+  /**
+   * USE EFFECT 3: POLLING REALTIME ĐỂ CẬP NHẬT TRẠNG THÁI ĐĂNG KÝ
+   * 
+   * KHI NÀO CHẠY: Sau khi component mount
+   * 
+   * MỤC ĐÍCH: Polling mỗi 2 giây để phát hiện khi đơn đăng ký được duyệt (status: ChoDuyet → DaDuyet)
+   * 
+   * FLOW:
+   * 1. Gọi API GET /registers/my-registrations mỗi 2 giây
+   * 2. So sánh status hiện tại với status trước đó
+   * 3. Hiển thị toast khi phát hiện đơn được duyệt
+   * 4. Lưu trạng thái vào localStorage để persist khi reload
+   */
   useEffect(() => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (!token) return;
@@ -227,7 +254,13 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Chỉ chạy một lần khi mount
 
-  // Load other data from localStorage on mount
+  /**
+   * USE EFFECT 4: LOAD DỮ LIỆU TỪ LOCALSTORAGE
+   * 
+   * KHI NÀO CHẠY: Khi component mount lần đầu
+   * 
+   * MỤC ĐÍCH: Khôi phục payments và clubRequests từ localStorage
+   */
   useEffect(() => {
     const savedPayments = localStorage.getItem('payments');
     const savedClubRequests = localStorage.getItem('clubRequests');
@@ -254,20 +287,59 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     }
   }, []);
 
-  // Save to localStorage whenever data changes
+  /**
+   * USE EFFECT 4.1: SAVE JOIN REQUESTS TO LOCALSTORAGE
+   * 
+   * KHI NÀO CHẠY: Khi joinRequests state thay đổi
+   * 
+   * MỤC ĐÍCH: Lưu joinRequests vào localStorage để persist khi reload
+   * 
+   * DEPENDENCIES: [joinRequests]
+   */
   useEffect(() => {
     localStorage.setItem('joinRequests', JSON.stringify(joinRequests));
   }, [joinRequests]);
 
+  /**
+   * USE EFFECT 4.2: SAVE PAYMENTS TO LOCALSTORAGE
+   * 
+   * KHI NÀO CHẠY: Khi payments state thay đổi
+   * 
+   * MỤC ĐÍCH: Lưu payments vào localStorage để persist khi reload
+   * 
+   * DEPENDENCIES: [payments]
+   */
   useEffect(() => {
     localStorage.setItem('payments', JSON.stringify(payments));
   }, [payments]);
 
+  /**
+   * USE EFFECT 4.3: SAVE CLUB REQUESTS TO LOCALSTORAGE
+   * 
+   * KHI NÀO CHẠY: Khi clubRequests state thay đổi
+   * 
+   * MỤC ĐÍCH: Lưu clubRequests vào localStorage để persist khi reload
+   * 
+   * DEPENDENCIES: [clubRequests]
+   */
   useEffect(() => {
     localStorage.setItem('clubRequests', JSON.stringify(clubRequests));
   }, [clubRequests]);
 
-  // Fetch clubs from API (student view)
+  /**
+   * USE EFFECT 5: FETCH DANH SÁCH CLUBS
+   * 
+   * KHI NÀO CHẠY: Khi component mount lần đầu
+   * 
+   * MỤC ĐÍCH: Lấy danh sách tất cả CLB để hiển thị cho sinh viên
+   * 
+   * FLOW:
+   * 1. Gọi API GET /clubs để lấy danh sách CLB
+   * 2. Normalize dữ liệu từ API format sang UI format
+   * 3. Fetch packages cho từng CLB để lấy participationFee chính xác
+   * 4. Cập nhật clubs state với dữ liệu đầy đủ
+   * 5. Retry nếu network error (tối đa 2 lần)
+   */
   useEffect(() => {
     const normalizeClub = (item) => ({
       id: item.id || item.clubId || item.requestId || Date.now(),
@@ -302,7 +374,7 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
           try {
             // ========== API CALL: GET /packages/club/{clubId} - Get Club Packages ==========
             // Mục đích: Lấy danh sách gói membership của CLB để hiển thị giá và thời hạn
-            // Response: Array of package objects với price, term, description
+            // Response: Array of package objects
             const res = await fetch(`${API_BASE_URL}/packages/club/${clubId}`, {
               headers: { 'Content-Type': 'application/json' }
             });
@@ -359,7 +431,7 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
         
         // ========== API CALL: GET /clubs - List All Clubs ==========
         // Mục đích: Lấy danh sách tất cả CLB để hiển thị cho sinh viên
-        // Response: Array of club objects với name, description, category, etc.
+        // Response: Array of club objects
         const response = await fetch(`${API_BASE_URL}/clubs`, {
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal
@@ -412,11 +484,31 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Chỉ chạy một lần khi component mount
 
+  /**
+   * FUNCTION: HANDLE JOIN REQUEST
+   * 
+   * MỤC ĐÍCH: Mở modal JoinRequestModal khi student click nút "Tham gia" trên CLB
+   * 
+   * @param {Object} club - Club object mà student muốn tham gia
+   */
   const handleJoinRequest = (club) => {
     setSelectedClub(club);
     setShowJoinModal(true);
   };
 
+  /**
+   * FUNCTION: GỬI YÊU CẦU THAM GIA CLB
+   * 
+   * MỤC ĐÍCH: Student gửi yêu cầu tham gia CLB với package đã chọn
+   * 
+   * FLOW:
+   * 1. Validate token, club, packageId
+   * 2. Gọi API POST /registers với packageId và joinReason
+   * 3. Cập nhật joinRequests state
+   * 4. Refresh danh sách đăng ký từ API để đảm bảo sync
+   * 
+   * @param {Object} formData - Form data từ JoinRequestModal (packageId, reason, phone, etc.)
+   */
   const submitJoinRequest = async (formData) => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (!token) {
@@ -450,7 +542,7 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
 
     // ========== API CALL: POST /registers - Create Join Request ==========
     // Mục đích: Gửi yêu cầu tham gia CLB với package đã chọn
-    // Request body: { packageId, joinReason, fullName, phone, studentId, major }
+    // Request body: { clubId, packageId, joinReason, fullName, phone, studentId, major }
     // Response: Registration object với subscriptionId, status, etc.
     const url = `${API_BASE_URL}/registers`;
 
@@ -609,11 +701,13 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     }
   };
 
-  const handlePayment = (club) => {
-    setSelectedClub(club);
-    setShowPaymentModal(true);
-  };
-
+  /**
+   * FUNCTION: CLOSE DETAILS MODAL
+   * 
+   * MỤC ĐÍCH: Đóng modal chi tiết CLB
+   * 
+   * @param {boolean} keepSelected - Nếu true, giữ lại selectedClub (để có thể mở lại modal)
+   */
   const closeDetailsModal = (keepSelected = false) => {
     setShowDetailsModal(false);
     if (!keepSelected) {
@@ -621,31 +715,31 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     }
   };
 
+  /**
+   * FUNCTION: HANDLE VIEW DETAILS
+   * 
+   * MỤC ĐÍCH: Mở modal ClubDetailsModal khi student click xem chi tiết CLB
+   * 
+   * @param {Object} club - Club object cần xem chi tiết
+   */
   const handleViewDetails = (club) => {
     setSelectedClub(club);
     setShowDetailsModal(true);
   };
 
-  const submitPayment = (paymentData) => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const newPayment = {
-      id: Date.now(),
-      clubId: selectedClub.id,
-      clubName: selectedClub.name,
-      studentEmail: user.email,
-      studentName: user.name,
-      amount: paymentData.amount,
-      note: paymentData.note,
-      paymentDate: new Date().toISOString().split('T')[0],
-      status: 'completed'
-    };
-
-    setPayments([...payments, newPayment]);
-    setShowPaymentModal(false);
-    setSelectedClub(null);
-    showToast('Nộp phí thành công!', 'success');
-  };
-
+  /**
+   * FUNCTION: GỬI YÊU CẦU ĐĂNG KÝ MỞ CLB MỚI
+   * 
+   * MỤC ĐÍCH: Student gửi yêu cầu đăng ký mở CLB mới
+   * 
+   * FLOW:
+   * 1. Validate token
+   * 2. Gọi API POST /club-requests với thông tin CLB
+   * 3. Cập nhật clubRequests state
+   * 4. Đóng modal và hiển thị toast thành công
+   * 
+   * @param {Object} clubData - Dữ liệu CLB từ RegisterClubModal (name, category, purpose, etc.)
+   */
   const submitClubRequest = async (clubData) => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (!token) {
@@ -721,6 +815,19 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     }
   };
 
+  /**
+   * FUNCTION: GET REQUEST STATUS
+   * 
+   * MỤC ĐÍCH: Lấy trạng thái đơn đăng ký của CLB (pending, approved, rejected, left)
+   * 
+   * LOGIC:
+   * - Tìm request trong joinRequests có clubId trùng với clubId truyền vào
+   * - Map status từ API format (ChoDuyet, DaDuyet, TuChoi, DaRoiCLB) sang UI format (pending, approved, rejected, left)
+   * - Normalize clubId để so sánh (xử lý cả number và string)
+   * 
+   * @param {number|string} clubId - ID của CLB cần kiểm tra
+   * @returns {string|null} - Status (pending, approved, rejected, left) hoặc null nếu chưa có request
+   */
   const getRequestStatus = (clubId) => {
     if (!clubId || joinRequests.length === 0) {
       return null;
@@ -799,15 +906,37 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
     return apiStatus;
   };
 
+  /**
+   * FUNCTION: HAS PAYMENT
+   * 
+   * MỤC ĐÍCH: Kiểm tra xem đã thanh toán cho CLB này chưa
+   * 
+   * @param {number|string} clubId - ID của CLB cần kiểm tra
+   * @returns {boolean} - true nếu đã có payment cho CLB này
+   */
   const hasPayment = (clubId) => {
     return payments.some(p => p.clubId === clubId);
   };
 
+  /**
+   * FUNCTION: GET MY REQUESTS
+   * 
+   * MỤC ĐÍCH: Lấy danh sách đơn đăng ký của student hiện tại (filter theo email)
+   * 
+   * @returns {Array} - Danh sách requests có studentEmail trùng với user.email
+   */
   const getMyRequests = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     return joinRequests.filter(r => r.studentEmail === user.email);
   };
 
+  /**
+   * FUNCTION: GET MY PAYMENTS
+   * 
+   * MỤC ĐÍCH: Lấy danh sách thanh toán của student hiện tại (filter theo email)
+   * 
+   * @returns {Array} - Danh sách payments có studentEmail trùng với user.email
+   */
   const getMyPayments = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     return payments.filter(p => p.studentEmail === user.email);
@@ -862,18 +991,6 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
             setSelectedClub(null);
           }}
           onSubmit={submitJoinRequest}
-        />
-      )}
-
-      {/* Payment Modal */}
-      {showPaymentModal && (
-        <PaymentModal
-          club={selectedClub}
-          onClose={() => {
-            setShowPaymentModal(false);
-            setSelectedClub(null);
-          }}
-          onSubmit={submitPayment}
         />
       )}
 

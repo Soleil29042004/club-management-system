@@ -28,7 +28,10 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
   const [errors, setErrors] = useState({});
 
   /**
-   * Xử lý khi input thay đổi
+   * FUNCTION: HANDLE INPUT CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi input thay đổi và xóa error message tương ứng
+   * 
    * @param {Event} e - Input change event
    */
   const handleChange = (e) => {
@@ -47,7 +50,18 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
   };
 
   /**
-   * Validate form trước khi submit
+   * FUNCTION: VALIDATE FORM
+   * 
+   * MỤC ĐÍCH: Validate form trước khi submit
+   * 
+   * VALIDATION RULES:
+   * - name: Bắt buộc
+   * - description: Bắt buộc, tối thiểu 20 ký tự
+   * - email: Bắt buộc, format hợp lệ
+   * - location: Bắt buộc
+   * - participationFee: Nếu có, phải là số >= 0
+   * - goals: Bắt buộc, tối thiểu 10 ký tự
+   * 
    * @returns {boolean} - true nếu form hợp lệ
    */
   const validateForm = () => {
@@ -96,7 +110,17 @@ const RegisterClubModal = ({ onClose, onSubmit }) => {
   };
 
   /**
-   * Xử lý khi submit form
+   * FUNCTION: HANDLE SUBMIT FORM
+   * 
+   * MỤC ĐÍCH: Xử lý khi submit form - validate và tạo clubRequest object
+   * 
+   * FLOW:
+   * 1. Prevent default form submission
+   * 2. Validate form
+   * 3. Lấy thông tin user từ localStorage
+   * 4. Tạo clubRequest object với applicantEmail, applicantName, status, requestDate
+   * 5. Gọi onSubmit(clubRequest) để parent component xử lý
+   * 
    * @param {Event} e - Form submit event
    */
   const handleSubmit = (e) => {

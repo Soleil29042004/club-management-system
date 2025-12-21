@@ -35,7 +35,16 @@ const ClubInfo = ({ club, onEdit, showEditForm, formData, onFormChange, onFormSu
   }
 
   /**
-   * Lấy CSS class cho status badge
+   * FUNCTION: GET STATUS BADGE CLASS
+   * 
+   * MỤC ĐÍCH: Lấy CSS class cho status badge dựa vào status string
+   * 
+   * LOGIC:
+   * - "hoạt động" → bg-green-500 (xanh lá)
+   * - "tạm ngưng" → bg-orange-500 (cam)
+   * - "ngừng" → bg-red-500 (đỏ)
+   * - Mặc định → bg-gray-500 (xám)
+   * 
    * @param {string} status - Trạng thái của club
    * @returns {string} - Tailwind CSS classes
    */

@@ -17,7 +17,13 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
   const [activities, setActivities] = useState(club?.activities || []);
 
   /**
-   * Cập nhật activities khi club thay đổi
+   * USE EFFECT: UPDATE ACTIVITIES WHEN CLUB CHANGES
+   * 
+   * KHI NÀO CHẠY: Khi club prop thay đổi
+   * 
+   * MỤC ĐÍCH: Cập nhật activities state khi club.activities thay đổi
+   * 
+   * DEPENDENCIES: [club]
    */
   useEffect(() => {
     if (club?.activities) {
@@ -106,8 +112,11 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
   };
 
   /**
-   * Xử lý khi click edit activity
-   * @param {number} index - Index của activity trong mảng
+   * FUNCTION: HANDLE EDIT
+   * 
+   * MỤC ĐÍCH: Mở form để chỉnh sửa activity tại index
+   * 
+   * @param {number} index - Index của activity trong mảng activities
    */
   const handleEdit = (index) => {
     setFormData(activities[index]);
@@ -116,7 +125,15 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
   };
 
   /**
-   * Xử lý khi xóa activity
+   * FUNCTION: HANDLE DELETE
+   * 
+   * MỤC ĐÍCH: Xóa activity khỏi danh sách
+   * 
+   * FLOW:
+   * 1. Confirm với user
+   * 2. Filter activity tại index khỏi activities array
+   * 3. Cập nhật activities state và gọi onUpdateActivities callback
+   * 
    * @param {number} index - Index của activity cần xóa
    */
   const handleDelete = (index) => {
@@ -128,7 +145,14 @@ const ClubActivities = ({ club, onUpdateActivities }) => {
   };
 
   /**
-   * Xử lý khi cancel form (hủy thêm/sửa)
+   * FUNCTION: HANDLE CANCEL
+   * 
+   * MỤC ĐÍCH: Hủy form (đóng form và reset state)
+   * 
+   * LOGIC:
+   * - Reset formData về empty
+   * - Đóng form (setShowAddForm = false)
+   * - Reset editingIndex và errors
    */
   const handleCancel = () => {
     setFormData({ title: '', description: '', date: '', location: '' });

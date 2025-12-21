@@ -20,7 +20,10 @@ import { memberRoles } from '../../data/constants';
 
 const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadingId, roleLoadingId }) => {
   /**
-   * Parse date từ nhiều format khác nhau (string, Date object, DD/MM/YYYY)
+   * FUNCTION: PARSE DATE
+   * 
+   * MỤC ĐÍCH: Parse date từ nhiều format khác nhau (string, Date object, DD/MM/YYYY)
+   * 
    * @param {any} value - Giá trị date cần parse
    * @returns {Date|null} - Date object hoặc null nếu không parse được
    */
@@ -41,7 +44,10 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadin
   };
 
   /**
-   * Format date sang định dạng tiếng Việt (DD/MM/YYYY)
+   * FUNCTION: FORMAT DATE
+   * 
+   * MỤC ĐÍCH: Format date sang định dạng tiếng Việt (DD/MM/YYYY)
+   * 
    * @param {Date|string} date - Date cần format
    * @returns {string} - Date string hoặc '-' nếu không hợp lệ
    */
@@ -52,8 +58,16 @@ const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadin
   };
 
   /**
-   * Tính toán thông tin membership (ngày hết hạn, trạng thái, badge class)
+   * FUNCTION: GET MEMBERSHIP INFO
+   * 
+   * MỤC ĐÍCH: Tính toán thông tin membership (ngày hết hạn, trạng thái, badge class)
    * Dựa vào joinDate và membershipDuration của club
+   * 
+   * LOGIC:
+   * - Ưu tiên status từ member.status nếu có
+   * - Tính toán expiryDate = joinDate + membershipDuration (tháng)
+   * - So sánh với ngày hiện tại để xác định status (Còn hiệu lực / Sắp hết hạn / Hết hạn)
+   * 
    * @param {Object} member - Member object
    * @returns {Object} - Object chứa expiryDate, status, badgeClass
    */
