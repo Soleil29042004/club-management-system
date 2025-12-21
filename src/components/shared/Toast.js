@@ -36,17 +36,18 @@ export const ToastProvider = ({ children }) => {
    * Hiển thị toast notification
    * @param {string} message - Nội dung thông báo
    * @param {string} type - Loại toast: 'success', 'error', 'warning', 'info'
+   * @param {number} duration - Thời gian hiển thị (ms), mặc định 3000ms (3 giây)
    */
-  const showToast = (message, type = 'success') => {
+  const showToast = (message, type = 'success', duration = 3000) => {
     const id = Date.now() + Math.random();
-    const newToast = { id, message, type };
+    const newToast = { id, message, type, duration };
     
     setToasts(prev => [...prev, newToast]);
     
-    // Tự động xóa sau 3 giây
+    // Tự động xóa sau duration (mặc định 3 giây)
     setTimeout(() => {
       removeToast(id);
-    }, 3000);
+    }, duration);
   };
 
   /**
@@ -101,15 +102,16 @@ const ToastItem = ({ toast, onClose }) => {
   }, [onClose]);
 
   /**
-   * Tự động đóng toast sau 3 giây
+   * Tự động đóng toast sau duration (mặc định 3 giây)
    */
   useEffect(() => {
+    const duration = toast.duration || 3000;
     const timer = setTimeout(() => {
       handleClose();
-    }, 3000);
+    }, duration);
 
     return () => clearTimeout(timer);
-  }, [handleClose]);
+  }, [handleClose, toast.duration]);
 
   /**
    * Lấy icon tương ứng với type của toast

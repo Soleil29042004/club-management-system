@@ -160,7 +160,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     { value: 'all', label: 'Tất cả' },
     { value: 'ChoDuyet', label: 'Chờ duyệt' },
     { value: 'DaDuyet', label: 'Đã duyệt' },
-    { value: 'TuChoi', label: 'Từ chối' }
+    { value: 'TuChoi', label: 'Từ chối' },
+    { value: 'HetHan', label: 'Hết hạn' }
   ];
 
   /**
@@ -178,8 +179,8 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
 
   /**
    * Map status từ API format sang UI format
-   * @param {string} status - Status từ API (ChoDuyet, DaDuyet, TuChoi, DaRoiCLB, etc.)
-   * @returns {string} - Status cho UI (pending, approved, rejected, left, unknown)
+   * @param {string} status - Status từ API (ChoDuyet, DaDuyet, TuChoi, HetHan, DaRoiCLB, etc.)
+   * @returns {string} - Status cho UI (pending, approved, rejected, expired, left, unknown)
    * 
    * MỤC ĐÍCH: Chuẩn hóa status để hiển thị badge và điều kiện logic
    */
@@ -188,6 +189,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     if (st === 'choduyet' || st === 'pending') return 'pending';
     if (st === 'daduyet' || st === 'approved') return 'approved';
     if (st === 'tuchoi' || st === 'rejected') return 'rejected';
+    if (st === 'hethan' || st === 'expired') return 'expired';
     if (isLeftStatus(st)) return 'left';
     return 'unknown';
   };
@@ -484,7 +486,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
   /**
    * Map status từ API response sang format hiển thị
    * @param {string} statusRaw - Status từ API response
-   * @returns {string} - Status đã map (approved, rejected, left, unknown)
+   * @returns {string} - Status đã map (approved, rejected, expired, left, unknown)
    * 
    * MỤC ĐÍCH: Dùng trong updateStatus để map status từ API response
    * KHÁC VỚI mapStatus: Function này chỉ xử lý status từ API response, không xử lý pending
@@ -493,6 +495,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
     const st = (statusRaw || '').toLowerCase();
     if (st === 'daduyet' || st === 'approved') return 'approved';
     if (st === 'tuchoi' || st === 'rejected') return 'rejected';
+    if (st === 'hethan' || st === 'expired') return 'expired';
     if (st === 'daroi' || st === 'daroiclb' || st === 'daroi clb') return 'left';
     return 'unknown';
   };
@@ -801,6 +804,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
    * - pending: Vàng (bg-amber-500) - "Chờ duyệt"
    * - approved: Xanh lá (bg-green-500) - "Đã chấp nhận"
    * - rejected: Đỏ (bg-red-500) - "Đã từ chối"
+   * - expired: Xám (bg-gray-500) - "Hết hạn"
    * - left: Xám (bg-gray-500) - "Đã rời CLB"
    * - unknown: Xám nhạt (bg-gray-400) - "Không xác định"
    */
@@ -809,6 +813,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
       pending: { bg: 'bg-amber-500', text: 'Chờ duyệt' },
       approved: { bg: 'bg-green-500', text: 'Đã chấp nhận' },
       rejected: { bg: 'bg-red-500', text: 'Đã từ chối' },
+      expired: { bg: 'bg-gray-500', text: 'Hết hạn' },
       left: { bg: 'bg-gray-500', text: 'Đã rời CLB' },
       unknown: { bg: 'bg-gray-400', text: 'Không xác định' }
     };
