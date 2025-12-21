@@ -27,7 +27,19 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
   const [error, setError] = useState('');
 
   /**
-   * Fetch chi tiết club và packages khi component mount hoặc club thay đổi
+   * USE EFFECT: FETCH CLUB DETAIL & PACKAGES
+   * 
+   * KHI NÀO CHẠY: Khi component mount hoặc club thay đổi
+   * 
+   * MỤC ĐÍCH: Lấy chi tiết CLB và packages để hiển thị trong modal
+   * 
+   * FLOW:
+   * 1. CALL API: GET /clubs/{id} - Lấy chi tiết CLB
+   * 2. CALL API: GET /packages/club/{clubId} - Lấy danh sách packages
+   * 3. MAP DATA: Map API response sang local format
+   * 4. FALLBACK: Nếu API fail, dùng dữ liệu từ props (club)
+   * 
+   * DEPENDENCIES: [club]
    */
   useEffect(() => {
     if (!club || !club.id) {
@@ -103,7 +115,10 @@ const ClubDetailsModal = ({ club, onClose, onJoinRequest, getRequestStatus }) =>
   const joinableClub = { ...displayClub, id: displayClub.id || displayClub.clubId };
 
   /**
-   * Lấy CSS class cho status badge
+   * FUNCTION: GET STATUS BADGE CLASS
+   * 
+   * MỤC ĐÍCH: Lấy CSS class cho status badge dựa vào status string
+   * 
    * @param {string} status - Trạng thái của club
    * @returns {string} - Tailwind CSS classes
    */

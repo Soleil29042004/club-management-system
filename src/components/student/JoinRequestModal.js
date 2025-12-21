@@ -41,8 +41,18 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
   /**
-   * Fetch thông tin user từ API để tự điền vào form
-   * Ưu tiên dữ liệu từ API, fallback về localStorage nếu API chưa load
+   * USE EFFECT 1: FETCH USER INFO FOR AUTO-FILL
+   * 
+   * KHI NÀO CHẠY: Khi component mount (modal mở)
+   * 
+   * MỤC ĐÍCH: Lấy thông tin user từ API để tự động điền vào form (fullName, phone, studentId, major)
+   * 
+   * FLOW:
+   * 1. CALL API: GET /users/my-info
+   * 2. MAP DATA: Tự điền formData với dữ liệu từ API
+   * 3. SET FLAG: userInfoLoaded = true để tránh localStorage ghi đè
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần)
    */
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -85,8 +95,19 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   }, []); // Chỉ chạy một lần khi modal mở
 
   /**
-   * Fetch chi tiết club và packages khi club thay đổi
-   * Sử dụng AbortController để cancel request khi component unmount
+   * USE EFFECT 2: FETCH CLUB DETAIL & PACKAGES
+   * 
+   * KHI NÀO CHẠY: Khi club.id thay đổi
+   * 
+   * MỤC ĐÍCH: Lấy chi tiết CLB và danh sách packages để hiển thị trong form
+   * 
+   * FLOW:
+   * 1. CALL API: GET /clubs/{id} - Lấy chi tiết CLB
+   * 2. CALL API: GET /packages/club/{clubId} - Lấy danh sách packages
+   * 3. SET DEFAULT: Tự động chọn package đầu tiên (hoặc package active)
+   * 4. CLEANUP: Abort controller khi component unmount
+   * 
+   * DEPENDENCIES: [club?.id]
    */
   useEffect(() => {
     if (!club || !club.id) return;
@@ -190,8 +211,17 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   };
 
   /**
-   * Load user data từ localStorage làm fallback
-   * Chỉ chạy nếu API chưa load xong để không ghi đè dữ liệu từ API
+   * USE EFFECT 3: LOAD USER DATA FROM LOCALSTORAGE (FALLBACK)
+   * 
+   * KHI NÀO CHẠY: Khi club thay đổi hoặc userInfoLoaded thay đổi
+   * 
+   * MỤC ĐÍCH: Load user data từ localStorage làm fallback nếu API chưa load xong
+   * 
+   * LOGIC:
+   * - Chỉ chạy nếu userInfoLoaded === false (API chưa load xong)
+   * - Chỉ set field nếu field đó chưa có giá trị (để không ghi đè API data)
+   * 
+   * DEPENDENCIES: [club, userInfoLoaded]
    */
   useEffect(() => {
     // Nếu API đã load xong, không dùng localStorage
@@ -200,8 +230,6 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const profile = JSON.parse(localStorage.getItem('profile') || '{}'); // optional storage
-      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]'); // legacy mock storage
-      const detailedUser = registeredUsers.find(u => u.email === user.email) || {};
 
       setFormData(prev => {
         // Chỉ set nếu field chưa có giá trị (để không ghi đè API data khi API load sau)
@@ -211,8 +239,6 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
           profile.name ||
           user.fullName ||
           user.name ||
-          detailedUser.fullName ||
-          detailedUser.name ||
           '';
         const phone =
           prev.phone ||
@@ -220,7 +246,6 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
           profile.phoneNumber ||
           user.phone ||
           user.phoneNumber ||
-          detailedUser.phone ||
           '';
         const studentId =
           prev.studentId ||
@@ -228,9 +253,8 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
           profile.studentCode ||
           user.studentId ||
           user.studentCode ||
-          detailedUser.studentId ||
           '';
-        const major = prev.major || profile.major || user.major || detailedUser.major || '';
+        const major = prev.major || profile.major || user.major || '';
 
         return {
           ...prev,
@@ -250,7 +274,10 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   if (!club) return null;
 
   /**
-   * Xử lý khi input thay đổi
+   * FUNCTION: HANDLE INPUT CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi input thay đổi và xóa error message tương ứng
+   * 
    * @param {Event} e - Input change event
    */
   const handleChange = (e) => {
@@ -266,7 +293,18 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   };
 
   /**
-   * Validate form trước khi submit
+   * FUNCTION: VALIDATE FORM
+   * 
+   * MỤC ĐÍCH: Validate form trước khi submit
+   * 
+   * VALIDATION RULES:
+   * - fullName: Bắt buộc
+   * - phone: Bắt buộc, format 10-11 số
+   * - studentId: Bắt buộc
+   * - major: Bắt buộc
+   * - reason: Bắt buộc, 20-500 ký tự
+   * - packageId: Bắt buộc phải chọn
+   * 
    * @returns {boolean} - true nếu form hợp lệ
    */
   const validateForm = () => {
@@ -316,7 +354,15 @@ const JoinRequestModal = ({ club, onClose, onSubmit }) => {
   };
 
   /**
-   * Xử lý khi submit form
+   * FUNCTION: HANDLE SUBMIT FORM
+   * 
+   * MỤC ĐÍCH: Xử lý khi submit form - validate và gọi callback onSubmit
+   * 
+   * FLOW:
+   * 1. Prevent default form submission
+   * 2. Validate form
+   * 3. Nếu hợp lệ → Gọi onSubmit(formData) để parent component xử lý
+   * 
    * @param {Event} e - Form submit event
    */
   const handleSubmit = (e) => {

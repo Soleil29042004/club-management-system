@@ -24,7 +24,17 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
   const [errors, setErrors] = useState({});
 
   /**
-   * Load dữ liệu club vào form khi edit mode
+   * USE EFFECT: LOAD CLUB DATA INTO FORM
+   * 
+   * KHI NÀO CHẠY: Khi club prop thay đổi (edit mode)
+   * 
+   * MỤC ĐÍCH: Load dữ liệu club vào form khi ở edit mode
+   * 
+   * LOGIC:
+   * - Nếu có club prop → Điền formData với dữ liệu từ club
+   * - Nếu không có club → Form sẽ ở add mode (formData rỗng)
+   * 
+   * DEPENDENCIES: [club]
    */
   useEffect(() => {
     if (club) {
@@ -37,7 +47,14 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
   }, [club]);
 
   /**
-   * Xử lý khi input thay đổi
+   * FUNCTION: HANDLE CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi input trong form thay đổi
+   * 
+   * LOGIC:
+   * - Cập nhật formData state với giá trị mới
+   * - Xóa error message của field đó nếu có
+   * 
    * @param {Event} e - Input change event
    */
   const handleChange = (e) => {
@@ -53,8 +70,16 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
   };
 
   /**
-   * Validate form trước khi submit
-   * @returns {boolean} - true nếu form hợp lệ
+   * FUNCTION: VALIDATE FORM
+   * 
+   * MỤC ĐÍCH: Validate form data trước khi submit
+   * 
+   * VALIDATION RULES:
+   * - description: Bắt buộc, không được để trống
+   * - location: Bắt buộc, không được để trống
+   * - logo: Optional (không bắt buộc)
+   * 
+   * @returns {boolean} - true nếu form hợp lệ, false nếu có lỗi
    */
   const validateForm = () => {
     const newErrors = {};
@@ -74,7 +99,15 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
   };
 
   /**
-   * Xử lý khi submit form
+   * FUNCTION: HANDLE SUBMIT
+   * 
+   * MỤC ĐÍCH: Xử lý khi submit form
+   * 
+   * FLOW:
+   * 1. Prevent default form submission
+   * 2. Validate form
+   * 3. Nếu hợp lệ → Gọi onSubmit(formData) để parent component xử lý
+   * 
    * @param {Event} e - Form submit event
    */
   const handleSubmit = (e) => {

@@ -40,6 +40,18 @@ const MemberForm = ({ member, clubs, onSubmit, onCancel }) => {
     }
   }, [member]);
 
+  /**
+   * FUNCTION: HANDLE CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi input trong form thay đổi
+   * 
+   * LOGIC:
+   * - Nếu name === 'clubId': Tìm club tương ứng và cập nhật cả clubId và clubName
+   * - Các field khác: Cập nhật trực tiếp
+   * - Xóa error message khi user bắt đầu nhập
+   * 
+   * @param {Event} e - Input change event
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'clubId') {
@@ -107,6 +119,17 @@ const MemberForm = ({ member, clubs, onSubmit, onCancel }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * FUNCTION: HANDLE SUBMIT
+   * 
+   * MỤC ĐÍCH: Xử lý khi submit form
+   * 
+   * FLOW:
+   * 1. Validate form
+   * 2. Gọi onSubmit callback với formData nếu hợp lệ
+   * 
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {

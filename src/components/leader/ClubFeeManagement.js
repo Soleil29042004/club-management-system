@@ -1,14 +1,13 @@
 /**
  * ClubFeeManagement Component
  * 
- * Component quản lý phí thành viên và thời hạn cho club leader:
- * - Hiển thị danh sách các gói thành viên (packages) của club
- * - Xem chi tiết từng gói thành viên
- * - Cập nhật thông tin gói thành viên (tên, thời hạn, giá, mô tả)
- * - Highlight gói đầu tiên trong danh sách
+ * Component quản lý phí và thời hạn thành viên cho leader:
+ * - Fetch và hiển thị danh sách packages của CLB
+ * - Xem chi tiết package
+ * - Cập nhật package (tên, thời hạn, giá, mô tả)
  * 
  * @param {Object} props
- * @param {Object} props.club - Club object cần quản lý phí
+ * @param {Object} props.club - Club object cần quản lý phí (có clubId)
  */
 import React, { useEffect, useState } from 'react';
 
@@ -33,8 +32,15 @@ const ClubFeeManagement = ({ club }) => {
   const [editLoading, setEditLoading] = useState(false);
 
   /**
-   * Fetch danh sách packages từ API khi club thay đổi
-   * Sử dụng AbortController để hủy request khi component unmount
+   * USE EFFECT 1: FETCH DANH SÁCH PACKAGES
+   * 
+   * KHI NÀO CHẠY: Khi component mount hoặc club.id/club.clubId thay đổi
+   * 
+   * MỤC ĐÍCH: Lấy danh sách gói membership của CLB để leader quản lý
+   * 
+   * FLOW:
+   * 1. Gọi API GET /packages/club/{clubId}
+   * 2. Lưu vào packages state
    */
   useEffect(() => {
     if (!club?.id && !club?.clubId) return;
@@ -77,7 +83,14 @@ const ClubFeeManagement = ({ club }) => {
   }, [club?.id, club?.clubId]);
 
   /**
-   * Xem chi tiết một package cụ thể
+   * FUNCTION: XEM CHI TIẾT PACKAGE
+   * 
+   * MỤC ĐÍCH: Lấy thông tin chi tiết gói để hiển thị trong modal
+   * 
+   * FLOW:
+   * 1. Gọi API GET /packages/{packageId}
+   * 2. Lưu vào detail state để hiển thị modal
+   * 
    * @param {number|string} packageId - ID của package cần xem chi tiết
    */
   const handleViewDetail = async (packageId) => {
@@ -89,7 +102,7 @@ const ClubFeeManagement = ({ club }) => {
     const token = localStorage.getItem('authToken');
     try {
       // ========== API CALL: GET /packages/{packageId} - Get Package Detail ==========
-      // Mục đích: Lấy thông tin chi tiết gói để hiển thị trong modal xem/ chỉnh sửa
+      // Mục đích: Lấy thông tin chi tiết gói để hiển thị trong modal
       // Response: Package object với đầy đủ thông tin
       const res = await fetch(`${API_BASE_URL}/packages/${packageId}`, {
         headers: {
@@ -116,8 +129,16 @@ const ClubFeeManagement = ({ club }) => {
   };
 
   /**
-   * Mở modal chỉnh sửa package
-   * Fetch chi tiết package từ API để có đầy đủ thông tin, fallback về dữ liệu từ list nếu API fail
+   * FUNCTION: MỞ MODAL CHỈNH SỬA PACKAGE
+   * 
+   * MỤC ĐÍCH: Fetch chi tiết package từ API để điền vào form edit, fallback về dữ liệu từ list nếu API fail
+   * 
+   * FLOW:
+   * 1. Gọi API GET /packages/{packageId} để lấy đầy đủ thông tin
+   * 2. Điền dữ liệu vào editData state
+   * 3. Mở modal edit
+   * 4. Nếu API fail, fallback về dữ liệu từ list
+   * 
    * @param {Object} pkg - Package object cần chỉnh sửa
    */
   const openEdit = async (pkg) => {
@@ -201,8 +222,15 @@ const ClubFeeManagement = ({ club }) => {
   };
 
   /**
-   * Xử lý thay đổi input trong form edit
-   * @param {Event} e - Event object từ input change
+   * FUNCTION: HANDLE EDIT CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi input trong form edit thay đổi
+   * 
+   * LOGIC:
+   * - Convert price sang Number nếu name === 'price'
+   * - Giữ nguyên value cho các field khác
+   * 
+   * @param {Event} e - Input change event
    */
   const handleEditChange = (e) => {
     const { name, value } = e.target;
@@ -213,8 +241,15 @@ const ClubFeeManagement = ({ club }) => {
   };
 
   /**
-   * Cập nhật thông tin package lên API
-   * Validate dữ liệu trước khi gửi (tên, thời hạn, giá)
+   * FUNCTION: CẬP NHẬT PACKAGE
+   * 
+   * MỤC ĐÍCH: Leader cập nhật thông tin gói membership (name, price, term, description)
+   * 
+   * FLOW:
+   * 1. Validate dữ liệu (tên, thời hạn, giá)
+   * 2. Gọi API PUT /packages/{packageId}
+   * 3. Cập nhật UI ngay lập tức sau khi API thành công
+   * 
    * @param {number|string} packageId - ID của package cần cập nhật
    */
   const handleUpdatePackage = async (packageId) => {
@@ -223,6 +258,7 @@ const ClubFeeManagement = ({ club }) => {
       return;
     }
     
+    // VALIDATE DỮ LIỆU
     if (!editData.packageName || !editData.packageName.trim()) {
       setEditError('Tên gói không được để trống');
       return;

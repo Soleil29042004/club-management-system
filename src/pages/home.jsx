@@ -1,3 +1,18 @@
+/**
+ * Home Page Component
+ * 
+ * Component trang chủ hiển thị landing page:
+ * - Hero section với giới thiệu về ClubHub
+ * - Features section giới thiệu tính năng
+ * - Benefits section giải thích lợi ích
+ * - CTA section kêu gọi đăng ký/đăng nhập
+ * - Footer với thông tin liên hệ
+ * 
+ * @param {Object} props
+ * @param {Function} props.onNavigateToLogin - Callback để chuyển đến trang đăng nhập
+ * @param {Function} props.onNavigateToRegister - Callback để chuyển đến trang đăng ký
+ */
+
 import React from 'react';
 
 const Home = ({ onNavigateToLogin, onNavigateToRegister }) => {

@@ -57,7 +57,21 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
   const [selectedReason, setSelectedReason] = useState('');
   const [selectedReasonType, setSelectedReasonType] = useState(''); // 'approve' or 'reject'
 
-  // Fetch club requests from API
+  /**
+   * USE EFFECT: FETCH CLUB REQUESTS
+   * 
+   * KHI NÀO CHẠY: Khi component mount hoặc filterStatus thay đổi
+   * 
+   * MỤC ĐÍCH: Lấy danh sách yêu cầu đăng ký mở CLB từ API
+   * 
+   * FLOW:
+   * 1. Build URL với query parameter status nếu filterStatus !== 'all'
+   * 2. Gọi API GET /club-requests
+   * 3. Map dữ liệu từ API format sang local format
+   * 4. Cập nhật clubRequests state
+   * 
+   * DEPENDENCIES: [filterStatus]
+   */
   useEffect(() => {
     let isMounted = true;
 
@@ -156,7 +170,16 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
 
   const filteredRequests = clubRequests; // Đã được filter từ API
 
-  // Hàm fetch lại danh sách yêu cầu
+  /**
+   * FUNCTION: REFETCH REQUESTS
+   * 
+   * MỤC ĐÍCH: Fetch lại danh sách yêu cầu (dùng cho polling hoặc refresh)
+   * 
+   * FLOW:
+   * 1. Build URL với query parameter status nếu filterStatus !== 'all'
+   * 2. Gọi API GET /club-requests
+   * 3. Map và cập nhật clubRequests state
+   */
   const refetchRequests = async () => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     if (!token) return;
@@ -211,6 +234,13 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
     }
   };
 
+  /**
+   * FUNCTION: OPEN APPROVE MODAL
+   * 
+   * MỤC ĐÍCH: Mở modal xác nhận duyệt yêu cầu
+   * 
+   * @param {Object} request - Club request object cần duyệt
+   */
   const openApproveModal = (request) => {
     setSelectedRequest(request);
     setConfirmAction('approve');
@@ -218,6 +248,13 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
     setShowConfirmModal(true);
   };
 
+  /**
+   * FUNCTION: OPEN REJECT MODAL
+   * 
+   * MỤC ĐÍCH: Mở modal xác nhận từ chối yêu cầu
+   * 
+   * @param {Object} request - Club request object cần từ chối
+   */
   const openRejectModal = (request) => {
     setSelectedRequest(request);
     setConfirmAction('reject');
@@ -225,6 +262,20 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
     setShowConfirmModal(true);
   };
 
+  /**
+   * FUNCTION: HANDLE APPROVE
+   * 
+   * MỤC ĐÍCH: Duyệt yêu cầu đăng ký mở CLB (tự động tạo club mới)
+   * 
+   * FLOW:
+   * 1. Validate requestId
+   * 2. Gọi API PUT /club-requests/{requestId} với status = 'ChapThuan'
+   * 3. Refresh danh sách requests và clubs
+   * 4. Hiển thị toast thành công
+   * 
+   * @param {Object} request - Club request object cần duyệt
+   * @param {string} reason - Lý do duyệt (optional, từ modal confirm)
+   */
   const handleApprove = async (request, reason = '') => {
     // reason được truyền từ modal confirm
 
@@ -254,7 +305,10 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
         payload,
         url: `${API_BASE_URL}/club-requests/${requestId}/review`
       });
-      //Duyệt/Từ chối yêu cầu mở câu lạc bộ
+      // ========== API CALL: PUT /club-requests/{requestId}/review - Approve Club Request ==========
+      // Mục đích: Admin duyệt yêu cầu đăng ký mở CLB (tự động tạo club mới)
+      // Request body: { status: 'ChapThuan', adminNote: string }
+      // Response: Success message và club mới được tạo
       const response = await fetch(`${API_BASE_URL}/club-requests/${requestId}/review`, {
         method: 'PUT',
         headers: {
@@ -314,6 +368,20 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
     }
   };
 
+  /**
+   * FUNCTION: HANDLE REJECT
+   * 
+   * MỤC ĐÍCH: Từ chối yêu cầu đăng ký mở CLB
+   * 
+   * FLOW:
+   * 1. Validate requestId
+   * 2. Gọi API PUT /club-requests/{requestId}/review với status = 'TuChoi'
+   * 3. Refresh danh sách requests
+   * 4. Hiển thị toast thông báo
+   * 
+   * @param {Object} request - Club request object cần từ chối
+   * @param {string} reason - Lý do từ chối (optional, từ modal confirm)
+   */
   const handleReject = async (request, reason = '') => {
     // reason được truyền từ modal confirm
 
@@ -343,7 +411,10 @@ const ClubRequestsManagement = ({ clubs, setClubs }) => {
         payload,
         url: `${API_BASE_URL}/club-requests/${requestId}/review`
       });
-      ////Duyệt/Từ chối yêu cầu mở câu lạc bộ
+      // ========== API CALL: PUT /club-requests/{requestId}/review - Reject Club Request ==========
+      // Mục đích: Admin từ chối yêu cầu đăng ký mở CLB
+      // Request body: { status: 'TuChoi', adminNote: string }
+      // Response: Success message
       const response = await fetch(`${API_BASE_URL}/club-requests/${requestId}/review`, {
         method: 'PUT',
         headers: {
