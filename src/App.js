@@ -9,20 +9,20 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import Dashboard from './components/Dashboard';
-import ClubManagement from './components/ClubManagement';
-import MemberManagement from './components/MemberManagement';
-import StudentDashboard from './components/StudentDashboard';
-import ClubLeaderDashboard from './components/ClubLeaderDashboard';
-import Profile from './components/Profile';
-import ClubRequestsManagement from './components/ClubRequestsManagement';
-import StudentMyClubRequests from './components/StudentMyClubRequests';
-import StudentJoinedClubs from './components/StudentJoinedClubs';
-import Sidebar from './components/Sidebar';
+import Dashboard from './components/admin/Dashboard';
+import ClubManagement from './components/admin/ClubManagement';
+import MemberManagement from './components/admin/MemberManagement';
+import StudentDashboard from './components/student/StudentDashboard';
+import ClubLeaderDashboard from './components/leader/ClubLeaderDashboard';
+import Profile from './components/shared/Profile';
+import ClubRequestsManagement from './components/admin/ClubRequestsManagement';
+import StudentMyClubRequests from './components/student/StudentMyClubRequests';
+import StudentJoinedClubs from './components/student/StudentJoinedClubs';
+import Sidebar from './components/shared/Sidebar';
 import Login from './pages/login';
 import Register from './pages/register';
 import Home from './pages/home';
-import { ToastProvider, useToast } from './components/Toast';
+import { ToastProvider, useToast } from './components/shared/Toast';
 import { 
   parseJWTToken, 
   mapScopeToRole, 

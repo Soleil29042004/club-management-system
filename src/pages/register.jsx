@@ -13,7 +13,7 @@
  */
 
 import React, { useState } from 'react';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/shared/Toast';
 import { API_BASE_URL, apiRequest } from '../utils/api';
 
 const Register = ({ onRegisterSuccess, onSwitchToLogin, onNavigateToHome }) => {

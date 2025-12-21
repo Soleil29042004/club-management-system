@@ -14,7 +14,7 @@
  */
 
 import React, { useState } from 'react';
-import { useToast } from '../components/Toast';
+import { useToast } from '../components/shared/Toast';
 import { parseJWTToken, mapScopeToRole, extractUserIdFromToken, extractClubIdFromToken, extractClubIdsFromToken, extractScopeFromToken } from '../utils/auth';
 import { API_BASE_URL, extractTokenFromResponse } from '../utils/api';
 
