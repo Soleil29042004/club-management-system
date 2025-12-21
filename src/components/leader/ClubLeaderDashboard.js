@@ -149,7 +149,82 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   });
 
   /**
-   * USE EFFECT 0: LOAD JOIN REQUESTS FROM LOCALSTORAGE (FALLBACK)
+   * USE EFFECT 0: FETCH USER INFO (MY-INFO)
+   * 
+   * KHI NÀO CHẠY: Khi component mount lần đầu
+   * 
+   * MỤC ĐÍCH: Lấy thông tin user mới nhất từ API để refresh token và cập nhật role
+   * 
+   * FLOW:
+   * 1. Gọi API GET /users/my-info
+   * 2. Kiểm tra token mới từ response (nếu có)
+   * 3. Cập nhật token trong localStorage
+   * 4. Cập nhật user data trong localStorage với thông tin mới nhất
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần)
+   */
+  useEffect(() => {
+    const fetchMyInfo = async () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+
+      try {
+        // ========== API CALL: GET /users/my-info - Get User Info ==========
+        // Mục đích: Lấy thông tin user mới nhất để refresh token và cập nhật role
+        // Response: User object với token mới (nếu có)
+        const response = await fetch(`${API_BASE_URL}/users/my-info`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && (data.code === 1000 || data.code === 0)) {
+          const info = data.result || data.data || data;
+          
+          // Kiểm tra xem API có trả về token mới không
+          const newToken = data.token || data.accessToken || data.access_token || null;
+          if (newToken) {
+            // Lưu token mới vào localStorage
+            localStorage.setItem('authToken', newToken);
+          }
+          
+          // Cập nhật user data trong localStorage với thông tin mới nhất
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            try {
+              const userData = JSON.parse(storedUser);
+              const updatedUser = {
+                ...userData,
+                ...(info.userId ? { userId: info.userId } : {}),
+                ...(info.email ? { email: info.email } : {}),
+                ...(info.fullName ? { name: info.fullName, fullName: info.fullName } : {}),
+                ...(info.role ? { role: info.role } : {}),
+                ...(info.scope ? { scope: info.scope } : {}),
+                ...(info.clubId ? { clubId: info.clubId } : {}),
+                ...(info.clubIds ? { clubIds: info.clubIds } : {}),
+                ...(newToken ? { token: newToken } : {})
+              };
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+            } catch (e) {
+              console.error('Error updating user data:', e);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Fetch my-info error:', error);
+        // Không hiển thị lỗi vì đây chỉ là refresh token, không ảnh hưởng đến chức năng chính
+      }
+    };
+
+    fetchMyInfo();
+  }, []);
+
+  /**
+   * USE EFFECT 0.5: LOAD JOIN REQUESTS FROM LOCALSTORAGE (FALLBACK)
    * 
    * KHI NÀO CHẠY: Khi component mount lần đầu
    * 
