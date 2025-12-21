@@ -34,6 +34,10 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   const [selectedClub, setSelectedClub] = useState(null);
   const [clubRequests, setClubRequests] = useState([]);
   const [loadingClubs, setLoadingClubs] = useState(false);
+  // Lưu trạng thái club requests trước đó để phát hiện thay đổi
+  const previousClubRequestStatusesRef = useRef(new Map());
+  // Flag để đánh dấu đã load dữ liệu lần đầu (không hiển thị toast trong lần đầu)
+  const isInitialClubRequestLoadRef = useRef(true);
 
   /**
    * USE EFFECT 1: FETCH MY REGISTRATIONS
@@ -325,6 +329,143 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   useEffect(() => {
     localStorage.setItem('clubRequests', JSON.stringify(clubRequests));
   }, [clubRequests]);
+
+  /**
+   * USE EFFECT 4.4: LOAD CLUB REQUEST STATUS FROM LOCALSTORAGE
+   * 
+   * KHI NÀO CHẠY: Khi component mount
+   * 
+   * MỤC ĐÍCH: Load trạng thái club requests đã lưu từ localStorage để tránh hiển thị toast khi reload trang
+   * 
+   * FLOW:
+   * 1. Load từ localStorage key 'clubRequestStatus'
+   * 2. Khôi phục vào previousClubRequestStatusesRef (Map)
+   * 3. Set isInitialClubRequestLoadRef = false nếu có dữ liệu đã lưu
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần)
+   */
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('clubRequestStatus');
+      if (saved) {
+        const savedMap = JSON.parse(saved);
+        previousClubRequestStatusesRef.current.clear();
+        Object.entries(savedMap).forEach(([key, value]) => {
+          previousClubRequestStatusesRef.current.set(key, value);
+        });
+        // Nếu đã có dữ liệu lưu, không phải lần đầu load
+        isInitialClubRequestLoadRef.current = false;
+      }
+    } catch (err) {
+      console.error('Error loading club request status from localStorage:', err);
+    }
+  }, []);
+
+  /**
+   * USE EFFECT 4.5: POLLING CLUB REQUEST STATUS
+   * 
+   * KHI NÀO CHẠY: Khi component mount, polling mỗi 5 giây
+   * 
+   * MỤC ĐÍCH: Polling để phát hiện khi đơn mở CLB được admin duyệt
+   * 
+   * FLOW:
+   * 1. Gọi API GET /club-requests để lấy danh sách đơn mở CLB của student
+   * 2. So sánh status hiện tại với previousClubRequestStatusesRef
+   * 3. Nếu phát hiện thay đổi từ DangCho/pending → ChapThuan/approved:
+   *    - Hiển thị toast 10 giây: "🎉 Đơn mở CLB {name} đã được duyệt! Vui lòng đăng xuất và đăng nhập lại để cập nhật tài khoản."
+   * 4. Lưu trạng thái vào previousClubRequestStatusesRef và localStorage
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần khi mount)
+   */
+  useEffect(() => {
+    let isMounted = true;
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        // ========== API CALL: GET /club-requests - Get My Club Requests ==========
+        // Mục đích: Lấy danh sách đơn mở CLB của student để kiểm tra trạng thái
+        // Response: Array of club request objects với status (DangCho, ChapThuan, TuChoi)
+        const response = await fetch(`${API_BASE_URL}/club-requests`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json().catch(() => null);
+        
+        if (!isMounted) return;
+        
+        if (response.ok && data && (data.code === 1000 || data.code === 0)) {
+          const raw = data.result || [];
+          
+          // Lấy thông tin user hiện tại để filter chỉ club requests của student này
+          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+          const currentUserEmail = currentUser?.email || currentUser?.studentEmail || '';
+          
+          // Filter chỉ club requests của student hiện tại
+          const myClubRequests = raw.filter(req => {
+            if (!currentUserEmail) return true; // Nếu không có email, lấy tất cả (fallback)
+            const reqEmail = req.creatorEmail || req.applicantEmail || '';
+            return reqEmail.toLowerCase() === currentUserEmail.toLowerCase();
+          });
+          
+          // So sánh với trạng thái trước đó và hiển thị toast
+          myClubRequests.forEach((req) => {
+            const requestId = req.requestId || req.id;
+            const currentStatus = (req.status || '').toLowerCase();
+            const previousStatus = previousClubRequestStatusesRef.current.has(requestId)
+              ? (previousClubRequestStatusesRef.current.get(requestId) || '').toLowerCase()
+              : null;
+            
+            // Phát hiện thay đổi từ DangCho/pending → ChapThuan/approved
+            const isApproved = currentStatus === 'chapthuan' || currentStatus === 'approved' || currentStatus === 'chấp thuận';
+            const wasPending = previousStatus === 'dangcho' || previousStatus === 'pending' || previousStatus === 'đang chờ';
+            
+            // Chỉ hiển thị toast nếu:
+            // 1. Không phải lần đầu load (isInitialClubRequestLoadRef.current === false)
+            // 2. Có thay đổi từ pending → approved
+            if (!isInitialClubRequestLoadRef.current && isApproved && wasPending && previousStatus !== null) {
+              const clubName = req.proposedName || req.name || 'CLB';
+              showToast(
+                `🎉 Đơn mở CLB "${clubName}" đã được duyệt! Vui lòng đăng xuất và đăng nhập lại để cập nhật tài khoản.`,
+                'success',
+                10000 // Hiển thị 10 giây
+              );
+            }
+            
+            // Lưu trạng thái hiện tại
+            previousClubRequestStatusesRef.current.set(requestId, currentStatus);
+          });
+          
+          // Lưu trạng thái vào localStorage
+          try {
+            const statusMap = Object.fromEntries(previousClubRequestStatusesRef.current);
+            localStorage.setItem('clubRequestStatus', JSON.stringify(statusMap));
+          } catch (err) {
+            console.error('Error saving club request status to localStorage:', err);
+          }
+          
+          // Đánh dấu đã hoàn thành lần load đầu tiên
+          if (isInitialClubRequestLoadRef.current) {
+            isInitialClubRequestLoadRef.current = false;
+          }
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Polling club request status error:', err);
+        }
+      }
+    }, 5000); // Poll mỗi 5 giây
+
+    return () => {
+      isMounted = false;
+      clearInterval(pollInterval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Chỉ chạy một lần khi mount
 
   /**
    * USE EFFECT 5: FETCH DANH SÁCH CLUBS
