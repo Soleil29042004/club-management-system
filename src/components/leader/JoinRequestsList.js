@@ -1076,7 +1076,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-2xl font-bold text-gray-800 m-0">{detailData.studentName}</h3>
-                      {getStatusBadge(detailData.status)}
+                      {mapStatus(detailData.status) !== 'unknown' && getStatusBadge(mapStatus(detailData.status))}
                     </div>
                     <div className="text-sm text-gray-500">
                       Email: {detailData.studentEmail}
@@ -1111,7 +1111,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-2xl font-bold text-gray-800 m-0">{selectedRequest.studentName}</h3>
-                      {getStatusBadge(selectedRequest.status)}
+                      {selectedRequest.status !== 'unknown' && getStatusBadge(selectedRequest.status)}
                     </div>
                     <div className="text-sm text-gray-500">
                       Email: {selectedRequest.studentEmail}
