@@ -8,7 +8,7 @@
  * - Integration với API backend
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Dashboard from './components/admin/Dashboard';
 import ClubManagement from './components/admin/ClubManagement';
 import MemberManagement from './components/admin/MemberManagement';
@@ -51,6 +51,11 @@ function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userReady, setUserReady] = useState(false);
   const [hasSetUserReady, setHasSetUserReady] = useState(false); // Flag để tránh set userReady trùng lặp
+  
+  // Ref để lưu role trước đó để phát hiện thay đổi
+  const previousRoleRef = useRef(null);
+  // Flag để tránh reload nhiều lần (vòng lặp vô hạn)
+  const isReloadingRef = useRef(false);
 
   /**
    * USE EFFECT 1: RESET CURRENT PAGE ON ROLE CHANGE
@@ -74,6 +79,9 @@ function AppContent() {
     } else if (userRole === 'admin') {
       setCurrentPage('dashboard');
     }
+    
+    // Lưu role hiện tại vào ref để so sánh sau này
+    previousRoleRef.current = userRole;
   }, [userRole]);
 
   /**
@@ -94,6 +102,9 @@ function AppContent() {
    */
   useEffect(() => {
     let isMounted = true;
+    
+    // Reset reload flag khi component mount lại (sau khi reload)
+    isReloadingRef.current = false;
     
     const token = getAuthToken();
     
@@ -136,6 +147,9 @@ function AppContent() {
         setIsAuthenticated(true);
         setUserRole(roleFromToken);
         setShowHome(false);
+        
+        // Cập nhật previousRoleRef để tránh phát hiện lại
+        previousRoleRef.current = roleFromToken;
       }
 
       // Hydrate localStorage.user với thông tin đầy đủ từ token
@@ -232,6 +246,198 @@ function AppContent() {
       isMounted = false;
     };
   }, []);
+
+  /**
+   * USE EFFECT 2.5: POLLING USER ROLE (CHECK ROLE CHANGE)
+   * 
+   * KHI NÀO CHẠY: Khi userRole === 'student' hoặc 'club_leader', polling mỗi 5 giây
+   * 
+   * MỤC ĐÍCH: Kiểm tra role của user có thay đổi không:
+   * - Từ student → club_leader: Khi admin duyệt yêu cầu mở club
+   * - Từ club_leader → student: Khi role bị thay đổi (ví dụ: bị thu hồi quyền)
+   * 
+   * FLOW:
+   * 1. Gọi API GET /users/my-info để lấy thông tin user mới nhất
+   * 2. Parse JWT token hoặc lấy từ API response để lấy role mới
+   * 3. So sánh role mới với role hiện tại
+   * 4. Nếu phát hiện thay đổi:
+   *    - Reload trang để lấy token mới và cập nhật giao diện
+   *    - Hiển thị toast thông báo
+   *    - Cập nhật localStorage user data
+   * 
+   * REALTIME: Polling mỗi 5 giây để phát hiện thay đổi role ngay lập tức
+   * 
+   * DEPENDENCIES: [userRole, isAuthenticated]
+   */
+  useEffect(() => {
+    // Chỉ polling khi user là student hoặc club_leader và đã authenticated
+    if ((userRole !== 'student' && userRole !== 'club_leader') || !isAuthenticated) {
+      previousRoleRef.current = userRole;
+      isReloadingRef.current = false; // Reset flag khi không polling
+      return;
+    }
+    
+    // Nếu đang reload/logout, không polling nữa
+    if (isReloadingRef.current) {
+      return;
+    }
+    
+    // Khởi tạo previousRoleRef nếu chưa được set (lần đầu vào Dashboard)
+    if (previousRoleRef.current === null) {
+      previousRoleRef.current = userRole;
+    }
+    
+    let isMounted = true;
+    const token = getAuthToken();
+    if (!token) return;
+
+    const pollInterval = setInterval(async () => {
+      // Nếu đang reload, dừng polling
+      if (isReloadingRef.current || !isMounted) {
+        return;
+      }
+      try {
+        // ========== API CALL: GET /users/my-info - Check User Role ==========
+        // Mục đích: Lấy thông tin user mới nhất để kiểm tra role có thay đổi không
+        // Response: User object với role mới nhất
+        const data = await apiRequest('/users/my-info', {
+          method: 'GET',
+          token
+        });
+        
+        if (!isMounted) return;
+        
+        if (data.code === 1000 || data.code === 0) {
+          const info = data.result || data.data || data;
+          
+          // Kiểm tra xem API có trả về token mới không (khi role thay đổi, backend có thể refresh token)
+          const newToken = data.token || data.accessToken || data.access_token || null;
+          if (newToken) {
+            // Lưu token mới vào localStorage
+            localStorage.setItem('authToken', newToken);
+          }
+          
+          // Kiểm tra role từ API response (có thể có role mới từ backend)
+          // Nếu API không trả về role, fallback về parse từ token (có thể là token mới)
+          let newRole = null;
+          const tokenToCheck = newToken || token; // Dùng token mới nếu có
+          
+          // Thử lấy role từ API response trước
+          // API có thể trả về role dưới dạng: role, scope, userRole, userScope
+          let apiRole = info.role || info.scope || info.userRole || info.userScope;
+          
+          // Nếu không có, thử parse từ token (có thể là token mới)
+          if (!apiRole) {
+            const payload = parseJWTToken(tokenToCheck);
+            if (payload) {
+              apiRole = extractScopeFromToken(payload);
+            }
+          }
+          
+          // Map role từ API/token sang format UI
+          if (apiRole) {
+            newRole = mapScopeToRole(apiRole);
+          }
+          
+          // Nếu vẫn không có, giữ nguyên role hiện tại
+          if (!newRole) {
+            newRole = userRole;
+          }
+          
+          const currentRole = userRole;
+          
+          // CHỈ phát hiện thay đổi role khi:
+          // 1. Role thực sự khác nhau (newRole !== currentRole)
+          // 2. previousRoleRef đã được set và bằng với currentRole (đảm bảo không phải lần đầu load)
+          // 3. Thay đổi từ student → club_leader HOẶC club_leader → student
+          // 4. Không đang trong quá trình reload/logout
+          const isRoleDifferent = newRole !== currentRole;
+          const hasPreviousRole = previousRoleRef.current !== null;
+          const isPreviousRoleSame = previousRoleRef.current === currentRole;
+          const isRoleChangeTransition = (newRole === 'club_leader' && currentRole === 'student') ||
+                                        (newRole === 'student' && currentRole === 'club_leader');
+          
+          // CHỈ trigger logout khi:
+          // - Role thực sự khác nhau
+          // - Đã có previousRole (không phải lần đầu load)
+          // - previousRole giống với currentRole (đảm bảo đây là thay đổi thực sự)
+          // - Là transition giữa student ↔ club_leader
+          const roleChanged = isRoleDifferent && 
+                             hasPreviousRole && 
+                             isPreviousRoleSame && 
+                             isRoleChangeTransition;
+          
+          if (roleChanged && isMounted && !isReloadingRef.current) {
+            // Đánh dấu đang xử lý để tránh vòng lặp
+            isReloadingRef.current = true;
+            
+            // Lưu role mới vào ref NGAY LẬP TỨC để tránh phát hiện lại
+            previousRoleRef.current = newRole;
+            
+            // Cập nhật user data trong localStorage với thông tin mới nhất
+            const storedUser = getUserFromStorage();
+            const updatedUser = {
+              ...storedUser,
+              role: newRole,
+              ...(info.userId ? { userId: info.userId } : {}),
+              ...(info.email ? { email: info.email } : {}),
+              ...(info.fullName ? { name: info.fullName } : {}),
+              ...(info.clubId ? { clubId: info.clubId } : {}),
+              ...(info.clubIds ? { clubIds: info.clubIds } : {}),
+              ...(newToken ? { token: newToken } : {})
+            };
+            saveUserToStorage(updatedUser);
+            
+            // Cập nhật token nếu có token mới từ API
+            if (newToken) {
+              localStorage.setItem('authToken', newToken);
+            }
+            
+            // Cập nhật userRole state NGAY LẬP TỨC để UI tự động chuyển trang
+            // renderPage() sẽ tự động render đúng component dựa trên userRole mới
+            setUserRole(newRole);
+            
+            // Reset currentPage về trang mặc định của role mới
+            if (newRole === 'club_leader') {
+              setCurrentPage('manage'); // Trang mặc định của club_leader
+            } else if (newRole === 'student') {
+              setCurrentPage('clubs'); // Trang mặc định của student
+            }
+            
+            // Hiển thị toast thông báo
+            if (newRole === 'club_leader') {
+              showToast('🎉 Tài khoản của bạn đã được nâng cấp thành Chủ tịch CLB! Đang chuyển trang...', 'success', 3000);
+            } else {
+              showToast('⚠️ Tài khoản của bạn đã được chuyển về Sinh viên. Đang chuyển trang...', 'warning', 3000);
+            }
+            
+            // Reset flag sau 3 giây để polling có thể tiếp tục
+            setTimeout(() => {
+              isReloadingRef.current = false;
+            }, 3000);
+            
+            // Return ngay để không tiếp tục xử lý
+            return;
+          }
+          
+          // Lưu role hiện tại vào ref (chỉ khi không có thay đổi)
+          if (!roleChanged) {
+            previousRoleRef.current = newRole;
+          }
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Polling user role error:', err);
+        }
+      }
+    }, 5000); // Poll mỗi 5 giây
+
+    return () => {
+      isMounted = false;
+      clearInterval(pollInterval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userRole, isAuthenticated]); // Chạy lại khi userRole hoặc isAuthenticated thay đổi
 
   /**
    * FUNCTION: HANDLE LOGIN SUCCESS
