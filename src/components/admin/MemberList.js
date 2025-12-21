@@ -24,7 +24,17 @@ const MemberList = ({ members, clubs, onEdit, onDelete, deleteLoadingId }) => {
   const [filterStatus, setFilterStatus] = useState('all');
 
   /**
-   * Filter members theo search term và các filters
+   * FUNCTION: FILTER MEMBERS
+   * 
+   * MỤC ĐÍCH: Filter members theo search term và các filters
+   * 
+   * FILTER LOGIC:
+   * - matchesSearch: Tìm kiếm trong fullName, studentId, email (case-insensitive)
+   * - matchesClub: Filter theo clubId (hoặc 'all' để hiển thị tất cả)
+   * - matchesRole: Filter theo role (hoặc 'all' để hiển thị tất cả)
+   * - matchesStatus: Filter theo status (hoặc 'all' để hiển thị tất cả)
+   * 
+   * @returns {Array} - Danh sách members đã được filter
    */
   const filteredMembers = members.filter(member => {
     // Search theo tên, MSSV, email
@@ -40,12 +50,29 @@ const MemberList = ({ members, clubs, onEdit, onDelete, deleteLoadingId }) => {
     return matchesSearch && matchesClub && matchesRole && matchesStatus;
   });
 
+  /**
+   * FUNCTION: GET UNIQUE ROLES AND STATUSES
+   * 
+   * MỤC ĐÍCH: Lấy danh sách unique roles và statuses từ members để hiển thị trong dropdown filter
+   * 
+   * @returns {Object} - Object chứa roles và statuses arrays
+   */
   // Lấy danh sách unique roles và statuses từ members để hiển thị trong dropdown
   const roles = [...new Set(members.map(member => member.role))];
   const statuses = [...new Set(members.map(member => member.status))];
 
   /**
-   * Lấy CSS class cho role badge
+   * FUNCTION: GET ROLE BADGE CLASS
+   * 
+   * MỤC ĐÍCH: Lấy CSS class cho role badge dựa trên role
+   * 
+   * LOGIC:
+   * - "chủ tịch" → bg-pink-100 text-pink-700 (hồng)
+   * - "phó" → bg-purple-100 text-purple-700 (tím)
+   * - "thư ký" → bg-green-100 text-green-700 (xanh lá)
+   * - "thủ quỹ" → bg-orange-100 text-orange-700 (cam)
+   * - Mặc định → bg-gray-100 text-gray-700 (xám)
+   * 
    * @param {string} role - Role của member
    * @returns {string} - Tailwind CSS classes
    */
@@ -59,7 +86,15 @@ const MemberList = ({ members, clubs, onEdit, onDelete, deleteLoadingId }) => {
   };
 
   /**
-   * Lấy CSS class cho status badge
+   * FUNCTION: GET STATUS BADGE CLASS
+   * 
+   * MỤC ĐÍCH: Lấy CSS class cho status badge dựa trên trạng thái
+   * 
+   * LOGIC:
+   * - "hoạt động" → bg-green-500 text-white (xanh lá)
+   * - "tạm ngưng" → bg-orange-500 text-white (cam)
+   * - Mặc định → bg-gray-500 text-white (xám)
+   * 
    * @param {string} status - Trạng thái của member
    * @returns {string} - Tailwind CSS classes
    */

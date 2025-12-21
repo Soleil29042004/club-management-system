@@ -57,7 +57,7 @@ const ClubInfoForm = ({ formData, onFormChange, onFormSubmit, onFormCancel }) =>
               placeholder="https://example.com/logo.png"
               className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
             />
-            <p className="text-xs text-gray-500 mt-1">Dán URL logo hợp lệ (PNG/JPG/SVG).</p>
+            <p className="text-xs text-gray-500 mt-1">Dán URL logo hợp lệ .</p>
           </div>
         </div>
 

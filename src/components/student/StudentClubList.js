@@ -33,6 +33,18 @@ const StudentClubList = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
 
+  /**
+   * FUNCTION: FILTER CLUBS
+   * 
+   * MỤC ĐÍCH: Filter danh sách clubs dựa vào searchTerm, filterCategory và status
+   * 
+   * LOGIC:
+   * - matchesSearch: Tìm kiếm trong tên và mô tả (case-insensitive)
+   * - matchesCategory: Filter theo category (hoặc 'all' để hiển thị tất cả)
+   * - isActive: Chỉ hiển thị clubs có status = 'Hoạt động' hoặc các giá trị active khác
+   * 
+   * @returns {Array} - Danh sách clubs đã được filter
+   */
   const filteredClubs = clubs.filter(club => {
     const matchesSearch = (club.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (club.description || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -42,6 +54,13 @@ const StudentClubList = ({
     return matchesSearch && matchesCategory && isActive;
   });
 
+  /**
+   * FUNCTION: GET UNIQUE CATEGORIES
+   * 
+   * MỤC ĐÍCH: Lấy danh sách categories duy nhất từ clubs để hiển thị trong dropdown filter
+   * 
+   * @returns {Array} - Danh sách categories (mỗi category chỉ xuất hiện một lần)
+   */
   const categories = [...new Set(clubs.map(club => club.category || 'Khac').filter(Boolean))];
 
   return (

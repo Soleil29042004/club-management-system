@@ -36,17 +36,17 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
 
-  // Mock data for testing (still used for forgot password UI)
-  const mockUsers = {
-    'student@gmail.com': { password: '123456', role: 'student', name: 'Nguyễn Văn A' },
-    'leader@gmail.com': { password: '123456', role: 'club_leader', name: 'Trần Thị B' }, // Club Tiếng Anh
-    'leader1@gmail.com': { password: '123456', role: 'club_leader', name: 'Nguyễn Văn A' }, // Club Lập trình
-    'leader2@gmail.com': { password: '123456', role: 'club_leader', name: 'Lê Văn C' }, // Club Thể thao
-    'leader3@gmail.com': { password: '123456', role: 'club_leader', name: 'Phạm Thị D' }, // Club Nhiếp ảnh
-    'admin@gmail.com': { password: '123456', role: 'admin', name: 'Admin' }
-  };
-
-
+  /**
+   * FUNCTION: HANDLE CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi input trong form thay đổi
+   * 
+   * LOGIC:
+   * - Cập nhật formData state với giá trị mới
+   * - Xóa error message của field đó nếu có
+   * 
+   * @param {Event} e - Input change event
+   */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -61,6 +61,17 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
     }
   };
 
+  /**
+   * FUNCTION: VALIDATE FORM
+   * 
+   * MỤC ĐÍCH: Validate form data trước khi submit
+   * 
+   * VALIDATION RULES:
+   * - email: Bắt buộc, format hợp lệ
+   * - password: Bắt buộc, tối thiểu 6 ký tự
+   * 
+   * @returns {boolean} - true nếu form hợp lệ, false nếu có lỗi
+   */
   const validateForm = () => {
     const newErrors = {};
     
@@ -80,6 +91,21 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onNavigateToHome }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * FUNCTION: HANDLE SUBMIT
+   * 
+   * MỤC ĐÍCH: Xử lý khi submit form đăng nhập
+   * 
+   * FLOW:
+   * 1. Validate form
+   * 2. Gọi API POST /auth/token để đăng nhập
+   * 3. Extract JWT token từ response
+   * 4. Parse token để lấy thông tin user (role, name, clubId, clubIds)
+   * 5. Lưu token và user data vào localStorage
+   * 6. Gọi onLoginSuccess callback để chuyển đến dashboard
+   * 
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     

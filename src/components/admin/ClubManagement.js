@@ -30,18 +30,39 @@ const ClubManagement = ({ clubs, setClubs }) => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
 
+  /**
+   * FUNCTION: HANDLE ADD
+   * 
+   * MỤC ĐÍCH: Mở form để thêm club mới
+   */
   const handleAdd = () => {
     setEditingClub(null);
     setShowForm(true);
   };
 
+  /**
+   * FUNCTION: HANDLE EDIT
+   * 
+   * MỤC ĐÍCH: Mở form để chỉnh sửa club
+   * 
+   * @param {Object} club - Club object cần chỉnh sửa
+   */
   const handleEdit = (club) => {
     setEditingClub(club);
     setShowForm(true);
   };
 
   /**
-   * Xóa club
+   * FUNCTION: HANDLE DELETE
+   * 
+   * MỤC ĐÍCH: Xóa club khỏi hệ thống
+   * 
+   * FLOW:
+   * 1. Confirm với user trước khi xóa
+   * 2. Gọi API DELETE /clubs/{clubId}
+   * 3. Xóa club khỏi local state
+   * 4. Refresh clubs list để đảm bảo consistency
+   * 
    * @param {string|number} clubId - ID của club cần xóa
    */
   const handleDelete = async (clubId) => {
@@ -65,11 +86,14 @@ const ClubManagement = ({ clubs, setClubs }) => {
     setDeleteLoadingId(clubId);
     setError(null);
 
-    try {
-      const data = await apiRequest(`/clubs/${clubId}`, {
-        method: 'DELETE',
-        token
-      });
+      try {
+        // ========== API CALL: DELETE /clubs/{clubId} - Delete Club ==========
+        // Mục đích: Admin xóa club khỏi hệ thống (chủ tịch sẽ được chuyển về Sinh viên)
+        // Response: Success message
+        const data = await apiRequest(`/clubs/${clubId}`, {
+          method: 'DELETE',
+          token
+        });
 
       // Xóa club khỏi local state
       setClubs(clubs.filter(c => c.id !== clubId));
@@ -91,10 +115,28 @@ const ClubManagement = ({ clubs, setClubs }) => {
     }
   };
 
+  /**
+   * FUNCTION: HANDLE VIEW
+   * 
+   * MỤC ĐÍCH: Mở modal xem chi tiết club
+   * 
+   * @param {Object} club - Club object cần xem chi tiết
+   */
   const handleView = (club) => {
     setViewingClub(club);
   };
 
+  /**
+   * FUNCTION: HANDLE SUBMIT
+   * 
+   * MỤC ĐÍCH: Xử lý khi submit form (thêm hoặc sửa club)
+   * 
+   * LOGIC:
+   * - Nếu editingClub có giá trị → update club trong state
+   * - Nếu không → thêm club mới vào state
+   * 
+   * @param {Object} formData - Dữ liệu form từ ClubForm
+   */
   const handleSubmit = (formData) => {
     if (editingClub) {
       // Update existing club
@@ -112,19 +154,37 @@ const ClubManagement = ({ clubs, setClubs }) => {
     setEditingClub(null);
   };
 
+  /**
+   * FUNCTION: HANDLE CANCEL
+   * 
+   * MỤC ĐÍCH: Đóng form và reset editingClub
+   */
   const handleCancel = () => {
     setShowForm(false);
     setEditingClub(null);
   };
 
+  /**
+   * FUNCTION: CLOSE VIEW MODAL
+   * 
+   * MỤC ĐÍCH: Đóng modal xem chi tiết club
+   */
   const closeViewModal = () => {
     setViewingClub(null);
   };
 
-
   /**
-   * Fetch clubs từ API với search và filter
-   * @param {string} category - Category filter (optional)
+   * FUNCTION: FETCH CLUBS
+   * 
+   * MỤC ĐÍCH: Lấy danh sách clubs từ API với search và filter
+   * 
+   * FLOW:
+   * 1. Build URL với query parameters (category, name)
+   * 2. Gọi API GET /clubs với query params
+   * 3. Map dữ liệu từ API format sang component format
+   * 4. Cập nhật clubs state
+   * 
+   * @param {string} category - Category filter (optional, 'all' để bỏ filter)
    * @param {string} searchName - Search term (optional)
    */
   const fetchClubs = async (category = null, searchName = '') => {
@@ -152,10 +212,14 @@ const ClubManagement = ({ clubs, setClubs }) => {
         endpoint += `?${params.toString()}`;
       }
 
-      const data = await apiRequest(endpoint, {
-        method: 'GET',
-        token
-      });
+        // ========== API CALL: GET /clubs - List Clubs (with filters) ==========
+        // Mục đích: Admin lấy danh sách clubs với search và filter
+        // Query params: ?category={category}&name={searchName}
+        // Response: Array of club objects
+        const data = await apiRequest(endpoint, {
+          method: 'GET',
+          token
+        });
 
       // Map API data sang component format
       const mappedClubs = (data.result || []).map(mapApiClubToComponent);
@@ -173,8 +237,17 @@ const ClubManagement = ({ clubs, setClubs }) => {
   };
 
   /**
-   * Fetch clubs khi component mount hoặc khi filter/search thay đổi
-   * Sử dụng debounce cho search để tránh gọi API quá nhiều
+   * USE EFFECT: FETCH CLUBS ON MOUNT/FILTER CHANGE
+   * 
+   * KHI NÀO CHẠY: Khi filterCategory hoặc searchTerm thay đổi
+   * 
+   * MỤC ĐÍCH: Fetch clubs từ API khi filter hoặc search thay đổi
+   * 
+   * LOGIC:
+   * - Debounce search: nếu có searchTerm, đợi 500ms trước khi fetch
+   * - Nếu chỉ filterCategory thay đổi, fetch ngay
+   * 
+   * DEPENDENCIES: [filterCategory, searchTerm]
    */
   useEffect(() => {
     let timeoutId;
@@ -195,11 +268,24 @@ const ClubManagement = ({ clubs, setClubs }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCategory, searchTerm]);
 
-  // Handle search and filter changes
+  /**
+   * FUNCTION: HANDLE SEARCH CHANGE
+   * 
+   * MỤC ĐÍCH: Cập nhật searchTerm state (sẽ trigger useEffect để fetch clubs)
+   * 
+   * @param {string} term - Search term mới
+   */
   const handleSearchChange = (term) => {
     setSearchTerm(term);
   };
 
+  /**
+   * FUNCTION: HANDLE CATEGORY CHANGE
+   * 
+   * MỤC ĐÍCH: Cập nhật filterCategory state (sẽ trigger useEffect để fetch clubs)
+   * 
+   * @param {string} category - Category filter mới
+   */
   const handleCategoryChange = (category) => {
     setFilterCategory(category);
   };

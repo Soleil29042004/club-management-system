@@ -53,8 +53,18 @@ function AppContent() {
   const [hasSetUserReady, setHasSetUserReady] = useState(false); // Flag để tránh set userReady trùng lặp
 
   /**
-   * Reset currentPage khi user role thay đổi
-   * Mỗi role có trang mặc định khác nhau
+   * USE EFFECT 1: RESET CURRENT PAGE ON ROLE CHANGE
+   * 
+   * KHI NÀO CHẠY: Khi userRole thay đổi
+   * 
+   * MỤC ĐÍCH: Reset currentPage về trang mặc định của role
+   * 
+   * LOGIC:
+   * - student → 'clubs'
+   * - club_leader → 'manage'
+   * - admin → 'dashboard'
+   * 
+   * DEPENDENCIES: [userRole]
    */
   useEffect(() => {
     if (userRole === 'student') {
@@ -67,9 +77,20 @@ function AppContent() {
   }, [userRole]);
 
   /**
-   * Kiểm tra authentication khi component mount
-   * Nếu có token trong localStorage, parse và set authentication state
-   * Fetch thông tin user từ API để đảm bảo có đầy đủ thông tin
+   * USE EFFECT 2: CHECK AUTHENTICATION ON MOUNT
+   * 
+   * KHI NÀO CHẠY: Khi component mount lần đầu
+   * 
+   * MỤC ĐÍCH: Kiểm tra authentication và load thông tin user
+   * 
+   * FLOW:
+   * 1. Lấy token từ localStorage
+   * 2. Parse JWT token để lấy thông tin (role, userId, clubId, clubIds)
+   * 3. Set authentication state và userRole
+   * 4. Fetch thông tin user từ API GET /users/my-info để có đầy đủ thông tin
+   * 5. Hydrate localStorage.user với thông tin từ token và API
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần)
    */
   useEffect(() => {
     let isMounted = true;
@@ -133,11 +154,21 @@ function AppContent() {
       saveUserToStorage(hydrated);
       
       /**
-       * Fetch thông tin user từ API để đảm bảo có đầy đủ thông tin
-       * Đặc biệt là userId (có thể không có trong token)
+       * FUNCTION: FETCH USER INFO
+       * 
+       * MỤC ĐÍCH: Fetch thông tin user từ API để đảm bảo có đầy đủ thông tin
+       * 
+       * FLOW:
+       * 1. Gọi API GET /users/my-info
+       * 2. Merge thông tin từ API với thông tin từ token
+       * 3. Cập nhật localStorage.user
+       * 
        */
       const fetchUserInfo = async () => {
         try {
+          // ========== API CALL: GET /users/my-info - Get User Info ==========
+          // Mục đích: Lấy thông tin đầy đủ của user từ API (userId, fullName, email, etc.)
+          // Response: User object với đầy đủ thông tin
           const data = await apiRequest('/users/my-info', {
             method: 'GET',
             token
@@ -202,6 +233,19 @@ function AppContent() {
     };
   }, []);
 
+  /**
+   * FUNCTION: HANDLE LOGIN SUCCESS
+   * 
+   * MỤC ĐÍCH: Xử lý khi đăng nhập thành công
+   * 
+   * FLOW:
+   * 1. Set isAuthenticated = true
+   * 2. Set userRole từ parameter
+   * 3. Ẩn home/login/register pages
+   * 4. Set userReady nếu chưa được set bởi useEffect
+   * 
+   * @param {string} role - Role của user ('admin', 'student', 'club_leader')
+   */
   const handleLoginSuccess = (role) => {
     setIsAuthenticated(true);
     setUserRole(role);
@@ -218,8 +262,18 @@ function AppContent() {
 
 
   /**
-   * Fetch clubs từ API khi đã đăng nhập
-   * Chỉ fetch khi user đã authenticated và ready
+   * USE EFFECT 3: FETCH CLUBS ON AUTHENTICATION
+   * 
+   * KHI NÀO CHẠY: Khi isAuthenticated hoặc userReady thay đổi
+   * 
+   * MỤC ĐÍCH: Fetch danh sách clubs từ API khi user đã đăng nhập
+   * 
+   * FLOW:
+   * 1. Gọi API GET /clubs
+   * 2. Map dữ liệu từ API format sang component format
+   * 3. Cập nhật clubs state
+   * 
+   * DEPENDENCIES: [isAuthenticated, userReady]
    */
   useEffect(() => {
     if (!isAuthenticated || !userReady) return;
@@ -229,11 +283,14 @@ function AppContent() {
 
     const fetchClubs = async () => {
       try {
-        const data = await apiRequest('/clubs', {
-          method: 'GET',
-          token,
-          signal: controller.signal
-        });
+          // ========== API CALL: GET /clubs - List All Clubs ==========
+          // Mục đích: Lấy danh sách tất cả clubs để hiển thị trong dashboard
+          // Response: Array of club objects
+          const data = await apiRequest('/clubs', {
+            method: 'GET',
+            token,
+            signal: controller.signal
+          });
         
         if (data.code === 1000 || data.code === 0) {
           const mapped = (data.result || []).map(mapApiClubToComponent);
@@ -252,8 +309,16 @@ function AppContent() {
   }, [isAuthenticated, userReady]);
 
   /**
-   * Xử lý logout: xóa authentication data và reset state
-   * Gọi API logout (không blocking) để thông báo cho server
+   * FUNCTION: HANDLE LOGOUT
+   * 
+   * MỤC ĐÍCH: Xử lý khi user đăng xuất
+   * 
+   * FLOW:
+   * 1. Xóa authentication data từ localStorage (clearAuthData)
+   * 2. Reset tất cả state về giá trị ban đầu
+   * 3. Gọi API POST /auth/logout (không blocking) để invalidate token ở backend
+   * 4. Hiển thị toast thành công
+   * 
    */
   const handleLogout = async () => {
     // Xóa tất cả dữ liệu authentication
@@ -289,18 +354,33 @@ function AppContent() {
     showToast('Đã đăng xuất thành công', 'success');
   };
 
+  /**
+   * FUNCTION: HANDLE NAVIGATE TO LOGIN
+   * 
+   * MỤC ĐÍCH: Chuyển đến trang đăng nhập
+   */
   const handleNavigateToLogin = () => {
     setShowHome(false);
     setShowLogin(true);
     setShowRegister(false);
   };
 
+  /**
+   * FUNCTION: HANDLE NAVIGATE TO REGISTER
+   * 
+   * MỤC ĐÍCH: Chuyển đến trang đăng ký
+   */
   const handleNavigateToRegister = () => {
     setShowHome(false);
     setShowLogin(false);
     setShowRegister(true);
   };
 
+  /**
+   * FUNCTION: HANDLE NAVIGATE TO HOME
+   * 
+   * MỤC ĐÍCH: Chuyển về trang chủ
+   */
   const handleNavigateToHome = () => {
     setShowHome(true);
     setShowLogin(false);
@@ -308,7 +388,19 @@ function AppContent() {
   };
 
   /**
-   * Render page component dựa trên currentPage cho admin role
+   * FUNCTION: RENDER PAGE (ADMIN)
+   * 
+   * MỤC ĐÍCH: Render page component dựa trên currentPage cho admin role
+   * 
+   * PAGES:
+   * - 'dashboard' → Dashboard component
+   * - 'clubs' → ClubManagement component
+   * - 'members' → MemberManagement component
+   * - 'club-requests' → ClubRequestsManagement component
+   * - 'profile' → Profile component
+   * - default → Dashboard component
+   * 
+   * @returns {JSX.Element} - Page component tương ứng với currentPage
    */
   const renderPage = () => {
     switch (currentPage) {
@@ -375,7 +467,18 @@ function AppContent() {
   }
 
   /**
-   * Render page component dựa trên currentPage cho student role
+   * FUNCTION: RENDER STUDENT PAGE
+   * 
+   * MỤC ĐÍCH: Render page component dựa trên currentPage cho student role
+   * 
+   * PAGES:
+   * - 'clubs' → StudentDashboard component
+   * - 'my-requests' → StudentMyClubRequests component
+   * - 'joined-clubs' → StudentJoinedClubs component
+   * - 'profile' → Profile component
+   * - default → StudentDashboard component với currentPage="clubs"
+   * 
+   * @returns {JSX.Element} - Page component tương ứng với currentPage
    */
   const renderStudentPage = () => {
     switch (currentPage) {
@@ -440,7 +543,19 @@ function AppContent() {
   }
 
   /**
-   * Render page component dựa trên currentPage cho club_leader role
+   * FUNCTION: RENDER LEADER PAGE
+   * 
+   * MỤC ĐÍCH: Render page component dựa trên currentPage cho club_leader role
+   * 
+   * PAGES:
+   * - 'manage' → ClubLeaderDashboard component với currentPage='manage'
+   * - 'requests' → ClubLeaderDashboard component với currentPage='requests'
+   * - 'members' → ClubLeaderDashboard component với currentPage='members'
+   * - 'fee' → ClubLeaderDashboard component với currentPage='fee'
+   * - 'profile' → Profile component
+   * - default → ClubLeaderDashboard component với currentPage='manage'
+   * 
+   * @returns {JSX.Element} - Page component tương ứng với currentPage
    */
   const renderLeaderPage = () => {
     switch (currentPage) {

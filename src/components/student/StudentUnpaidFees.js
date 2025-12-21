@@ -15,7 +15,10 @@ import React from 'react';
 
 const StudentUnpaidFees = ({ unpaidFees, onPayment }) => {
   /**
-   * Format date string sang định dạng tiếng Việt (DD/MM/YYYY)
+   * FUNCTION: FORMAT DATE
+   * 
+   * MỤC ĐÍCH: Format date string sang định dạng tiếng Việt (DD/MM/YYYY)
+   * 
    * @param {string} dateString - Date string cần format
    * @returns {string} - Formatted date hoặc '-' nếu không hợp lệ
    */
@@ -26,8 +29,15 @@ const StudentUnpaidFees = ({ unpaidFees, onPayment }) => {
   };
 
   /**
-   * Tính toán ngày bắt đầu và ngày hết hạn dựa vào requestDate và membershipDuration
-   * Nếu không có requestDate, dùng ngày hiện tại làm ngày bắt đầu
+   * FUNCTION: CALCULATE START AND EXPIRY DATE
+   * 
+   * MỤC ĐÍCH: Tính toán ngày bắt đầu và ngày hết hạn dựa vào requestDate và membershipDuration
+   * 
+   * LOGIC:
+   * - Nếu không có requestDate → Dùng ngày hiện tại làm startDate
+   * - expiryDate = startDate + membershipDuration (tháng)
+   * - Trả về ISO string format (YYYY-MM-DD)
+   * 
    * @param {string|null} requestDate - Ngày yêu cầu (có thể null)
    * @param {number} membershipDuration - Thời hạn membership (tháng, mặc định 6)
    * @returns {Object} - Object chứa startDate và expiryDate (ISO string)

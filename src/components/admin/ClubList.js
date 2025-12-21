@@ -46,7 +46,14 @@ const ClubList = ({
   const filterCategory = externalFilterCategory !== undefined ? externalFilterCategory : internalFilterCategory;
 
   /**
-   * Xử lý khi search term thay đổi
+   * FUNCTION: HANDLE SEARCH CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi search term thay đổi
+   * 
+   * LOGIC:
+   * - Nếu có onSearchChange callback (controlled mode) → Gọi callback để parent xử lý
+   * - Nếu không có callback (uncontrolled mode) → Cập nhật internal state
+   * 
    * @param {string} value - Search term mới
    */
   const handleSearchChange = (value) => {
@@ -60,7 +67,14 @@ const ClubList = ({
   };
 
   /**
-   * Xử lý khi category filter thay đổi
+   * FUNCTION: HANDLE CATEGORY CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi category filter thay đổi
+   * 
+   * LOGIC:
+   * - Nếu có onCategoryChange callback (controlled mode) → Gọi callback để parent xử lý
+   * - Nếu không có callback (uncontrolled mode) → Cập nhật internal state
+   * 
    * @param {string} value - Category mới
    */
   const handleCategoryChange = (value) => {
@@ -82,7 +96,16 @@ const ClubList = ({
   const categories = clubCategories;
 
   /**
-   * Lấy CSS class cho status badge dựa trên trạng thái
+   * FUNCTION: GET STATUS BADGE CLASS
+   * 
+   * MỤC ĐÍCH: Lấy CSS class cho status badge dựa trên trạng thái
+   * 
+   * LOGIC:
+   * - "hoạt động" → bg-green-500 (xanh lá)
+   * - "tạm ngưng" → bg-orange-500 (cam)
+   * - "ngừng" → bg-red-500 (đỏ)
+   * - Mặc định → bg-gray-500 (xám)
+   * 
    * @param {string} status - Trạng thái của club
    * @returns {string} - Tailwind CSS classes
    */

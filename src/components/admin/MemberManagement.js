@@ -3,7 +3,7 @@
  * 
  * Component quản lý members/users cho admin:
  * - Hiển thị danh sách users với pagination
- * - Sort theo các trường khác nhau (tên, email, mã sinh viên, ngày tạo)
+ * - Sort theo các trường khác nhau (tên, email, mã sinh viên)
  * - Xem thông tin chi tiết user (tên, email, phone, mã sinh viên, clubs tham gia)
  * - Deactivate user (soft delete)
  * - Map clubIds với club names để hiển thị
@@ -33,14 +33,27 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
-  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortBy, setSortBy] = useState('fullName');
   const [sortDirection, setSortDirection] = useState('DESC');
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [clubsMap, setClubsMap] = useState({});
   const clubsMapRef = useRef({});
 
-  // Fetch danh sách clubs để map với clubIds
+  /**
+   * USE EFFECT 1: FETCH CLUBS FOR MAPPING
+   * 
+   * KHI NÀO CHẠY: Khi component mount lần đầu
+   * 
+   * MỤC ĐÍCH: Lấy danh sách clubs để tạo clubsMap (map clubId → clubName)
+   * 
+   * FLOW:
+   * 1. Gọi API GET /clubs để lấy danh sách tất cả clubs
+   * 2. Tạo map từ clubId → clubName
+   * 3. Lưu vào clubsMap state và clubsMapRef
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần)
+   */
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
@@ -95,7 +108,21 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
     };
   }, []);
 
-  // Fetch users khi page, size, sort thay đổi (KHÔNG phụ thuộc vào clubsMap)
+  /**
+   * USE EFFECT 2: FETCH USERS (PAGINATED)
+   * 
+   * KHI NÀO CHẠY: Khi page, size, sortBy, hoặc sortDirection thay đổi
+   * 
+   * MỤC ĐÍCH: Lấy danh sách users với phân trang và sắp xếp
+   * 
+   * FLOW:
+   * 1. Gọi API GET /users với query params (page, size, sort)
+   * 2. Map dữ liệu từ API format sang component format
+   * 3. Cập nhật clubName từ clubsMapRef (đã có sẵn từ useEffect 1)
+   * 4. Cập nhật members state và pagination info (totalPages, totalElements)
+   * 
+   * DEPENDENCIES: [page, size, sortBy, sortDirection]
+   */
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
@@ -217,7 +244,20 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, size, sortBy, sortDirection]);
 
-  // Helper function để cập nhật clubName từ clubsMap
+  /**
+   * FUNCTION: UPDATE CLUB NAMES
+   * 
+   * MỤC ĐÍCH: Cập nhật clubName cho members từ clubsMap
+   * 
+   * LOGIC:
+   * - Map clubIds của mỗi member với clubsMap để lấy club names
+   * - Join nhiều club names bằng dấu phẩy nếu member tham gia nhiều clubs
+   * - Chỉ trả về updated list nếu có thay đổi (tránh re-render không cần thiết)
+   * 
+   * @param {Array} membersList - Danh sách members cần cập nhật
+   * @param {Object} clubsMapData - Map từ clubId → clubName
+   * @returns {Array} - Danh sách members đã được cập nhật clubName
+   */
   const updateClubNames = (membersList, clubsMapData) => {
     if (Object.keys(clubsMapData).length === 0 || membersList.length === 0) {
       return membersList;
@@ -248,7 +288,15 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
     return hasChanges ? updated : membersList;
   };
 
-  // Cập nhật clubName khi clubsMap thay đổi
+  /**
+   * USE EFFECT 3: UPDATE CLUB NAMES WHEN CLUBS MAP CHANGES
+   * 
+   * KHI NÀO CHẠY: Khi clubsMap thay đổi
+   * 
+   * MỤC ĐÍCH: Cập nhật clubName cho tất cả members khi clubsMap được load xong
+   * 
+   * DEPENDENCIES: [clubsMap]
+   */
   useEffect(() => {
     if (Object.keys(clubsMap).length > 0) {
       setMembers(prev => updateClubNames(prev, clubsMap));
@@ -256,8 +304,19 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubsMap]);
 
-  // Cập nhật clubName sau khi fetch users xong nếu clubsMap đã có dữ liệu
-  // Sử dụng useRef để track xem đã cập nhật chưa, tránh vòng lặp
+  /**
+   * USE EFFECT 4: UPDATE CLUB NAMES ON PAGE CHANGE
+   * 
+   * KHI NÀO CHẠY: Khi page hoặc clubsMap thay đổi
+   * 
+   * MỤC ĐÍCH: Cập nhật clubName khi chuyển trang (page thay đổi) nếu clubsMap đã có dữ liệu
+   * 
+   * LOGIC:
+   * - Sử dụng prevPageRef để track page trước đó
+   * - Chỉ cập nhật khi page thay đổi (không phải lần đầu mount)
+   * 
+   * DEPENDENCIES: [page, clubsMap]
+   */
   const prevPageRef = React.useRef(page);
   
   useEffect(() => {
@@ -269,16 +328,41 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, clubsMap]);
 
+  /**
+   * FUNCTION: HANDLE ADD
+   * 
+   * MỤC ĐÍCH: Mở form để thêm member mới
+   */
   const handleAdd = () => {
     setEditingMember(null);
     setShowForm(true);
   };
 
+  /**
+   * FUNCTION: HANDLE EDIT
+   * 
+   * MỤC ĐÍCH: Mở form để chỉnh sửa member
+   * 
+   * @param {Object} member - Member object cần chỉnh sửa
+   */
   const handleEdit = (member) => {
     setEditingMember(member);
     setShowForm(true);
   };
 
+  /**
+   * FUNCTION: HANDLE DELETE
+   * 
+   * MỤC ĐÍCH: Deactivate user (soft delete)
+   * 
+   * FLOW:
+   * 1. Confirm với user
+   * 2. Gọi API DELETE /users/{userId} để deactivate
+   * 3. Cập nhật members state (set status = 'Tạm dừng')
+   * 4. Refresh danh sách để đảm bảo consistency
+   * 
+   * @param {Object} member - Member object cần xóa
+   */
   const handleDelete = async (member) => {
     if (!member?.id) return;
 
@@ -339,6 +423,17 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
     }
   };
 
+  /**
+   * FUNCTION: HANDLE SUBMIT
+   * 
+   * MỤC ĐÍCH: Xử lý khi submit form (thêm hoặc sửa member)
+   * 
+   * LOGIC:
+   * - Nếu editingMember có giá trị → update member trong state
+   * - Nếu không → thêm member mới vào state
+   * 
+   * @param {Object} formData - Dữ liệu form từ MemberForm
+   */
   const handleSubmit = (formData) => {
     if (editingMember) {
       // Update existing member
@@ -356,6 +451,11 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
     setEditingMember(null);
   };
 
+  /**
+   * FUNCTION: HANDLE CANCEL
+   * 
+   * MỤC ĐÍCH: Đóng form và reset editingMember
+   */
   const handleCancel = () => {
     setShowForm(false);
     setEditingMember(null);
@@ -388,7 +488,6 @@ const MemberManagement = ({ members, setMembers, clubs }) => {
               onChange={(e) => setSortBy(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:border-fpt-blue focus:outline-none focus:ring-2 focus:ring-fpt-blue focus:border-transparent transition-all cursor-pointer"
             >
-              <option value="createdAt">Ngày tạo</option>
               <option value="fullName">Tên</option>
               <option value="studentCode">Mã sinh viên</option>
               <option value="email">Email</option>

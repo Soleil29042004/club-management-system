@@ -31,8 +31,19 @@ const Dashboard = ({ clubs = [], members = [] }) => {
   const [error, setError] = useState('');
 
   /**
-   * Fetch dashboard data từ API khi component mount
-   * Sử dụng fallback data từ props nếu API không trả về đầy đủ
+   * USE EFFECT: FETCH DASHBOARD DATA
+   * 
+   * KHI NÀO CHẠY: Khi component mount hoặc clubs.length/members.length thay đổi
+   * 
+   * MỤC ĐÍCH: Lấy dữ liệu thống kê dashboard từ API
+   * 
+   * FLOW:
+   * 1. Gọi API GET /admin/dashboard
+   * 2. Map và normalize data từ API format sang UI format
+   * 3. Sử dụng fallback data từ props nếu API không trả về đầy đủ
+   * 4. Lưu vào dashboardData state
+   * 
+   * DEPENDENCIES: [clubs.length, members.length]
    */
   useEffect(() => {
     const controller = new AbortController();
@@ -48,6 +59,9 @@ const Dashboard = ({ clubs = [], members = [] }) => {
       setError('');
 
       try {
+        // ========== API CALL: GET /admin/dashboard - Get Dashboard Statistics ==========
+        // Mục đích: Admin lấy thống kê tổng quan hệ thống
+        // Response: Object chứa totalClubs, totalMembers, clubsByCategory, membersByRole, top5ClubsByMembers, newClubsThisMonth
         const data = await apiRequest('/admin/dashboard', {
           method: 'GET',
           token,

@@ -44,7 +44,27 @@ const Profile = ({ userRole, clubs, members }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedSubscriptionId, setSelectedSubscriptionId] = useState(null);
 
+  /**
+   * USE EFFECT: FETCH PROFILE
+   * 
+   * KHI NÀO CHẠY: Khi component mount lần đầu
+   * 
+   * MỤC ĐÍCH: Lấy thông tin profile từ API hoặc localStorage
+   * 
+   * FLOW:
+   * 1. Gọi API GET /users/my-info để lấy thông tin mới nhất
+   * 2. Map và normalize dữ liệu từ API format sang UI format
+   * 3. Sync vào localStorage (user, profile) để các component khác dùng
+   * 4. Fallback về localStorage nếu API fail hoặc không có token
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần)
+   */
   useEffect(() => {
+    /**
+     * FUNCTION: FALLBACK LOCAL
+     * 
+     * MỤC ĐÍCH: Load dữ liệu từ localStorage khi API không có hoặc fail
+     */
     const fallbackLocal = () => {
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
       const profileData = JSON.parse(localStorage.getItem('profile') || '{}');
@@ -161,11 +181,30 @@ const Profile = ({ userRole, clubs, members }) => {
     fetchProfile();
   }, []);
 
+  /**
+   * FUNCTION: GET MY CLUB
+   * 
+   * MỤC ĐÍCH: Lấy CLB mà leader đang quản lý (tìm theo president name)
+   * 
+   * @returns {Object|null} - Club object hoặc null nếu không tìm thấy
+   */
   const getMyClub = () => {
     if (userRole !== 'club_leader' || !user) return null;
     return clubs.find(c => c.president === user.name);
   };
 
+  /**
+   * FUNCTION: GET MY MEMBERSHIPS
+   * 
+   * MỤC ĐÍCH: Lấy danh sách CLB mà student đã tham gia (status = approved)
+   * 
+   * LOGIC:
+   * - Load từ localStorage joinRequests
+   * - Filter theo studentEmail và status = 'approved'
+   * - Map với clubs để có đầy đủ thông tin CLB
+   * 
+   * @returns {Array} - Danh sách memberships với club info
+   */
   const getMyMemberships = () => {
     if (userRole !== 'student' || !user) return [];
     const joinRequests = JSON.parse(localStorage.getItem('joinRequests') || '[]');
@@ -178,6 +217,13 @@ const Profile = ({ userRole, clubs, members }) => {
     }).filter(Boolean);
   };
 
+  /**
+   * FUNCTION: HANDLE FORM CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi input trong form profile thay đổi và xóa error message
+   * 
+   * @param {Event} e - Input change event
+   */
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -192,6 +238,13 @@ const Profile = ({ userRole, clubs, members }) => {
     }
   };
 
+  /**
+   * FUNCTION: HANDLE PASSWORD CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi input trong form đổi mật khẩu thay đổi và xóa error message
+   * 
+   * @param {Event} e - Input change event
+   */
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswordData(prev => ({
@@ -206,6 +259,19 @@ const Profile = ({ userRole, clubs, members }) => {
     }
   };
 
+  /**
+   * FUNCTION: VALIDATE INFO FORM
+   * 
+   * MỤC ĐÍCH: Validate form thông tin cá nhân trước khi submit
+   * 
+   * VALIDATION RULES:
+   * - name: Bắt buộc
+   * - email: Bắt buộc, format hợp lệ
+   * - phone: Bắt buộc, format 10-11 số
+   * - studentId, major: Bắt buộc nếu userRole === 'student'
+   * 
+   * @returns {boolean} - true nếu form hợp lệ
+   */
   const validateInfoForm = () => {
     const newErrors = {};
     
@@ -238,6 +304,18 @@ const Profile = ({ userRole, clubs, members }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * FUNCTION: VALIDATE PASSWORD FORM
+   * 
+   * MỤC ĐÍCH: Validate form đổi mật khẩu trước khi submit
+   * 
+   * VALIDATION RULES:
+   * - currentPassword: Bắt buộc
+   * - newPassword: Bắt buộc, tối thiểu 6 ký tự
+   * - confirmPassword: Bắt buộc, phải khớp với newPassword
+   * 
+   * @returns {boolean} - true nếu form hợp lệ
+   */
   const validatePasswordForm = () => {
     const newErrors = {};
     
@@ -261,6 +339,18 @@ const Profile = ({ userRole, clubs, members }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * FUNCTION: HANDLE SAVE INFO
+   * 
+   * MỤC ĐÍCH: Cập nhật thông tin profile
+   * 
+   * FLOW:
+   * 1. Validate form
+   * 2. Gọi API PUT /users/my-info với payload (fullName, phoneNumber, major, avatarUrl)
+   * 3. Sync dữ liệu mới vào localStorage (user, profile)
+   * 4. Cập nhật UI và hiển thị toast thành công
+   * 
+   */
   const handleSaveInfo = async () => {
     if (!validateInfoForm()) {
       return;
@@ -320,15 +410,6 @@ const Profile = ({ userRole, clubs, members }) => {
         active: info.active !== undefined ? info.active : (user.active !== undefined ? user.active : true)
       };
 
-      // Update registeredUsers cache so the rest of the app sees the latest info
-      const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      const updatedUsers = registeredUsers.map(u =>
-        u.email === user.email
-          ? { ...u, ...normalized }
-          : u
-      );
-      localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
-
       // Update user session
       const updatedUser = {
         ...user,
@@ -379,6 +460,18 @@ const Profile = ({ userRole, clubs, members }) => {
     }
   };
 
+  /**
+   * FUNCTION: HANDLE CHANGE PASSWORD
+   * 
+   * MỤC ĐÍCH: Đổi mật khẩu của user
+   * 
+   * FLOW:
+   * 1. Validate form
+   * 2. Gọi API POST /users/change-password với oldPassword và newPassword
+   * 3. Clear form và hiển thị toast thành công
+   * 4. Handle error: Highlight currentPassword field nếu sai mật khẩu cũ
+   * 
+   */
   const handleChangePassword = async () => {
     if (!validatePasswordForm()) {
       return;

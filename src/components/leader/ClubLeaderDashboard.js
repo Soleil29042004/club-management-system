@@ -1,12 +1,10 @@
 /**
  * ClubLeaderDashboard Component
  * 
- * Component dashboard chính cho club leader role:
- * - Quản lý thông tin club (chỉnh sửa mô tả, địa điểm, logo)
- * - Duyệt yêu cầu tham gia club từ students
- * - Quản lý thành viên (xem danh sách, cập nhật role, xóa thành viên)
- * - Quản lý phí thành viên và thời hạn
- * - Xem thống kê club (số thành viên, doanh thu, danh sách chưa đóng phí)
+ * Component quản lý CLB cho leader:
+ * - Fetch và hiển thị thông tin CLB, thống kê, thành viên
+ * - Cập nhật thông tin CLB (logo, mô tả, địa điểm)
+ * - Quản lý thành viên (cập nhật role, xóa thành viên)
  * - Real-time polling để cập nhật trạng thái thanh toán
  * 
  * @param {Object} props
@@ -60,6 +58,19 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
 
   const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
+  /**
+   * FUNCTION: MAP API CLUB
+   * 
+   * MỤC ĐÍCH: Map dữ liệu CLB từ API format sang UI format
+   * 
+   * LOGIC:
+   * - Chuẩn hóa field names: clubName → name, establishedDate → foundedDate, etc.
+   * - Set default values cho các field có thể null/undefined
+   * - Map isActive → status ('Hoạt động' / 'Tạm dừng')
+   * 
+   * @param {Object} apiClub - Club object từ API
+   * @returns {Object} - Club object đã được map sang UI format
+   */
   const mapApiClub = (apiClub) => ({
     id: apiClub?.clubId,
     clubId: apiClub?.clubId,
@@ -79,10 +90,20 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     raw: apiClub
   });
 
+  /**
+   * FUNCTION: NORMALIZE ROLE
+   * 
+   * MỤC ĐÍCH: Chuẩn hóa role từ API format (ChuTich, PhoChuTich) sang UI format (Chủ tịch, Phó chủ tịch)
+   * 
+   * LOGIC:
+   * - Map các format khác nhau của role (có dấu, không dấu, viết liền, có khoảng trắng)
+   * - Trả về role bằng tiếng Việt để hiển thị trong UI
+   * 
+   * @param {string} role - Role từ API (ChuTich, PhoChuTich, ThuKy, ThuQuy, ThanhVien)
+   * @returns {string} - Role đã được normalize (Chủ tịch, Phó chủ tịch, Thư ký, Thủ quỹ, Thành viên)
+   */
   const normalizeRole = (role) => {
     if (!role) return 'Thành viên';
-    // Chuyển về lowercase để so sánh (xử lý cả camelCase như PhoChuTich)
-    // Map về format đúng với memberRoles trong constants (chữ thường "chủ")
     const r = (role || '').toLowerCase();
     if (r === 'chutich' || r === 'chủ tịch' || r === 'chu tich') return 'Chủ tịch';
     if (r === 'phochutich' || r === 'phó chủ tịch' || r === 'pho chu tich') return 'Phó chủ tịch';
@@ -92,6 +113,20 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     return role || 'Thành viên';
   };
 
+  /**
+   * FUNCTION: MAP API MEMBER
+   * 
+   * MỤC ĐÍCH: Map dữ liệu member từ API format sang UI format
+   * 
+   * LOGIC:
+   * - Chuẩn hóa field names: studentName → fullName, studentCode → studentId, etc.
+   * - Normalize role bằng normalizeRole function
+   * - Set default values cho các field có thể null/undefined
+   * 
+   * @param {Object} m - Member object từ API
+   * @param {number|string} clubId - ID của club
+   * @returns {Object} - Member object đã được map sang UI format
+   */
   const mapApiMember = (m, clubId) => ({
     id: m?.userId || m?.id,
     userId: m?.userId || m?.id,
@@ -113,7 +148,15 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     clubId
   });
 
-  // Load data từ localStorage (join requests mock) - giữ lại cho tới khi có API chính thức
+  /**
+   * USE EFFECT 0: LOAD JOIN REQUESTS FROM LOCALSTORAGE (FALLBACK)
+   * 
+   * KHI NÀO CHẠY: Khi component mount lần đầu
+   * 
+   * MỤC ĐÍCH: Load join requests từ localStorage làm fallback khi chưa có API
+   * 
+   * DEPENDENCIES: [] (chỉ chạy một lần)
+   */
   useEffect(() => {
     const savedRequests = localStorage.getItem('joinRequests');
     if (savedRequests) {
@@ -123,9 +166,22 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
         console.error('Error parsing joinRequests:', e);
       }
     }
-  }, []); // Chỉ chạy một lần khi mount
+  }, []);
 
-  // Fetch chi tiết CLB cho Club Leader
+  /**
+   * USE EFFECT 1: FETCH THÔNG TIN CLB
+   * 
+   * KHI NÀO CHẠY: Khi component mount lần đầu
+   * 
+   * MỤC ĐÍCH: Lấy thông tin CLB mà leader quản lý để hiển thị và edit
+   * 
+   * FLOW:
+   * 1. Xác định clubId từ userData (clubId, clubIds, hoặc từ clubs list)
+   * 2. Gọi API GET /clubs/{clubId}
+   * 3. Map dữ liệu từ API format sang UI format
+   * 4. Lưu vào myClub và formData
+   * 5. Retry không có token nếu API fail với 401/403
+   */
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     const userData = storedUser ? JSON.parse(storedUser) : {};
@@ -168,14 +224,9 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       setClubLoading(true);
       setClubError('');
       try {
-        // ========== API CALL: GET /clubs/{id} - Get Club Detail (Leader) ==========
+        // ========== API CALL: GET /clubs/{id} - Get Club Detail ==========
         // Mục đích: Lấy thông tin chi tiết CLB mà leader quản lý
         // Response: Club object với đầy đủ thông tin để hiển thị và edit
-        console.log('[ClubLeaderDashboard] Fetch club detail', {
-          targetClubId,
-          tokenExists: !!token,
-          useAuth
-        });
         const res = await fetch(`${API_BASE_URL}/clubs/${targetClubId}`, {
           headers: {
             'Content-Type': 'application/json',
@@ -185,12 +236,6 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
         });
 
         const data = await res.json().catch(() => ({}));
-
-        console.log('[ClubLeaderDashboard] Club detail response', {
-          status: res.status,
-          data,
-          useAuth
-        });
 
         if (!res.ok || !(data.code === 1000 || data.code === 0)) {
           if (useAuth && token && (res.status === 401 || res.status === 403) && !triedWithoutAuth) {
@@ -244,12 +289,31 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // chỉ fetch đúng 1 lần khi mount
 
-  // Save to localStorage whenever requests change
+  /**
+   * USE EFFECT 1.5: SAVE JOIN REQUESTS TO LOCALSTORAGE
+   * 
+   * KHI NÀO CHẠY: Khi joinRequests state thay đổi
+   * 
+   * MỤC ĐÍCH: Lưu join requests vào localStorage để persist khi reload
+   * 
+   * DEPENDENCIES: [joinRequests]
+   */
   useEffect(() => {
     localStorage.setItem('joinRequests', JSON.stringify(joinRequests));
   }, [joinRequests]);
 
-  // Fetch members of the current club
+  /**
+   * USE EFFECT 2: FETCH DANH SÁCH THÀNH VIÊN
+   * 
+   * KHI NÀO CHẠY: Khi myClub.id hoặc myClub.clubId thay đổi
+   * 
+   * MỤC ĐÍCH: Lấy danh sách thành viên của CLB để leader quản lý
+   * 
+   * FLOW:
+   * 1. Gọi API GET /clubs/{clubId}/members
+   * 2. Map dữ liệu từ API format sang UI format (normalize role)
+   * 3. Cập nhật members state và memberCount của CLB
+   */
   useEffect(() => {
     const targetClubId = myClub?.id || myClub?.clubId;
     if (!targetClubId) return;
@@ -306,7 +370,18 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     return () => controller.abort();
   }, [myClub?.id, myClub?.clubId, API_BASE_URL, setClubs, setMembers, showToast]);
 
-  // Fetch club internal stats: members, revenue, unpaid list
+  /**
+   * USE EFFECT 3: FETCH THỐNG KÊ CLB
+   * 
+   * KHI NÀO CHẠY: Khi myClub.id hoặc myClub.clubId thay đổi
+   * 
+   * MỤC ĐÍCH: Lấy thống kê CLB (số thành viên, doanh thu, danh sách chưa đóng phí)
+   * 
+   * FLOW:
+   * 1. Gọi API GET /clubs/{clubId}/stats
+   * 2. Lưu vào clubStats state
+   * 3. Cập nhật memberCount của CLB từ stats
+   */
   useEffect(() => {
     const targetClubId = myClub?.id || myClub?.clubId;
     if (!targetClubId) return;
@@ -319,8 +394,8 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       setStatsError('');
       try {
         // ========== API CALL: GET /clubs/{id}/stats - Get Club Statistics ==========
-        // Mục đích: Lấy thống kê CLB (số thành viên, số đơn đang chờ, etc.)
-        // Response: Stats object với các metrics
+        // Mục đích: Lấy thống kê CLB để hiển thị dashboard
+        // Response: Object chứa totalMembers, totalRevenue, unpaidCount, unpaidMembers, etc.
         const res = await fetch(`${API_BASE_URL}/clubs/${targetClubId}/stats`, {
           headers: {
             'Content-Type': 'application/json',
@@ -356,7 +431,19 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     return () => controller.abort();
   }, [API_BASE_URL, myClub?.id, myClub?.clubId, showToast]);
 
-  // Polling để kiểm tra thay đổi trạng thái thanh toán realtime (mỗi 2 giây)
+  /**
+   * USE EFFECT 4: POLLING REALTIME ĐỂ CẬP NHẬT TRẠNG THÁI THANH TOÁN
+   * 
+   * KHI NÀO CHẠY: Khi myClub.id hoặc myClub.clubId thay đổi
+   * 
+   * MỤC ĐÍCH: Polling mỗi 2 giây để phát hiện khi student thanh toán (isPaid: false → true)
+   * 
+   * FLOW:
+   * 1. Gọi API GET /registrations/club/{clubId} mỗi 2 giây
+   * 2. So sánh isPaid hiện tại với isPaid trước đó
+   * 3. Hiển thị toast khi phát hiện thanh toán mới
+   * 4. Lưu trạng thái vào localStorage để persist khi reload
+   */
   useEffect(() => {
     const targetClubId = myClub?.id || myClub?.clubId;
     if (!targetClubId) return;
@@ -434,7 +521,18 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myClub?.id, myClub?.clubId]); // Chạy khi clubId thay đổi
 
-  // Load và reset trạng thái từ localStorage khi clubId thay đổi
+  /**
+   * USE EFFECT 5: LOAD TRẠNG THÁI THANH TOÁN TỪ LOCALSTORAGE
+   * 
+   * KHI NÀO CHẠY: Khi myClub.id hoặc myClub.clubId thay đổi
+   * 
+   * MỤC ĐÍCH: Khôi phục trạng thái thanh toán đã lưu để tiếp tục theo dõi thay đổi
+   * 
+   * FLOW:
+   * 1. Load Map từ localStorage (key: paymentStatus_{clubId})
+   * 2. Khôi phục vào previousPaymentStatusRef
+   * 3. Set isInitialLoadRef để biết đã load hay chưa
+   */
   useEffect(() => {
     const targetClubId = myClub?.id || myClub?.clubId;
     if (!targetClubId) return;
@@ -463,8 +561,19 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     }
   }, [myClub?.id, myClub?.clubId]);
 
-  // Get all requests for this leader's club (pending, approved, rejected)
-  // Sắp xếp: pending trước, sau đó approved, cuối cùng rejected
+  /**
+   * FUNCTION: GET ALL REQUESTS
+   * 
+   * MỤC ĐÍCH: Lấy tất cả requests của CLB này và sắp xếp theo thứ tự ưu tiên
+   * 
+   * LOGIC:
+   * - Filter requests theo clubId
+   * - Sắp xếp: pending → approved → rejected (theo statusOrder)
+   * - Nếu cùng status, sắp xếp theo ngày gửi (mới nhất trước)
+   * 
+   * @param {Array} requestsList - Danh sách requests (mặc định: joinRequests)
+   * @returns {Array} - Danh sách requests đã được filter và sort
+   */
   const getAllRequests = useCallback((requestsList = joinRequests) => {
     if (!myClub) return [];
     const requests = requestsList.filter(
@@ -484,7 +593,13 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     });
   }, [joinRequests, myClub]);
 
-  // Get pending requests count for stats
+  /**
+   * FUNCTION: GET PENDING REQUESTS COUNT
+   * 
+   * MỤC ĐÍCH: Đếm số requests đang chờ duyệt cho stats
+   * 
+   * @returns {number} - Số lượng requests có status = 'pending' của CLB hiện tại
+   */
   const getPendingRequestsCount = useCallback(() => {
     if (!myClub) return 0;
     return joinRequests.filter(
@@ -492,8 +607,20 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     ).length;
   }, [joinRequests, myClub]);
 
+  /**
+   * FUNCTION: HANDLE APPROVE (FALLBACK)
+   * 
+   * MỤC ĐÍCH: Handler khi duyệt request (fallback cho localStorage khi chưa có API)
+   * 
+   * FLOW:
+   * 1. Cập nhật status của request từ 'pending' → 'approved'
+   * 2. Lưu vào localStorage
+   * 3. Tăng memberCount của CLB
+   * 4. Hiển thị toast thành công
+   * 
+   * @param {number|string} requestId - ID của request cần duyệt
+   */
   const handleApprove = (requestId) => {
-    // Sử dụng functional update để đảm bảo state được cập nhật đúng
     setJoinRequests(prevRequests => {
       const updated = prevRequests.map(request => {
         if (request.id === requestId) {
@@ -506,7 +633,6 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       return updated;
     });
     
-    // Update member count
     if (myClub) {
       setClubs(prevClubs => prevClubs.map(club =>
         club.id === myClub.id
@@ -518,9 +644,20 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     showToast('Đã chấp nhận yêu cầu tham gia!', 'success');
   };
 
+  /**
+   * FUNCTION: HANDLE REJECT (FALLBACK)
+   * 
+   * MỤC ĐÍCH: Handler khi từ chối request (fallback cho localStorage khi chưa có API)
+   * 
+   * FLOW:
+   * 1. Cập nhật status của request từ 'pending' → 'rejected'
+   * 2. Lưu vào localStorage
+   * 3. Hiển thị toast thông báo
+   * 
+   * @param {number|string} requestId - ID của request cần từ chối
+   */
   const handleReject = (requestId) => {
     if (window.confirm('Bạn có chắc chắn muốn từ chối yêu cầu này?')) {
-      // Sử dụng functional update để đảm bảo state được cập nhật đúng
       setJoinRequests(prevRequests => {
         const updated = prevRequests.map(request => {
           if (request.id === requestId) {
@@ -528,7 +665,6 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
           }
           return request;
         });
-        // Lưu vào localStorage ngay lập tức
         localStorage.setItem('joinRequests', JSON.stringify(updated));
         return updated;
       });
@@ -536,10 +672,22 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     }
   };
 
+  /**
+   * FUNCTION: HANDLE EDIT
+   * 
+   * MỤC ĐÍCH: Mở form chỉnh sửa thông tin CLB
+   */
   const handleEdit = () => {
     setShowEditForm(true);
   };
 
+  /**
+   * FUNCTION: HANDLE FORM CHANGE
+   * 
+   * MỤC ĐÍCH: Xử lý khi input trong form thay đổi
+   * 
+   * @param {Event} e - Input change event
+   */
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -548,6 +696,18 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     }));
   };
 
+  /**
+   * FUNCTION: HANDLE FORM SUBMIT
+   * 
+   * MỤC ĐÍCH: Xử lý khi submit form chỉnh sửa thông tin CLB
+   * 
+   * FLOW:
+   * 1. Validate form data (description, location bắt buộc)
+   * 2. Gọi API PUT /clubs/{clubId} để cập nhật
+   * 3. Cập nhật UI ngay lập tức sau khi API thành công
+   * 
+   * @param {Event} e - Form submit event
+   */
   const handleFormSubmit = (e) => {
     e.preventDefault();
     
@@ -557,13 +717,22 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     }
 
     const token = localStorage.getItem('authToken');
-    // API cập nhật thông tin cơ bản: logo, mô tả, địa điểm
     const payload = {
       logo: formData.logo || null,
       description: formData.description || '',
       location: formData.location || ''
     };
 
+    /**
+     * FUNCTION: CẬP NHẬT THÔNG TIN CLB
+     * 
+     * MỤC ĐÍCH: Leader cập nhật thông tin CLB (logo, description, location)
+     * 
+     * FLOW:
+     * 1. Gọi API PUT /clubs/{clubId}
+     * 2. Map response và cập nhật myClub, formData, clubs state
+     * 3. Đóng form edit và hiển thị toast thành công
+     */
     const doUpdate = async () => {
       try {
         // ========== API CALL: PUT /clubs/{id} - Update Club Info ==========
@@ -605,12 +774,23 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     doUpdate();
   };
 
+  /**
+   * FUNCTION: HANDLE FORM CANCEL
+   * 
+   * MỤC ĐÍCH: Hủy chỉnh sửa và khôi phục formData về giá trị ban đầu
+   */
   const handleFormCancel = () => {
     setFormData(myClub);
     setShowEditForm(false);
   };
 
-  // Get members of this club
+  /**
+   * FUNCTION: GET CLUB MEMBERS
+   * 
+   * MỤC ĐÍCH: Lấy danh sách thành viên của CLB hiện tại
+   * 
+   * @returns {Array} - Danh sách members có clubId trùng với myClub.id
+   */
   const getClubMembers = useCallback(() => {
     if (!myClub) return [];
     return members.filter(member => member.clubId === myClub.id || member.clubId === myClub.clubId);
@@ -641,6 +821,16 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
       return;
     }
 
+    /**
+     * FUNCTION: XÓA THÀNH VIÊN KHỎI CLB
+     * 
+     * MỤC ĐÍCH: Leader xóa thành viên khỏi CLB (đánh dấu DaRoiCLB)
+     * 
+     * FLOW:
+     * 1. Confirm với user
+     * 2. Gọi API DELETE /registrations/club/{clubId}/user/{userId}
+     * 3. Cập nhật UI (xóa khỏi members list, giảm memberCount)
+     */
     setDeleteLoadingId(memberId);
     try {
       // ========== API CALL: DELETE /registrations/club/{clubId}/user/{userId} - Remove Member ==========
@@ -660,10 +850,8 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
         throw new Error(data.message || 'Không thể xóa thành viên khỏi club.');
       }
 
-      // Remove member from local state
       setMembers(members.filter(m => m.id !== memberId));
       
-      // Update member count
       if (myClub) {
         setClubs(clubs.map(club =>
           club.id === myClub.id
@@ -682,7 +870,18 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     }
   };
 
-  // Map role từ tiếng Việt (UI) sang API format
+  /**
+   * FUNCTION: MAP ROLE TO API FORMAT
+   * 
+   * MỤC ĐÍCH: Map role từ UI format (tiếng Việt) sang API format (ChuTich, PhoChuTich, etc.)
+   * 
+   * LOGIC:
+   * - Map các format khác nhau của role (có dấu, không dấu, viết liền, có khoảng trắng)
+   * - Trả về role code theo format API (ChuTich, PhoChuTich, ThuKy, ThuQuy, ThanhVien)
+   * 
+   * @param {string} role - Role từ UI (Chủ tịch, Phó chủ tịch, Thư ký, Thủ quỹ, Thành viên)
+   * @returns {string} - Role code theo API format (ChuTich, PhoChuTich, ThuKy, ThuQuy, ThanhVien)
+   */
   const mapRoleToApiFormat = (role) => {
     const r = (role || '').toLowerCase();
     if (r === 'chủ tịch' || r === 'chu tich' || r === 'chutich') return 'ChuTich';
@@ -692,6 +891,21 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     return 'ThanhVien'; // Default
   };
 
+  /**
+   * FUNCTION: HANDLE UPDATE MEMBER ROLE
+   * 
+   * MỤC ĐÍCH: Leader thay đổi vai trò của thành viên
+   * 
+   * FLOW:
+   * 1. VALIDATE: Kiểm tra member, clubId, userId, token
+   * 2. MAP ROLE: Map role từ UI format (tiếng Việt) sang API format
+   * 3. CALL API: PUT /registrations/club/{clubId}/user/{userId}/role
+   * 4. UPDATE UI: Cập nhật role trong members state (đã normalize về tiếng Việt)
+   * 5. SHOW TOAST: Thông báo kết quả
+   * 
+   * @param {number|string} memberId - ID của member cần cập nhật role
+   * @param {string} newRole - Role mới từ UI (Chủ tịch, Phó chủ tịch, etc.)
+   */
   const handleUpdateMemberRole = async (memberId, newRole) => {
     const member = members.find(m => m.id === memberId);
     if (!member) {
@@ -716,10 +930,20 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     // Map role từ UI (tiếng Việt) sang API format
     const apiRole = mapRoleToApiFormat(newRole);
 
+    /**
+     * FUNCTION: CẬP NHẬT VAI TRÒ THÀNH VIÊN
+     * 
+     * MỤC ĐÍCH: Leader thay đổi vai trò của thành viên (ChuTich, PhoChuTich, ThuKy, ThuQuy, ThanhVien)
+     * 
+     * FLOW:
+     * 1. Map role từ UI format (tiếng Việt) sang API format
+     * 2. Gọi API PUT /registrations/club/{clubId}/user/{userId}/role
+     * 3. Cập nhật UI với role mới (đã normalize về tiếng Việt)
+     */
     setRoleLoadingId(memberId);
     try {
       // ========== API CALL: PUT /registrations/club/{clubId}/user/{userId}/role - Update Member Role ==========
-      // Mục đích: Leader thay đổi vai trò của thành viên (ChuTich, PhoChuTich, ThuKy, ThuQuy, ThanhVien)
+      // Mục đích: Leader thay đổi vai trò của thành viên
       // Request body: { newRole } (role code từ UI)
       // Response: Updated member object
       const res = await fetch(`${API_BASE_URL}/registrations/club/${clubId}/user/${userId}/role`, {
@@ -739,18 +963,12 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
         throw new Error(data.message || 'Không thể cập nhật vai trò thành viên.');
       }
 
-      // Lấy role từ API response và map về tiếng Việt
       const responseRole = data.result?.clubRole || apiRole;
-      console.log('API Response role:', responseRole);
       const normalizedRole = normalizeRole(responseRole);
-      console.log('Normalized role:', normalizedRole);
 
-      // Update local state với role từ API response (đã được map về tiếng Việt)
       setMembers(members.map(m => {
         if (m.id === memberId) {
-          const updated = { ...m, role: normalizedRole, roleCode: responseRole };
-          console.log('Updated member:', updated);
-          return updated;
+          return { ...m, role: normalizedRole, roleCode: responseRole };
         }
         return m;
       }));
@@ -764,6 +982,9 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     }
   };
 
+  /**
+   * Handler khi cập nhật phí tham gia (từ ClubFeeManagement component)
+   */
   const handleUpdateFee = (feeData) => {
     if (!myClub) return;
     
@@ -781,7 +1002,6 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     showToast('Đã cập nhật phí tham gia và thời hạn thành công!', 'success');
   };
 
-  // Sử dụng useMemo để đảm bảo được tính toán lại khi dependencies thay đổi
   const allRequests = useMemo(() => getAllRequests(joinRequests), [getAllRequests, joinRequests]);
   const pendingRequestsCount = useMemo(() => {
     if (clubStats?.pendingRegistrations !== undefined) {
