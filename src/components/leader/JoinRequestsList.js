@@ -804,7 +804,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
    * - pending: Vàng (bg-amber-500) - "Chờ duyệt"
    * - approved: Xanh lá (bg-green-500) - "Đã chấp nhận"
    * - rejected: Đỏ (bg-red-500) - "Đã từ chối"
-   * - expired: Cam đậm (bg-orange-600) - "Hết hạn"
+   * - expired: Xám (bg-gray-500) - "Hết hạn"
    * - left: Xám (bg-gray-500) - "Đã rời CLB"
    * - unknown: Xám nhạt (bg-gray-400) - "Không xác định"
    */
@@ -813,7 +813,7 @@ const JoinRequestsList = ({ requests = [], clubId, onApprove, onReject }) => {
       pending: { bg: 'bg-amber-500', text: 'Chờ duyệt' },
       approved: { bg: 'bg-green-500', text: 'Đã chấp nhận' },
       rejected: { bg: 'bg-red-500', text: 'Đã từ chối' },
-      expired: { bg: 'bg-orange-600', text: 'Hết hạn' },
+      expired: { bg: 'bg-gray-500', text: 'Hết hạn' },
       left: { bg: 'bg-gray-500', text: 'Đã rời CLB' },
       unknown: { bg: 'bg-gray-400', text: 'Không xác định' }
     };
