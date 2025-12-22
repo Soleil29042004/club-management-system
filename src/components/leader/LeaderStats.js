@@ -14,7 +14,9 @@
  * @param {number} props.pendingRequestsCount - Số yêu cầu chờ duyệt
  * @param {string} props.category - Danh mục của club
  * @param {string} props.location - Địa điểm của club
- * @param {number} props.totalRevenue - Tổng doanh thu (optional)
+ * @param {number} props.totalRevenue - Tổng doanh thu hiển thị
+ * @param {string} props.revenueMode - Chế độ doanh thu: 'month' | 'all'
+ * @param {Function} props.onRevenueModeChange - Đổi chế độ doanh thu
  * @param {number} props.unpaidCount - Số thành viên chưa đóng phí (optional)
  */
 
@@ -27,7 +29,9 @@ const LeaderStats = ({
   category, 
   location,
   totalRevenue = 0,
-  unpaidCount = 0
+  unpaidCount = 0,
+  revenueMode = 'month',
+  onRevenueModeChange
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -71,12 +75,42 @@ const LeaderStats = ({
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-md flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-lg border border-fpt-blue/8">
+      <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-md flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-lg border border-fpt-blue/8 md:col-span-2 lg:col-span-2">
         <div className="text-5xl w-16 h-16 flex items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex-shrink-0">
           💰
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">Doanh thu theo tháng</h3>
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-sm text-gray-600 font-medium uppercase tracking-wide">
+              {revenueMode === 'all' ? 'Doanh thu (tất cả thời gian)' : 'Doanh thu tháng hiện tại'}
+            </h3>
+            {onRevenueModeChange && (
+              <div className="flex items-center gap-1 bg-white/80 rounded-full px-2 py-1 text-xs md:text-sm">
+                <button
+                  type="button"
+                  onClick={() => onRevenueModeChange('month')}
+                  className={`px-3 py-1 rounded-full font-semibold transition ${
+                    revenueMode === 'month'
+                      ? 'bg-fpt-blue text-white shadow'
+                      : 'text-fpt-blue hover:bg-fpt-blue/10'
+                  }`}
+                >
+                  Tháng
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRevenueModeChange('all')}
+                  className={`px-3 py-1 rounded-full font-semibold transition ${
+                    revenueMode === 'all'
+                      ? 'bg-fpt-blue text-white shadow'
+                      : 'text-fpt-blue hover:bg-fpt-blue/10'
+                  }`}
+                >
+                  Tất cả
+                </button>
+              </div>
+            )}
+          </div>
           <p className="text-3xl font-bold text-fpt-blue">{(totalRevenue || 0).toLocaleString('vi-VN')} VNĐ</p>
         </div>
       </div>
