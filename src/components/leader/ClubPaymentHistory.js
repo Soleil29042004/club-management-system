@@ -138,7 +138,6 @@ const ClubPaymentHistory = ({ club }) => {
               <thead className="bg-gray-100 text-gray-700">
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Mã giao dịch</th>
-                  <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Mã đăng ký</th>
                   <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Họ tên</th>
                   <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Email</th>
                   <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Gói</th>
@@ -151,7 +150,6 @@ const ClubPaymentHistory = ({ club }) => {
                 {payments.map((p) => (
                   <tr key={p.paymentId} className="hover:bg-gray-50">
                     <td className="px-4 py-3 whitespace-nowrap">{p.paymentId}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{p.subscriptionId}</td>
                     <td className="px-4 py-3">{p.userName || '—'}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{p.userEmail || '—'}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{p.packageName || '—'}</td>

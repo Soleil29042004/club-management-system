@@ -25,6 +25,7 @@ const Sidebar = ({ userRole, currentPage, onPageChange, onLogout, isOpen, onClos
       { id: 'clubs', label: 'Câu lạc bộ', icon: '🏛️' },
       { id: 'members', label: 'Thành viên', icon: '👥' },
       { id: 'club-requests', label: 'Duyệt yêu cầu CLB', icon: '📝' },
+      { id: 'revenue', label: 'Doanh thu', icon: '💵' },
       { id: 'profile', label: 'Hồ sơ', icon: '👤' }
     ],
     student: [
