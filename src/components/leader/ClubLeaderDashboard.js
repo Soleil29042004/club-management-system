@@ -22,6 +22,7 @@ import ClubInfo from './ClubInfo';
 import JoinRequestsList from './JoinRequestsList';
 import MembersList from './MembersList';
 import ClubFeeManagement from './ClubFeeManagement';
+import ClubPaymentHistory from './ClubPaymentHistory';
 import { clubCategoryLabels } from '../../data/constants';
 
 const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage }) => {
@@ -35,6 +36,11 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   const [clubStats, setClubStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState('');
+  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
+  const [allTimeRevenue, setAllTimeRevenue] = useState(0);
+  const [revenueMode, setRevenueMode] = useState('month'); // 'month' | 'all'
+  const [revenueLoading, setRevenueLoading] = useState(false);
+  const [revenueError, setRevenueError] = useState('');
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [roleLoadingId, setRoleLoadingId] = useState(null);
   const lastFetchedClubId = useRef(null);
@@ -445,66 +451,195 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     return () => controller.abort();
   }, [myClub?.id, myClub?.clubId, API_BASE_URL, setClubs, setMembers, showToast]);
 
-  /**
-   * USE EFFECT 3: FETCH THỐNG KÊ CLB
-   * 
-   * KHI NÀO CHẠY: Khi myClub.id hoặc myClub.clubId thay đổi
-   * 
-   * MỤC ĐÍCH: Lấy thống kê CLB (số thành viên, doanh thu, danh sách chưa đóng phí)
-   * 
-   * FLOW:
-   * 1. Gọi API GET /clubs/{clubId}/stats
-   * 2. Lưu vào clubStats state
-   * 3. Cập nhật memberCount của CLB từ stats
-   */
-  useEffect(() => {
+  const loadClubStats = useCallback(async (signal) => {
     const targetClubId = myClub?.id || myClub?.clubId;
     if (!targetClubId) return;
 
-    const controller = new AbortController();
     const token = localStorage.getItem('authToken');
-
-    const fetchStats = async () => {
+    try {
       setStatsLoading(true);
       setStatsError('');
-      try {
-        // ========== API CALL: GET /clubs/{id}/stats - Get Club Statistics ==========
-        // Mục đích: Lấy thống kê CLB để hiển thị dashboard
-        // Response: Object chứa totalMembers, totalRevenue, unpaidCount, unpaidMembers, etc.
-        const res = await fetch(`${API_BASE_URL}/clubs/${targetClubId}/stats`, {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
-          },
-          signal: controller.signal
-        });
+      const res = await fetch(`${API_BASE_URL}/clubs/${targetClubId}/stats`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        signal
+      });
 
-        const data = await res.json().catch(() => ({}));
-        if (res.ok && (data.code === 1000 || data.code === 0)) {
-          const result = data.result || {};
-          setClubStats(result);
-          if (result.totalMembers !== undefined) {
-            setMyClub(prev => (prev ? { ...prev, memberCount: result.totalMembers } : prev));
-          }
-        } else {
-          const message = data?.message || 'Không thể tải thống kê CLB.';
-          setStatsError(message);
-          showToast(message, 'error');
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && (data.code === 1000 || data.code === 0)) {
+        const result = data.result || {};
+        setClubStats(result);
+        if (result.totalMembers !== undefined) {
+          setMyClub(prev => (prev ? { ...prev, memberCount: result.totalMembers } : prev));
         }
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Fetch club stats error:', err);
-          setStatsError('Không thể tải thống kê CLB.');
-          showToast('Không thể tải thống kê CLB.', 'error');
-        }
-      } finally {
-        setStatsLoading(false);
+      } else {
+        const message = data?.message || 'Không thể tải thống kê CLB.';
+        setStatsError(message);
+        showToast(message, 'error');
       }
-    };
-
-    fetchStats();
-    return () => controller.abort();
+    } catch (err) {
+      if (err?.name !== 'AbortError') {
+        console.error('Fetch club stats error:', err);
+        setStatsError('Không thể tải thống kê CLB.');
+        showToast('Không thể tải thống kê CLB.', 'error');
+      }
+    } finally {
+      setStatsLoading(false);
+    }
   }, [API_BASE_URL, myClub?.id, myClub?.clubId, showToast]);
+
+  /**
+   * USE EFFECT 3: FETCH THỐNG KÊ CLB (initial load)
+   */
+  useEffect(() => {
+    const controller = new AbortController();
+    loadClubStats(controller.signal);
+    return () => controller.abort();
+  }, [loadClubStats]);
+
+  /**
+   * USE EFFECT 3.1: FETCH DOANH THU CLB THEO THÁNG HIỆN TẠI
+   * 
+   * KHI NÀO CHẠY: Khi myClub.id hoặc myClub.clubId thay đổi
+   * 
+   * MỤC ĐÍCH: Lấy doanh thu của CLB theo tháng hiện tại từ API
+   * 
+   * FLOW:
+   * 1. Xác định khoảng ngày của tháng hiện tại (startDate, endDate)
+   * 2. Gọi API GET /payment-history/revenue/club/{clubId}/date-range?startDate=...&endDate=...
+   * 3. Tính tổng totalRevenue từ mảng result và lưu vào monthlyRevenue state
+   */
+  const loadMonthlyRevenue = useCallback(async (signal) => {
+    const targetClubId = myClub?.id || myClub?.clubId;
+    if (!targetClubId) return;
+
+    const token = localStorage.getItem('authToken');
+    try {
+      setRevenueLoading(true);
+      setRevenueError('');
+
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      const startDate = startOfMonth.toISOString();
+      const endDate = endOfMonth.toISOString();
+
+      const url = `${API_BASE_URL}/payment-history/revenue/club/${targetClubId}/date-range?startDate=${encodeURIComponent(
+        startDate
+      )}&endDate=${encodeURIComponent(endDate)}`;
+
+      const res = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        signal
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && (data.code === 1000 || data.code === 0 || data.code === 0)) {
+        const list = Array.isArray(data.result) ? data.result : [];
+        const total = list.reduce(
+          (sum, item) => sum + (typeof item.totalRevenue === 'number' ? item.totalRevenue : 0),
+          0
+        );
+        setMonthlyRevenue(total);
+      } else {
+        const message = data?.message || 'Không thể tải doanh thu câu lạc bộ.';
+        setRevenueError(message);
+        console.error('[ClubLeaderDashboard] Fetch revenue error:', message);
+        setMonthlyRevenue(0);
+      }
+    } catch (err) {
+      if (err?.name !== 'AbortError') {
+        console.error('Fetch club revenue error:', err);
+        setRevenueError('Không thể tải doanh thu câu lạc bộ.');
+        setMonthlyRevenue(0);
+      }
+    } finally {
+      setRevenueLoading(false);
+    }
+  }, [API_BASE_URL, myClub?.id, myClub?.clubId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadMonthlyRevenue(controller.signal);
+    return () => controller.abort();
+  }, [loadMonthlyRevenue]);
+
+  /**
+   * USE EFFECT 3.2: FETCH DOANH THU CLB TẤT CẢ THỜI GIAN
+   * 
+   * KHI NÀO CHẠY: Khi myClub.id hoặc myClub.clubId thay đổi
+   * 
+   * MỤC ĐÍCH: Lấy tổng doanh thu của CLB từ trước đến nay
+   * 
+   * FLOW:
+   * 1. Gọi API GET /payment-history/revenue/club/{clubId}
+   * 2. Lưu totalRevenue vào allTimeRevenue state
+   */
+  const loadAllTimeRevenue = useCallback(async (signal) => {
+    const targetClubId = myClub?.id || myClub?.clubId;
+    if (!targetClubId) return;
+
+    const token = localStorage.getItem('authToken');
+    try {
+      const url = `${API_BASE_URL}/payment-history/revenue/club/${targetClubId}`;
+
+      const res = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        signal
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && (data.code === 1000 || data.code === 0)) {
+        const result = data.result || {};
+        const total = typeof result.totalRevenue === 'number' ? result.totalRevenue : 0;
+        setAllTimeRevenue(total);
+      } else {
+        const message = data?.message || 'Không thể tải tổng doanh thu câu lạc bộ.';
+        console.error('[ClubLeaderDashboard] Fetch all-time revenue error:', message);
+        setAllTimeRevenue(0);
+      }
+    } catch (err) {
+      if (err?.name !== 'AbortError') {
+        console.error('Fetch all-time club revenue error:', err);
+        setAllTimeRevenue(0);
+      }
+    }
+  }, [API_BASE_URL, myClub?.id, myClub?.clubId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadAllTimeRevenue(controller.signal);
+    return () => controller.abort();
+  }, [loadAllTimeRevenue]);
+
+  /**
+   * USE EFFECT 3.3: POLLING THỐNG KÊ & DOANH THU (10s)
+   */
+  useEffect(() => {
+    const controller = new AbortController();
+    const doPoll = () => {
+      loadClubStats(controller.signal);
+      loadMonthlyRevenue(controller.signal);
+      loadAllTimeRevenue(controller.signal);
+    };
+    doPoll();
+    const interval = setInterval(doPoll, 10000);
+    return () => {
+      clearInterval(interval);
+      controller.abort();
+    };
+  }, [loadClubStats, loadMonthlyRevenue, loadAllTimeRevenue]);
 
   /**
    * USE EFFECT 4: POLLING REALTIME ĐỂ CẬP NHẬT TRẠNG THÁI THANH TOÁN
@@ -1085,6 +1220,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     return getPendingRequestsCount();
   }, [clubStats?.pendingRegistrations, getPendingRequestsCount]);
   const clubMembers = useMemo(() => getClubMembers(), [getClubMembers]);
+  const displayedRevenue = revenueMode === 'all' ? allTimeRevenue : monthlyRevenue;
 
   if (clubLoading) {
     return (
@@ -1149,8 +1285,10 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
             pendingRequestsCount={pendingRequestsCount}
             category={myClub.category}
             location={myClub.location}
-            totalRevenue={clubStats?.totalRevenue}
+            totalRevenue={displayedRevenue}
             unpaidCount={clubStats?.unpaidCount}
+            revenueMode={revenueMode}
+            onRevenueModeChange={setRevenueMode}
           />
 
           <ClubInfo
@@ -1258,6 +1396,11 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
           club={myClub}
           onUpdate={handleUpdateFee}
         />
+      )}
+
+      {/* Payment History Tab */}
+      {currentPage === 'payments' && (
+        <ClubPaymentHistory club={myClub} />
       )}
     </div>
   );

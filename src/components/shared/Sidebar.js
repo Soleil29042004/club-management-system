@@ -31,6 +31,7 @@ const Sidebar = ({ userRole, currentPage, onPageChange, onLogout, isOpen, onClos
       { id: 'clubs', label: 'Danh sách CLB', icon: '🏛️' },
       { id: 'my-requests', label: 'Đơn đã gửi', icon: '📄' },
       { id: 'joined-clubs', label: 'CLB đã tham gia', icon: '🤝' },
+      { id: 'my-payments', label: 'Lịch sử giao dịch', icon: '💳' },
       { id: 'profile', label: 'Hồ sơ', icon: '👤' }
     ],
     club_leader: [
@@ -38,6 +39,7 @@ const Sidebar = ({ userRole, currentPage, onPageChange, onLogout, isOpen, onClos
       { id: 'requests', label: 'Duyệt yêu cầu', icon: '📋' },
       { id: 'members', label: 'Quản lý thành viên', icon: '👥' },
       { id: 'fee', label: 'Phí & Thời hạn', icon: '💰' },
+      { id: 'payments', label: 'Lịch sử giao dịch', icon: '💳' },
       { id: 'profile', label: 'Hồ sơ', icon: '👤' }
     ]
   };

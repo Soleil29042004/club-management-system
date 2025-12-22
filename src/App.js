@@ -18,6 +18,7 @@ import Profile from './components/shared/Profile';
 import ClubRequestsManagement from './components/admin/ClubRequestsManagement';
 import StudentMyClubRequests from './components/student/StudentMyClubRequests';
 import StudentJoinedClubs from './components/student/StudentJoinedClubs';
+import StudentPaymentHistory from './components/student/StudentPaymentHistory';
 import Sidebar from './components/shared/Sidebar';
 import Login from './pages/login';
 import Register from './pages/register';
@@ -694,6 +695,8 @@ function AppContent() {
         return <StudentMyClubRequests />;
       case 'joined-clubs':
         return <StudentJoinedClubs />;
+      case 'my-payments':
+        return <StudentPaymentHistory />;
       case 'profile':
         return <Profile userRole={userRole} clubs={clubs} members={members} />;
       default:
@@ -773,6 +776,8 @@ function AppContent() {
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
       case 'fee':
         return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
+      case 'payments':
+        return <ClubLeaderDashboard clubs={clubs} setClubs={setClubs} members={members} setMembers={setMembers} currentPage={currentPage} />;
       case 'profile':
         return <Profile userRole={userRole} clubs={clubs} members={members} />;
       default:
@@ -812,6 +817,7 @@ function AppContent() {
                   {currentPage === 'requests' && 'Duyệt yêu cầu'}
                   {currentPage === 'members' && 'Quản lý thành viên'}
                   {currentPage === 'fee' && 'Phí & Thời hạn'}
+                  {currentPage === 'payments' && 'Lịch sử giao dịch'}
                   {currentPage === 'profile' && 'Hồ sơ cá nhân'}
                 </h2>
               </div>

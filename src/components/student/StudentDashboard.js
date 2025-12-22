@@ -40,6 +40,41 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
   const isInitialClubRequestLoadRef = useRef(true);
 
   /**
+   * Helper: normalize registration object từ API sang UI format
+   */
+  const normalizeRegistration = (reg) => ({
+    id: reg.subscriptionId || Date.now(),
+    subscriptionId: reg.subscriptionId,
+    clubId: typeof reg.clubId === 'string' ? parseInt(reg.clubId, 10) : reg.clubId,
+    clubName: reg.clubName,
+    clubLogo: reg.clubLogo,
+    studentEmail: reg.studentEmail,
+    studentName: reg.studentName,
+    studentCode: reg.studentCode,
+    userId: reg.userId,
+    phone: '', // API không trả về phone
+    studentId: reg.studentCode,
+    major: '', // API không trả về major
+    reason: '', // API không trả về reason
+    status: reg.status || 'ChoDuyet',
+    requestDate: reg.createdAt ? reg.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+    createdAt: reg.createdAt,
+    message: `Yêu cầu tham gia ${reg.clubName}`,
+    packageId: reg.packageId,
+    packageName: reg.packageName,
+    price: reg.price,
+    term: reg.term,
+    isPaid: reg.isPaid || false,
+    paymentMethod: reg.paymentMethod,
+    clubRole: reg.clubRole || 'ThanhVien',
+    approverName: reg.approverName,
+    paymentDate: reg.paymentDate,
+    startDate: reg.startDate,
+    endDate: reg.endDate,
+    joinDate: reg.joinDate
+  });
+
+  /**
    * USE EFFECT 1: FETCH MY REGISTRATIONS
    * 
    * KHI NÀO CHẠY: Khi component mount lần đầu
@@ -85,37 +120,7 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
 
         if (response.ok && data && (data.code === 1000 || data.code === 0)) {
           // Map API response to local format
-          const registrations = (data.result || []).map(reg => ({
-            id: reg.subscriptionId || Date.now(),
-            subscriptionId: reg.subscriptionId,
-            clubId: typeof reg.clubId === 'string' ? parseInt(reg.clubId, 10) : reg.clubId,
-            clubName: reg.clubName,
-            clubLogo: reg.clubLogo,
-            studentEmail: reg.studentEmail,
-            studentName: reg.studentName,
-            studentCode: reg.studentCode,
-            userId: reg.userId,
-            phone: '', // API không trả về phone
-            studentId: reg.studentCode,
-            major: '', // API không trả về major
-            reason: '', // API không trả về reason
-            status: reg.status || 'ChoDuyet',
-            requestDate: reg.createdAt ? reg.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-            createdAt: reg.createdAt,
-            message: `Yêu cầu tham gia ${reg.clubName}`,
-            packageId: reg.packageId,
-            packageName: reg.packageName,
-            price: reg.price,
-            term: reg.term,
-            isPaid: reg.isPaid || false,
-            paymentMethod: reg.paymentMethod,
-            clubRole: reg.clubRole || 'ThanhVien',
-            approverName: reg.approverName,
-            paymentDate: reg.paymentDate,
-            startDate: reg.startDate,
-            endDate: reg.endDate,
-            joinDate: reg.joinDate
-          }));
+          const registrations = (data.result || []).map(normalizeRegistration);
 
           setJoinRequests(registrations);
           console.log('Loaded registrations from API:', registrations);
@@ -214,9 +219,10 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
         
         if (response.ok && data && data.code === 1000) {
           const raw = data.result || [];
-          
+          const mapped = raw.map(normalizeRegistration);
+
           // So sánh với trạng thái trước đó
-          raw.forEach((reg) => {
+          mapped.forEach((reg) => {
             const subscriptionId = reg.subscriptionId;
             const currentStatus = (reg.status || '').toLowerCase();
             const previousStatus = previousStatusesRef.current.has(subscriptionId)
@@ -235,6 +241,10 @@ const StudentDashboard = ({ clubs, currentPage, setClubs }) => {
             previousStatusesRef.current.set(subscriptionId, currentStatus);
           });
           
+          // Cập nhật joinRequests UI để phản ánh status mới
+          setJoinRequests(mapped);
+          localStorage.setItem('joinRequests', JSON.stringify(mapped));
+
           // Lưu trạng thái vào localStorage để giữ lại khi reload
           try {
             const statusMap = Object.fromEntries(previousStatusesRef.current);
