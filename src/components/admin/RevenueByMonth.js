@@ -101,7 +101,7 @@ const RevenueByMonth = () => {
 
   const totals = useMemo(() => {
     const totalRevenue = data.reduce((sum, item) => sum + (item.totalRevenue || 0), 0);
-    const totalTransactions = data.reduce((sum, item) => sum + (item.transactionCount || 0), 0);
+    const totalTransactions = data.reduce((sum, item) => sum + (item.totalTransactionCount || 0), 0);
     return { totalRevenue, totalTransactions };
   }, [data]);
 
@@ -110,14 +110,10 @@ const RevenueByMonth = () => {
     return `${value.toLocaleString('vi-VN')} VNĐ`;
   };
 
-  const formatDateTime = (value) => {
-    if (!value) return '—';
-    return new Date(value).toLocaleString('vi-VN');
-  };
-
-  const formatMonth = (start) => {
-    if (!start) return '—';
-    return new Date(start).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
+  const formatMonth = (year, month) => {
+    if (!year || !month) return '—';
+    const date = new Date(year, month - 1, 1);
+    return date.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
   };
 
   return (
@@ -196,39 +192,65 @@ const RevenueByMonth = () => {
             Không có dữ liệu trong khoảng thời gian đã chọn.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100 text-gray-700">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Tháng</th>
-                  <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Doanh thu</th>
-                  <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Số giao dịch</th>
-                  <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">CLB</th>
-                  <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Gói</th>
-                  <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Từ</th>
-                  <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Đến</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {data.map((item, idx) => (
-                  <tr key={`${item.startDate || ''}-${idx}`} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap">{formatMonth(item.startDate)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap font-semibold text-gray-800">{formatCurrency(item.totalRevenue)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{item.transactionCount ?? '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {item.clubName || '—'}
-                      {item.clubId ? ` (#${item.clubId})` : ''}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {item.packageName || '—'}
-                      {item.packageId ? ` (#${item.packageId})` : ''}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">{formatDateTime(item.startDate)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{formatDateTime(item.endDate)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-4">
+            {data.map((monthData, idx) => (
+              <div key={`${monthData.year}-${monthData.month}-${idx}`} className="border border-gray-200 rounded-lg overflow-hidden">
+                {/* Header của tháng */}
+                <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light text-white p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-lg font-semibold m-0">
+                        {formatMonth(monthData.year, monthData.month)}
+                      </h4>
+                    </div>
+                    <div className="flex gap-6 text-sm">
+                      <div className="text-right">
+                        <span className="opacity-80">Tổng doanh thu:</span>
+                        <p className="m-0 font-bold text-lg">{formatCurrency(monthData.totalRevenue)}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="opacity-80">Tổng giao dịch:</span>
+                        <p className="m-0 font-bold text-lg">{monthData.totalTransactionCount || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bảng chi tiết CLB trong tháng */}
+                {monthData.clubRevenues && monthData.clubRevenues.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-100 text-gray-700">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">STT</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Tên CLB</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Doanh thu</th>
+                          <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Số giao dịch</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {monthData.clubRevenues.map((club, clubIdx) => (
+                          <tr key={`${club.clubId}-${clubIdx}`} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 whitespace-nowrap text-gray-600">{clubIdx + 1}</td>
+                            <td className="px-4 py-3">
+                              <span className="font-semibold text-gray-800">{club.clubName || '—'}</span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap font-semibold text-green-700">
+                              {formatCurrency(club.revenue)}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">{club.transactionCount || 0}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    Không có doanh thu từ CLB nào trong tháng này.
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
