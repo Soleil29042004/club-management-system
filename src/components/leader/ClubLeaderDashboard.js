@@ -27,6 +27,7 @@ import { clubCategoryLabels } from '../../data/constants';
 
 const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage }) => {
   const { showToast } = useToast();
+  // joinRequests: đơn tham gia đã map sang UI (pending/approved/rejected...); dùng cho tab Requests
   const [joinRequests, setJoinRequests] = useState([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [membersError, setMembersError] = useState('');
@@ -499,18 +500,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     return () => controller.abort();
   }, [loadClubStats]);
 
-  /**
-   * USE EFFECT 3.1: FETCH DOANH THU CLB THEO THÁNG HIỆN TẠI
-   * 
-   * KHI NÀO CHẠY: Khi myClub.id hoặc myClub.clubId thay đổi
-   * 
-   * MỤC ĐÍCH: Lấy doanh thu của CLB theo tháng hiện tại từ API
-   * 
-   * FLOW:
-   * 1. Xác định khoảng ngày của tháng hiện tại (startDate, endDate)
-   * 2. Gọi API GET /payment-history/revenue/club/{clubId}/date-range?startDate=...&endDate=...
-   * 3. Tính tổng totalRevenue từ mảng result và lưu vào monthlyRevenue state
-   */
+  // USE EFFECT 3.1: Lấy doanh thu tháng hiện tại (date-range theo tháng hiện tại)
   const loadMonthlyRevenue = useCallback(async (signal) => {
     const targetClubId = myClub?.id || myClub?.clubId;
     if (!targetClubId) return;
@@ -571,17 +561,7 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     return () => controller.abort();
   }, [loadMonthlyRevenue]);
 
-  /**
-   * USE EFFECT 3.2: FETCH DOANH THU CLB TẤT CẢ THỜI GIAN
-   * 
-   * KHI NÀO CHẠY: Khi myClub.id hoặc myClub.clubId thay đổi
-   * 
-   * MỤC ĐÍCH: Lấy tổng doanh thu của CLB từ trước đến nay
-   * 
-   * FLOW:
-   * 1. Gọi API GET /payment-history/revenue/club/{clubId}
-   * 2. Lưu totalRevenue vào allTimeRevenue state
-   */
+  // USE EFFECT 3.2: Lấy doanh thu all-time của CLB
   const loadAllTimeRevenue = useCallback(async (signal) => {
     const targetClubId = myClub?.id || myClub?.clubId;
     if (!targetClubId) return;

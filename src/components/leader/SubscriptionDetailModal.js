@@ -1,17 +1,8 @@
 /**
- * SubscriptionDetailModal Component
- * 
- * Modal component hiển thị chi tiết đăng ký CLB:
- * - Thông tin đăng ký: mã đăng ký, ngày đăng ký
- * - Thông tin CLB: tên, mã, logo
- * - Thông tin sinh viên: họ tên, MSSV, email, vai trò
- * - Thông tin gói thành viên: mã gói, tên, thời hạn, giá
- * - Trạng thái và thông tin khác: trạng thái, đã thanh toán, phương thức thanh toán, người duyệt, các ngày liên quan
- * - Fetch dữ liệu từ API khi subscriptionId thay đổi
- * 
- * @param {Object} props
- * @param {number|string} props.subscriptionId - ID của subscription cần xem chi tiết
- * @param {Function} props.onClose - Callback khi đóng modal
+ * SubscriptionDetailModal
+ * - Hiển thị chi tiết đăng ký CLB (registration/subscription)
+ * - Khi subscriptionId thay đổi → fetch GET /registers/{subscriptionId}
+ * - Thông tin: đăng ký, CLB, sinh viên, gói, trạng thái, thanh toán, các ngày liên quan
  */
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../shared/Toast';

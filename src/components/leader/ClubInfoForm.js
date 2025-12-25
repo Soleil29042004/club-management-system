@@ -14,6 +14,7 @@
  */
 import React from 'react';
 
+// Form chỉnh sửa thông tin CLB: controlled inputs, submit qua onFormSubmit
 const ClubInfoForm = ({ formData, onFormChange, onFormSubmit, onFormCancel }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
