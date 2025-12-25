@@ -13,6 +13,15 @@ import React, { useEffect, useState } from 'react';
 
 const API_BASE_URL = 'https://clubmanage.azurewebsites.net/api';
 
+// Flow summary:
+// - Khi có clubId: fetch danh sách gói (/packages/club/{id})
+// - Xem chi tiết: fetch /packages/{packageId} → detail modal
+// - Chỉnh sửa: fetch /packages/{packageId} (prefill) → PUT cập nhật → sync list/detail
+// Flow summary:
+// 1) Khi có clubId → GET /packages/club/{id} để lấy danh sách gói (packages)
+// 2) Xem chi tiết gói → GET /packages/{packageId} → hiển thị modal detail
+// 3) Chỉnh sửa gói → GET /packages/{packageId} (prefill) → PUT /packages/{packageId} → đồng bộ list + detail
+// State editData là controlled form; editPackageId xác định gói đang edit
 const ClubFeeManagement = ({ club }) => {
   const [packages, setPackages] = useState([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
@@ -42,6 +51,7 @@ const ClubFeeManagement = ({ club }) => {
    * 1. Gọi API GET /packages/club/{clubId}
    * 2. Lưu vào packages state
    */
+  // Fetch danh sách gói khi mount/đổi club
   useEffect(() => {
     if (!club?.id && !club?.clubId) return;
     const controller = new AbortController();
@@ -93,6 +103,7 @@ const ClubFeeManagement = ({ club }) => {
    * 
    * @param {number|string} packageId - ID của package cần xem chi tiết
    */
+  // Xem chi tiết gói → GET /packages/{id} và mở modal detail
   const handleViewDetail = async (packageId) => {
     if (!packageId) return;
     setDetail(null);
@@ -141,6 +152,7 @@ const ClubFeeManagement = ({ club }) => {
    * 
    * @param {Object} pkg - Package object cần chỉnh sửa
    */
+  // Mở modal edit: fetch chi tiết gói (prefill), fallback dữ liệu list nếu API lỗi
   const openEdit = async (pkg) => {
     const packageId = pkg?.packageId || pkg?.id;
     if (!packageId) {
@@ -232,6 +244,7 @@ const ClubFeeManagement = ({ club }) => {
    * 
    * @param {Event} e - Input change event
    */
+  // Controlled inputs cho form edit
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditData(prev => ({
@@ -252,6 +265,7 @@ const ClubFeeManagement = ({ club }) => {
    * 
    * @param {number|string} packageId - ID của package cần cập nhật
    */
+  // Cập nhật gói: validate → PUT /packages/{id} → cập nhật list & detail
   const handleUpdatePackage = async (packageId) => {
     if (!packageId) {
       setEditError('Không tìm thấy ID gói thành viên.');

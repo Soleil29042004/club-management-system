@@ -23,6 +23,7 @@
 import React from 'react';
 import { clubCategoryLabels } from '../../data/constants';
 
+// Hiển thị các thẻ thống kê; doanh thu toggle Tháng/Tất cả (props từ parent)
 const LeaderStats = ({ 
   memberCount, 
   pendingRequestsCount, 

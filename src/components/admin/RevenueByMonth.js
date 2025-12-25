@@ -1,7 +1,7 @@
 /**
  * RevenueByMonth Component (Admin)
  *
- * Trang admin xem doanh thu theo tháng trong khoảng thời gian.
+ * Trang admin xem doanh thu trong khoảng thời gian.
  * - Cho phép chọn startDate, endDate (datetime)
  * - Gọi API: GET /payment-history/revenue/by-month/date-range
  *   Query: startDate, endDate (ISO date-time string)
@@ -121,9 +121,9 @@ const RevenueByMonth = () => {
       <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 m-0">Doanh thu theo tháng</h2>
+            <h2 className="text-xl font-semibold text-gray-800 m-0">Doanh thu</h2>
             <p className="text-sm text-gray-500 m-0 mt-1">
-              Tính doanh thu theo từng tháng trong khoảng thời gian
+              Tính doanh thu trong khoảng thời gian từ ngày bắt đầu đến ngày kết thúc
             </p>
           </div>
           <div className="flex flex-col md:flex-row gap-3 md:items-center">
