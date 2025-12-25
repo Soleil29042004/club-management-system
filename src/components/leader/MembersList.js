@@ -18,6 +18,7 @@
 import React from 'react';
 import { memberRoles } from '../../data/constants';
 
+// Danh sách thành viên: show thông tin, badge tình trạng, dropdown đổi role, nút xóa
 const MembersList = ({ members, club, onUpdateRole, onDeleteMember, deleteLoadingId, roleLoadingId }) => {
   /**
    * FUNCTION: PARSE DATE

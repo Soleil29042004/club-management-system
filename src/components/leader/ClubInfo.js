@@ -23,6 +23,7 @@ import { clubCategoryLabels } from '../../data/constants';
 const ClubInfo = ({ club, onEdit, showEditForm, formData, onFormChange, onFormSubmit, onFormCancel }) => {
   if (!club) return null;
 
+  // Khi showEditForm = true → hiển thị form chỉnh sửa
   if (showEditForm) {
     return (
       <ClubInfoForm
@@ -56,6 +57,7 @@ const ClubInfo = ({ club, onEdit, showEditForm, formData, onFormChange, onFormSu
     return 'bg-gray-500 text-white';
   };
 
+  // View mode: hiển thị thông tin CLB + nút chỉnh sửa
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
       <div className="bg-gradient-to-r from-fpt-blue to-fpt-blue-light p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

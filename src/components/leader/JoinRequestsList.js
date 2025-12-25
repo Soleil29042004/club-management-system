@@ -1,13 +1,11 @@
 /**
  * JoinRequestsList Component
  * 
- * Component hiển thị danh sách yêu cầu tham gia club cho club leader:
- * - Fetch và hiển thị requests từ API
- * - Filter theo trạng thái (pending, approved, rejected)
- * - Duyệt/từ chối yêu cầu
- * - Xem chi tiết request và subscription
- * - Real-time polling để cập nhật trạng thái thanh toán
- * - Hiển thị thông tin thanh toán và xác nhận thanh toán
+ * Component hiển thị danh sách yêu cầu tham gia club cho club leader.
+ * Luồng chính:
+ * - Fetch requests theo clubId (filter trạng thái nếu cần)
+ * - Polling 2s để phát hiện thanh toán (isPaid false → true) và lưu trạng thái vào localStorage
+ * - Duyệt / Từ chối / Xác nhận thanh toán / Xem chi tiết đăng ký
  * 
  * @param {Object} props
  * @param {Array} props.requests - Danh sách requests từ props (fallback)

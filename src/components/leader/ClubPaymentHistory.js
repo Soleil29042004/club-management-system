@@ -23,6 +23,7 @@ const ClubPaymentHistory = ({ club }) => {
 
   const clubId = club?.id || club?.clubId;
 
+  // Fetch lịch sử giao dịch khi có clubId / đổi trang (page/size)
   useEffect(() => {
     if (!clubId) return;
 
