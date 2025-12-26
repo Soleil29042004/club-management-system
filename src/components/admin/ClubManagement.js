@@ -131,27 +131,79 @@ const ClubManagement = ({ clubs, setClubs }) => {
    * 
    * MỤC ĐÍCH: Xử lý khi submit form (thêm hoặc sửa club)
    * 
-   * LOGIC:
-   * - Nếu editingClub có giá trị → update club trong state
-   * - Nếu không → thêm club mới vào state
+   * FLOW:
+   * - Nếu editingClub có giá trị → Gọi API PUT /clubs/{clubId} để cập nhật
+   * - Nếu không → Hiện tại chưa hỗ trợ tạo club mới (form chỉ có logo, description, location)
    * 
    * @param {Object} formData - Dữ liệu form từ ClubForm
    */
-  const handleSubmit = (formData) => {
+  const handleSubmit = async (formData) => {
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    if (!token) {
+      showToast('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
+      return;
+    }
+
     if (editingClub) {
       // Update existing club
-      setClubs(clubs.map(club => 
-        club.id === editingClub.id ? { ...formData, id: editingClub.id } : club
-      ));
+      const clubId = editingClub.id || editingClub.clubId;
+      if (!clubId) {
+        showToast('Không tìm thấy ID câu lạc bộ.', 'error');
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        // ========== API CALL: PUT /clubs/{clubId} - Update Club Info ==========
+        // Mục đích: Admin cập nhật thông tin CLB (logo, description, location, email)
+        // Request body: { logo, description, location, email }
+        // Response: Updated club object
+        const payload = {
+          logo: formData.logo || null,
+          description: formData.description || '',
+          location: formData.location || '',
+          email: formData.email || ''
+        };
+
+        const data = await apiRequest(`/clubs/${clubId}`, {
+          method: 'PUT',
+          body: payload,
+          token
+        });
+
+        // Map response và cập nhật clubs state
+        const updatedClub = mapApiClubToComponent(data.result || {});
+        setClubs(clubs.map(club => 
+          club.id === clubId || club.clubId === clubId ? updatedClub : club
+        ));
+        
+        setShowForm(false);
+        setEditingClub(null);
+        showToast('Cập nhật thông tin câu lạc bộ thành công!', 'success');
+        
+        // Refresh clubs list để đảm bảo consistency
+        fetchClubs(filterCategory, searchTerm);
+      } catch (error) {
+        if (error.status === 401) {
+          showToast('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
+        } else {
+          console.error('Update club error:', error);
+          const errorMessage = error.data?.message || error.message || 'Đã xảy ra lỗi khi cập nhật câu lạc bộ. Vui lòng thử lại.';
+          setError(errorMessage);
+          showToast(errorMessage, 'error');
+        }
+      } finally {
+        setLoading(false);
+      }
     } else {
-      // Add new club - ID will be assigned by API
-      const newClub = {
-        ...formData
-      };
-      setClubs([...clubs, newClub]);
+      // Add new club - Hiện tại form chỉ có logo, description, location
+      // Không đủ thông tin để tạo club mới, nên chỉ hiển thị thông báo
+      showToast('Chức năng tạo câu lạc bộ mới chưa được hỗ trợ. Vui lòng sử dụng chức năng đăng ký CLB từ trang sinh viên.', 'info');
+      setShowForm(false);
+      setEditingClub(null);
     }
-    setShowForm(false);
-    setEditingClub(null);
   };
 
   /**

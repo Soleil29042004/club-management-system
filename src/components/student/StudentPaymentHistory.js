@@ -32,7 +32,9 @@ const StudentPaymentHistory = () => {
           sortBy: 'paymentDate',
           sortDir: 'DESC'
         });
-
+        // ========== API CALL: GET /payment-history/my-history - Get My Payment History ==========
+        // Mục đích: Lấy lịch sử giao dịch thanh toán của user hiện tại
+        // Response: Array of payment objects
         const url = `${API_BASE_URL}/payment-history/my-history?${params.toString()}`;
 
         const res = await fetch(url, {

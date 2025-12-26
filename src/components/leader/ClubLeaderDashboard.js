@@ -901,8 +901,15 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
   const handleFormSubmit = (e) => {
     e.preventDefault();
     
-    if (!formData.description.trim() || !formData.location.trim()) {
-      showToast('Vui lòng nhập mô tả và địa điểm.', 'error');
+    if (!formData.description.trim() || !formData.location.trim() || !formData.email.trim()) {
+      showToast('Vui lòng nhập đầy đủ mô tả, địa điểm và email.', 'error');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      showToast('Email không hợp lệ.', 'error');
       return;
     }
 
@@ -910,7 +917,8 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     const payload = {
       logo: formData.logo || null,
       description: formData.description || '',
-      location: formData.location || ''
+      location: formData.location || '',
+      email: formData.email || ''
     };
 
     /**
@@ -926,8 +934,8 @@ const ClubLeaderDashboard = ({ clubs, setClubs, members, setMembers, currentPage
     const doUpdate = async () => {
       try {
         // ========== API CALL: PUT /clubs/{id} - Update Club Info ==========
-        // Mục đích: Leader cập nhật thông tin CLB (logo, description, location)
-        // Request body: { logo, description, location }
+        // Mục đích: Leader cập nhật thông tin CLB (logo, description, location, email)
+        // Request body: { logo, description, location, email }
         // Response: Updated club object
         const res = await fetch(`${API_BASE_URL}/clubs/${myClub.id || myClub.clubId}`, {
           method: 'PUT',
