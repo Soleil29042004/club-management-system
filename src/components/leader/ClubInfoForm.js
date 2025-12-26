@@ -4,10 +4,11 @@
  * Form component để club leader chỉnh sửa thông tin cơ bản của club:
  * - Mô tả (description) - required
  * - Địa điểm (location) - required
+ * - Email (email) - required
  * - Logo URL (logo) - optional
  * 
  * @param {Object} props
- * @param {Object} props.formData - Form data object chứa description, location, logo
+ * @param {Object} props.formData - Form data object chứa description, location, email, logo
  * @param {Function} props.onFormChange - Callback khi input thay đổi
  * @param {Function} props.onFormSubmit - Callback khi submit form
  * @param {Function} props.onFormCancel - Callback khi cancel edit
@@ -48,6 +49,21 @@ const ClubInfoForm = ({ formData, onFormChange, onFormSubmit, onFormCancel }) =>
             />
           </div>
 
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-800 text-sm">Email *</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email || ''}
+              onChange={onFormChange}
+              placeholder="club@example.com"
+              required
+              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10"
+            />
+          </div>
+        </div>
+
+        <div className="mb-6">
           <div className="flex flex-col">
             <label className="mb-2 font-semibold text-gray-800 text-sm">Logo URL</label>
             <input

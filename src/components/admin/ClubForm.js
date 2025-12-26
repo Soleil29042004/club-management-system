@@ -2,7 +2,7 @@
  * ClubForm Component
  * 
  * Component form để thêm/sửa thông tin club:
- * - Form modal để chỉnh sửa mô tả, địa điểm, logo
+ * - Form modal để chỉnh sửa mô tả, địa điểm, logo, email
  * - Validation cho các trường bắt buộc
  * - Hỗ trợ cả add và edit mode
  * 
@@ -18,7 +18,8 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     description: '',
     location: '',
-    logo: ''
+    logo: '',
+    email: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -41,7 +42,8 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
       setFormData({
         description: club.description || '',
         location: club.location || '',
-        logo: club.logo || ''
+        logo: club.logo || '',
+        email: club.email || ''
       });
     }
   }, [club]);
@@ -77,6 +79,7 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
    * VALIDATION RULES:
    * - description: Bắt buộc, không được để trống
    * - location: Bắt buộc, không được để trống
+   * - email: Bắt buộc, phải là email hợp lệ
    * - logo: Optional (không bắt buộc)
    * 
    * @returns {boolean} - true nếu form hợp lệ, false nếu có lỗi
@@ -92,6 +95,16 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
     // Validate địa điểm (bắt buộc)
     if (!formData.location.trim()) {
       newErrors.location = 'Địa điểm là bắt buộc';
+    }
+
+    // Validate email (bắt buộc, phải là email hợp lệ)
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email là bắt buộc';
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = 'Email không hợp lệ';
+      }
     }
 
     setErrors(newErrors);
@@ -160,6 +173,22 @@ const ClubForm = ({ club, onSubmit, onCancel }) => {
                 }`}
               />
               {errors.location && <span className="text-red-500 text-xs mt-1">{errors.location}</span>}
+            </div>
+
+            <div className="flex flex-col">
+              <label htmlFor="email" className="mb-2 font-semibold text-gray-800 text-sm">Email *</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="club@example.com"
+                className={`px-4 py-3 border-2 rounded-lg text-sm transition-all font-sans focus:outline-none focus:border-fpt-blue focus:ring-4 focus:ring-fpt-blue/10 ${
+                  errors.email ? 'border-red-500' : 'border-gray-200'
+                }`}
+              />
+              {errors.email && <span className="text-red-500 text-xs mt-1">{errors.email}</span>}
             </div>
 
             <div className="flex flex-col">
